@@ -1,0 +1,248 @@
+# pre-commit install
+# pre-commit run --all-files
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+ci:
+  autoupdate_commit_msg: "chore(deps): update pre-commit hooks"
+  autofix_commit_msg: "style: pre-commit fixes"
+  autoupdate_schedule: "quarterly"
+  skip:
+    - uv-lock
+    - pip-compile
+default_install_hook_types:
+  - pre-commit
+  - commit-msg
+repos:
+  # * meta hooks
+  - repo: meta
+    hooks:
+      - id: check-hooks-apply
+      - id: check-useless-excludes
+
+  # * sync dependencies
+  - repo: https://github.com/wpk-nist-gov/sync-pre-commit-hooks
+    rev: v0.5.1
+    hooks:
+      - id: forbidden-files
+      - id: sync-pre-commit-deps
+      - id: sync-uv-build-deps
+      - id: sync-uv-dependency-groups
+
+  # * Top level
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        exclude: ^uv[.]lock
+      - id: check-case-conflict
+      - id: check-merge-conflict
+        args: [--assume-in-merge]
+      - id: check-symlinks
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+
+  # * toml/pyproject.toml
+  # ** format
+  - repo: https://github.com/ComPWA/taplo-pre-commit
+    rev: v0.9.3
+    hooks:
+      - id: taplo-format
+        # exclude: (^|/)pyproject\.toml$
+      - id: taplo-lint
+        args: ["--no-schema"]
+  - repo: https://github.com/tox-dev/pyproject-fmt
+    rev: v2.21.1
+    hooks:
+      - id: pyproject-fmt
+  # ** validate (schema-store)
+  - repo: https://github.com/henryiii/validate-pyproject-schema-store
+    rev: 2026.04.26
+    hooks:
+      - id: validate-pyproject
+        name: validate-pyproject-schema-store
+        stages: [manual]
+  # ** repo review
+  - repo: https://github.com/scientific-python/cookie
+    rev: 2026.04.04
+    hooks:
+      - id: sp-repo-review
+        stages: [manual]
+
+  # * Prettier
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.8.3
+    hooks:
+      - id: prettier
+        alias: markdownlint
+        stages: [pre-commit, manual]
+        args:
+          - "--cache"
+          - "--cache-location=.prettier_cache/cache"
+
+  # * Markdown
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.22.1
+    hooks:
+      - id: markdownlint-cli2
+        alias: markdownlint
+        args: [--style, prettier]
+
+  # Just
+  - repo: https://github.com/wpk-nist-gov/just-pre-commit
+    rev: v1.50.0
+    hooks:
+      - id: justfile-format
+
+  # * Linting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.12
+    hooks:
+      - id: ruff-check
+        alias: ruff
+        args: [--fix, --show-fixes]
+        types_or: &ruff_types [python, pyi, jupyter, markdown]
+      - id: ruff-format
+        alias: ruff
+        types_or: *ruff_types
+
+  # * Spelling
+  # ** typos
+  - repo: https://github.com/adhtruong/mirrors-typos
+    rev: v1.45.2
+    hooks:
+      - id: typos
+        exclude_types: [jupyter]
+        exclude: ^uv[.]lock$|^requirements|^\.copier-answers\.ya?ml$
+
+  # * Dependencies
+  # ** pyproject2conda
+  - repo: https://github.com/usnistgov/pyproject2conda
+    rev: v0.22.1
+    hooks:
+      - id: pyproject2conda-project
+        alias: requirements
+        args:
+          - "--custom-command=prek run pyproject2conda-project --all-files"
+  # ** uv
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.11.8
+    hooks:
+      - id: uv-lock
+        alias: requirements
+        args: [--locked]
+      - id: pip-compile
+        alias: requirements
+        entry: python tools/requirements_lock.py
+        pass_filenames: true
+        files: ^requirements/[^/]*\.txt$
+
+  # * Commit message
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.13.10
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
+  # * Cog
+  - repo: local
+    hooks:
+      - id: cog-readme
+        name: cog-readme
+        alias: cog
+        entry: >-
+          python tools/cog_runner.py --use-uvx --format=prettier
+          --lint=markdownlint-cli2 --
+        # if need package, use --group=cog --no-dev --no-active/--isolated
+        language: python
+        files: ^README\.md$
+        stages: [manual]
+
+  # * Actions
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.37.1
+    hooks:
+      - id: check-github-workflows
+        alias: actions
+        priority: 0
+      - id: check-github-actions
+        alias: actions
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+        alias: actions
+        stages: [manual]
+        args:
+          - "-ignore=SC2129" # ignorable stylistic lint from shellcheck
+          - "-ignore=SC2016" # another shellcheck lint: seems to have false positives?
+        language: golang # means renovate will also update `additional_dependencies`
+        additional_dependencies:
+          # actionlint has a shellcheck integration which extracts shell scripts in `run:` steps from GitHub Actions
+          # and checks these with shellcheck. This is arguably its most useful feature,
+          # but the integration only works if shellcheck is installed
+          - "github.com/wasilibs/go-shellcheck/cmd/shellcheck@v0.11.1"
+        # see https://github.com/rhysd/actionlint/issues/46
+        exclude: ^\.github/actions
+        priority: 0
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    # Zizmor version.
+    rev: v1.24.1
+    hooks:
+      # Run the linter.
+      - id: zizmor
+        alias: actions
+
+  # * Notebook specific --------------------------------------------------------
+  # * Strip out metadata from notebooks
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.9.1
+    hooks:
+      - id: nbstripout
+        args:
+          - "--keep-output"
+          - "--keep-count"
+          - "--extra-keys"
+          - "metadata.kernelspec metadata.kernel_spec"
+
+  - repo: https://github.com/nbQA-dev/nbQA
+    rev: 1.9.1
+    hooks:
+      # ** typos
+      - id: nbqa
+        name: nbqa-typos
+        alias: typos
+        additional_dependencies: &typos-deps
+          - typos==1.45.2
+        args:
+          - typos
+          - --force-exclude
+          - --no-check-filenames
+          - --write-changes
+          - --nbqa-shell
+      - id: nbqa
+        name: nbqa-typos-markdown
+        alias: typos
+        additional_dependencies: *typos-deps
+        args:
+          - typos
+          - --force-exclude
+          - --no-check-filenames
+          - --write-changes
+          - --nbqa-shell
+          - --nbqa-md
+
+  # ** symlink in notebooks from example/usage to docs/example/usage
+  - repo: local
+    hooks:
+      - id: symlink-docs-examples-notebooks
+        name: symlink-docs-examples-notebooks
+        entry: python tools/symlink_docs_examples_notebooks.py
+        language: python
+        files: ^docs/examples/.*\.md$
+        pass_filenames: false
+
+  #  * Other tools --------------------------------------------------------------

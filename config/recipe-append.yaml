@@ -1,0 +1,20 @@
+test:
+  imports:
+    - nist_gas_srm
+  commands:
+    - pip check
+  requires:
+    - pip
+    - python {{ python_min }}
+
+about:
+  home: https://github.com/wpk-nist-gov/nist-gas-srm
+  summary: Demo of gas SRM database
+  description: |
+    Demo of gas SRM database
+  license: NIST-PD
+  license_file: LICENSE
+
+extra:
+  recipe-maintainers:
+    - wpk-nist-gov
