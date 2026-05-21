@@ -19,7 +19,7 @@ select = [
     "ALL",
 ]
 # fixable/unfixable
-# fixable = ["ALL"]
+fixable = [ "ALL" ]
 unfixable = [
     "ERA",
     "PLR6104",
@@ -48,6 +48,13 @@ ignore = [
     "S607",    # - start-process-with-partial-path
     "TID252",  # - Allow relative imports
 ]
+
+[lint.flake8-type-checking]
+runtime-evaluated-base-classes = [
+    "pydantic.BaseModel",
+    "sqlmodel.SQLModel",
+]
+
 
 [lint.isort]
 known-first-party = [
@@ -102,4 +109,5 @@ strictly-empty-init-modules = false
     # "PLR2004", # - numbers in comparison sometimes ok
     # "PLR0913", # - complexity sometimes ok
     # "PLR0917", # - complexity sometimes ok
+    "D",
 ]

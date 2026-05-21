@@ -17,14 +17,13 @@ license-files = [ "LICENSE" ]
 authors = [
     { name = "William P. Krekelberg", email = "wpk@nist.gov" },
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -32,8 +31,11 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
-    # Core dependencies
+    "openpyxl>=3.1.5",
+    "pandas>=2.3.3",
+    "python-calamine>=0.6.2",
     "sqlmodel>=0.0.38",
+    "xlrd>=2.0.2",
 ]
 
 [project.urls]
@@ -57,6 +59,7 @@ test = [
     { include-group = "pytest" },
 ]
 type = [
+    "pandas-stubs",
     { include-group = "nox" },
     { include-group = "pylint" },
     { include-group = "pytest" },
@@ -109,6 +112,8 @@ build-backend.source-include = [ "tests/**" ]
 pip.annotation-style = "line"
 pip.generate-hashes = true
 
+# [tool.uv.sources]
+# pandas-stubs = { git = "https://github.com/pandas-dev/pandas-stubs", branch="main"}
 [tool.uv.dependency-groups]
 cog.requires-python = ">=3.14"
 dev.requires-python = ">=3.14"

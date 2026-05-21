@@ -4,13 +4,11 @@ from __future__ import annotations
 
 import logging
 import shlex
-import sys
+import tomllib
 from argparse import ArgumentParser
 from pathlib import Path
 from subprocess import check_call
 from typing import TYPE_CHECKING
-
-import tomllib
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
@@ -18,11 +16,6 @@ if TYPE_CHECKING:
 FORMAT = "[%(name)s - %(levelname)s] %(message)s"
 logging.basicConfig(level=logging.INFO, format=FORMAT)
 logger = logging.getLogger("requirements_lock")
-
-if sys.version_info < (3, 11):
-    msg = "Python >=3.11 required"  # pyright: ignore[reportUnreachable]
-    raise RuntimeError(msg)
-
 
 USE_PYTHON_MIN_VERSION = [
     "test.txt",
