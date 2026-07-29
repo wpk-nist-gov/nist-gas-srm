@@ -1,6 +1,6 @@
 """Basic model"""
 
-# ruff: noqa: T201
+# ruff:file-ignore[print]
 import logging
 import re
 from collections.abc import Iterator, Sequence
@@ -23,7 +23,7 @@ from sqlmodel import (
     delete,
     select,
 )
-from sqlmodel._compat import SQLModelConfig  # noqa: PLC2701
+from sqlmodel._compat import SQLModelConfig  # ruff:ignore[import-private-name]
 from sqlmodel.sql._expression_select_cls import Select, SelectOfScalar
 
 from .core.validate import (
@@ -381,7 +381,7 @@ class AdditionalLotStandardsDataUpdate(
 
 
 # * RCertification -----------------------------------------------------------
-# ruff: noqa: ERA001
+# ruff:file-ignore[commented-out-code]
 # class RCertificationDataBase(_SRMDataForeignKey):
 
 #     timestamp: datetime = Field
@@ -662,7 +662,7 @@ def main(argv: Sequence[str] | None = None) -> bool:
     #             print(get_ratio_data_stats_table(out, factor=None, col="ave"))
 
     with Session(engine) as session:
-        data = session.exec(select(SRMData).where(col(SRMData.srm_id) == 2627)).all()  # noqa: PLR2004
+        data = session.exec(select(SRMData).where(col(SRMData.srm_id) == 2627)).all()  # ruff:ignore[magic-value-comparison]
         print(data)
 
     return False

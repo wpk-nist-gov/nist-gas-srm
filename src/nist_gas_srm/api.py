@@ -62,8 +62,8 @@ def read_srm(
 # @app.get("/ratios/{srm_id}", response_model=RatioDataPublic)
 # def read_ratios(
 #         srm_id: int,
-#         batch_id: _OptStrAsLower = None,  # noqa: ERA001
-#         lot_id: _OptStrAsLower = None,  # noqa: ERA001
+#         batch_id: _OptStrAsLower = None,  # ruff:ignore[commented-out-code]
+#         lot_id: _OptStrAsLower = None,  # ruff:ignore[commented-out-code]
 # ) -> Sequence[RatioData]:
 #     with Session(engine) as session:
 #         pass

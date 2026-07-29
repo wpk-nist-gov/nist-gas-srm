@@ -215,7 +215,7 @@ napoleon_type_aliases = {
     "Series": "~pandas.Series",
     "DataFrame": "~pandas.DataFrame",
     "Categorical": "~pandas.Categorical",
-    "Path": "~~pathlib.Path",
+    "Path": "~pathlib.Path",
     # objects with abbreviated namespace (from pandas)
     "pd.Index": "~pandas.Index",
     "pd.NaT": "~pandas.NaT",
@@ -240,7 +240,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "nist-gas-srm"
-copyright = "2026, William P. Krekelberg"  # noqa: A001
+copyright = "2026, William P. Krekelberg"  # ruff:ignore[builtin-variable-shadowing]
 author = "William P. Krekelberg"
 
 
@@ -265,7 +265,7 @@ language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-# This patterns also effect to html_static_path and html_extra_path
+# These patterns also affect to html_static_path and html_extra_path
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
 
 # The name of the Pygments (syntax highlighting) style to use.
@@ -404,7 +404,7 @@ texinfo_documents = [
         "nist-gas-srm Documentation",
         author,
         "nist_gas_srm",
-        "One line description of project.",
+        "Demo of gas SRM database",
         "Miscellaneous",
     ),
 ]
@@ -440,7 +440,7 @@ def linkcode_resolve(domain: str, info: dict[str, Any]) -> str | None:
     parent_name, *sub_parts = info["module"].split(".")
     parent_mod = sys.modules.get(parent_name)
 
-    try:
+    try:  # ruff:ignore[too-many-statements-in-try-clause]
         if len(sub_parts) > 0:
             sub_name = ".".join(sub_parts)
             obj = attrgetter(sub_name)(parent_mod)
@@ -460,6 +460,8 @@ def linkcode_resolve(domain: str, info: dict[str, Any]) -> str | None:
     if not fn:
         return None
 
+    source: list[str] = []
+    lineno: int | None = None
     try:
         source, lineno = inspect.getsourcelines(obj)
     except OSError:

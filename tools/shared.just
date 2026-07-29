@@ -17,14 +17,14 @@ TYPECHECK := "-m typecheck_runner -v"
 # run nox
 [group("tools")]
 nox *options:
-    {{ UVX_WITH_OPTS }} nox {{ options }}
+    uv run --script noxfile.py {{ options }}
 
 # run pre-commit
 [group("lint")]
 [group("tools")]
 pre-commit *commands:
     @[[ ! -f {{ CONSTRAINTS_MIN }} ]] && touch {{ CONSTRAINTS_MIN }} || true
-    {{ UVX }} --constraints={{ CONSTRAINTS_MIN }} prek -c .pre-commit-config.yaml {{ commands }} # using prek
+    {{ UVX }} --constraints={{ CONSTRAINTS_MIN }} prek {{ commands }} # using prek
 
 [group("lint")]
 [group("tools")]
