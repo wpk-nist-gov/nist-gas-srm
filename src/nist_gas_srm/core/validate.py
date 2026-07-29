@@ -20,3 +20,13 @@ def validate_nan_to_none(x: Any) -> Any:
     except TypeError:
         pass
     return x
+
+
+def validate_str_to_lower(x: str) -> str:
+    return x.lower()
+
+
+def validate_optional_str_to_lower(x: str | None) -> str | None:
+    if x is None:
+        return x
+    return x.lower()

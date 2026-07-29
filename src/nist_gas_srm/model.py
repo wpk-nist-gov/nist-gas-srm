@@ -1,8 +1,8 @@
 """Basic model"""
 
 # ruff: noqa: T201
-
 import logging
+import re
 from collections.abc import Iterator, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
@@ -26,9 +26,11 @@ from sqlmodel import (
 from sqlmodel._compat import SQLModelConfig  # noqa: PLC2701
 from sqlmodel.sql._expression_select_cls import Select, SelectOfScalar
 
-from nist_gas_srm.stats import get_ratio_data_stats_table
-
-from .core.validate import validate_nan_to_none
+from .core.validate import (
+    validate_nan_to_none,
+    validate_optional_str_to_lower,
+    validate_str_to_lower,
+)
 from .read_excel import (
     SRMExcelFile,
     frame_to_list_of_models,
@@ -85,6 +87,14 @@ class SRMDataBase(SQLModel):
     """Metadata base class"""
 
     name: str = Field(sa_column=Column("name", VARCHAR, unique=True, index=True))
+    srm_id: int = Field(index=True)
+    batch_id: Annotated[
+        str | None, BeforeValidator(validate_optional_str_to_lower)
+    ]  # = Field(default=None, index=True)
+    lot_id: Annotated[
+        str, BeforeValidator(validate_str_to_lower)
+    ]  # = Field(index=True)
+
     timestamp: datetime = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False),
         default_factory=lambda: datetime.now(UTC),
@@ -93,6 +103,8 @@ class SRMDataBase(SQLModel):
 
 class SRMData(SRMDataBase, _IDPrimaryKey, table=True):
     """Metadata table"""
+
+    model_config = SQLModelConfig(str_to_lower=True)
 
     ratios: list["RatioData"] = Relationship(
         back_populates="srmdata", cascade_delete=True
@@ -405,20 +417,42 @@ class AdditionalLotStandardsDataUpdate(
 
 
 # * Options -------------------------------------------------------------------
-sqlite_file_path = Path("database.db")
-sqlite_url = f"sqlite:///{sqlite_file_path}"
-
-engine = create_engine(sqlite_url, echo=True)
-
-
 def create_db_and_tables(engine: Engine) -> None:
     SQLModel.metadata.create_all(engine)
 
 
-def add_srm(session: Session, path: Path) -> None:
+def _parse_name_to_ids(name: str) -> dict[str, str | None]:
+    m = re.match(
+        r"srm(?P<srm_id>\d+)(?P<batch_id>\w*)_Series(?P<lot_id>\w*)_(.*).xls",
+        name,
+        flags=re.IGNORECASE,
+    )
+    if m is None:
+        msg = f"Unable to parse ids from {name}"
+        raise ValueError(msg)
+
+    out = m.groupdict().copy()
+    if not out["batch_id"]:
+        out["batch_id"] = None
+
+    return out
+
+
+def add_srm(
+    session: Session,
+    path: Path,
+) -> None:
     srmxls = SRMExcelFile(path)
-    srm = SRMData(
+
+    # do this to circumvent issues covered
+    # here: https://github.com/fastapi/sqlmodel/issues/453
+    srm_metadata = SRMDataCreate(
         name=path.name,
+        **_parse_name_to_ids(path.name),
+    )
+
+    srm = SRMData(
+        **srm_metadata.model_dump(),
         ratios=list(frame_to_list_of_models(srmxls.ratio_data(), RatioData)),
         vendors=list(frame_to_list_of_models(srmxls.vendor_data(), VendorData)),
         standards=list(frame_to_list_of_models(srmxls.standards_data(), StandardsData)),
@@ -448,14 +482,14 @@ def add_srm(session: Session, path: Path) -> None:
     session.commit()
 
 
-def get_srm(session: Session, srm: str | SRMData) -> SRMData:
+def get_srm_by_name(session: Session, srm: str | SRMData) -> SRMData:
     if isinstance(srm, SRMData):
         return srm
     return session.exec(select(SRMData).where(SRMData.name == srm)).one()
 
 
 def delete_srm(session: Session, srm: str | SRMData) -> None:
-    srm = get_srm(session, srm)
+    srm = get_srm_by_name(session, srm)
     session.delete(srm)
     session.commit()
 
@@ -463,7 +497,7 @@ def delete_srm(session: Session, srm: str | SRMData) -> None:
 def delete_subtable(
     session: Session, srm: str | SRMData, table: type[_SRMDataForeignKey]
 ) -> None:
-    srm = get_srm(session, srm)
+    srm = get_srm_by_name(session, srm)
     _ = session.exec(delete(table).where(col(table.srmdata_id) == srm.id))
     session.commit()
 
@@ -477,7 +511,7 @@ def add_srm_subtable_row(
     | PastLotStandardsData
     | AdditionalLotStandardsData,
 ) -> None:
-    srm = get_srm(session, srm)
+    srm = get_srm_by_name(session, srm)
     obj.srmdata = srm
     session.add(obj)
     session.commit()
@@ -530,6 +564,11 @@ def main(argv: Sequence[str] | None = None) -> bool:
 
     options = parser.parse_args(argv)
     paths: list[Path] = options.paths
+
+    sqlite_file_path = Path("database.db")
+    sqlite_url = f"sqlite:///{sqlite_file_path}"
+
+    engine = create_engine(sqlite_url, echo=True)
 
     if options.clean:
         sqlite_file_path.unlink(missing_ok=True)
@@ -603,24 +642,28 @@ def main(argv: Sequence[str] | None = None) -> bool:
 
     #     print(get_standards_data_stats_table(df))
 
+    # with Session(engine) as session:
+    #     df = get_dataframe(
+    #         session=session,
+    #         statement=select(
+    #             RatioData,
+    #         )
+    #         .join(SRMData)
+    #         .where(SRMData.name == paths[0].name),
+    #     )
+    #     df = df.query("number != 100")
+    #     factors = [None, "number", "port", "break_set", "day"]
+    #     for factor in factors:
+    #         print(factor)
+    #         out = get_ratio_data_stats_table(df, factor)
+    #         if factor is None:
+    #             print(out)
+    #         else:
+    #             print(get_ratio_data_stats_table(out, factor=None, col="ave"))
+
     with Session(engine) as session:
-        df = get_dataframe(
-            session=session,
-            statement=select(
-                RatioData,
-            )
-            .join(SRMData)
-            .where(SRMData.name == paths[0].name),
-        )
-        df = df.query("number != 100")
-        factors = [None, "number", "port", "break_set", "day"]
-        for factor in factors:
-            print(factor)
-            out = get_ratio_data_stats_table(df, factor)
-            if factor is None:
-                print(out)
-            else:
-                print(get_ratio_data_stats_table(out, factor=None, col="ave"))
+        data = session.exec(select(SRMData).where(col(SRMData.srm_id) == 2627)).all()  # noqa: PLR2004
+        print(data)
 
     return False
 

@@ -1,0 +1,74 @@
+from collections.abc import Sequence
+from pathlib import Path
+from typing import Annotated
+
+from fastapi import FastAPI, HTTPException
+from pydantic import AfterValidator
+from sqlmodel import Session, create_engine, select
+
+from .core.validate import validate_optional_str_to_lower
+from .model import SRMData, SRMDataPublic, create_db_and_tables
+
+sqlite_file_path = Path("database.db")
+sqlite_url = f"sqlite:///{sqlite_file_path}"
+
+connect_args = {"check_same_thread": False}
+engine = create_engine(sqlite_url, echo=True, connect_args=connect_args)
+
+
+app = FastAPI()
+
+_OptStrAsLower = Annotated[str | None, AfterValidator(validate_optional_str_to_lower)]
+
+
+@app.on_event("startup")
+def on_startup() -> None:
+    create_db_and_tables(engine)
+
+
+@app.get("/srm/", response_model=list[SRMDataPublic])
+def read_srms() -> list[SRMData]:
+    with Session(engine) as session:
+        return session.exec(select(SRMData)).all()
+
+
+@app.get("/srm/index/{index}", response_model=SRMDataPublic)
+def read_srm_index(index: int) -> SRMData:
+    with Session(engine) as session:
+        data = session.get(SRMData, index)
+        if data is None:
+            raise HTTPException(status_code=404, detail=f"srm with {index=} not found")
+        return data
+
+
+@app.get("/srm/{srm_id}", response_model=list[SRMDataPublic])
+def read_srm(
+    srm_id: int,
+    batch_id: _OptStrAsLower = None,
+    lot_id: _OptStrAsLower = None,
+) -> Sequence[SRMData]:
+
+    with Session(engine) as session:
+        query = select(SRMData).where(SRMData.srm_id == srm_id)
+
+        if batch_id:
+            query = query.where(SRMData.batch_id == batch_id)
+        if lot_id:
+            query = query.where(SRMData.lot_id == lot_id)
+
+        return session.exec(query).all()
+
+
+# @app.get("/ratios/{srm_id}", response_model=RatioDataPublic)
+# def read_ratios(
+#         srm_id: int,
+#         batch_id: _OptStrAsLower = None,  # noqa: ERA001
+#         lot_id: _OptStrAsLower = None,  # noqa: ERA001
+# ) -> Sequence[RatioData]:
+#     with Session(engine) as session:
+#         pass
+
+
+# @app.get(f"/srm/{srm_id}")
+# def read_ratio_data() -> None:
+#     pass
