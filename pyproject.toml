@@ -34,6 +34,7 @@ dependencies = [
     "fastapi[standard]>=0.136.3",
     "openpyxl>=3.1.5",
     "pandas>=2.3.3",
+    "plotly-express>=0.4.1",
     "python-calamine>=0.6.2",
     "sqlmodel>=0.0.38",
     "statsmodels>=0.14.6",
@@ -64,6 +65,7 @@ test = [
 ]
 type = [
     "pandas-stubs",
+    "plotly-stubs",
     { include-group = "nox" },
     { include-group = "pylint" },
     { include-group = "pytest" },

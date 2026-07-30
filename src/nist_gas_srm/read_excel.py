@@ -177,7 +177,7 @@ class _RCertification(_SRMExcelFileBase):
         )
 
     def standards_values(self) -> pd.DataFrame | None:
-        return _maybe_dropna(
+        out = _maybe_dropna(
             self._get_optional_frame(
                 self.sheet.rcert,
                 usecols="B:E",
@@ -185,6 +185,11 @@ class _RCertification(_SRMExcelFileBase):
             ),
             how="all",
         )
+        if out is not None:
+            columns = list(out.columns)
+            columns[-1] = "Predicted " + columns[-1]
+            out.columns = columns
+        return out
 
     def additional_lot_standards(self) -> pd.DataFrame | None:
         return self._get_optional_frame(

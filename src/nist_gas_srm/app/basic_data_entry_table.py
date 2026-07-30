@@ -1,22 +1,31 @@
+from datetime import UTC, datetime
+
 import pandas as pd
 import streamlit as st
 
-st.title("📊 Grid-Based Bulk Data Entry")
+st.title("📊 SRM data entry")
 
 # Initialize an empty starting template
 if "bulk_data" not in st.session_state:
-    st.session_state.bulk_data = pd.DataFrame([
-        {"Item": "Laptop", "Price": 1200, "In Stock": True},
-        {"Item": "Mouse", "Price": 25, "In Stock": True},
-    ])
-
+    st.session_state.bulk_data = pd.DataFrame(
+        [
+            {
+                "name": "a name",
+                "srm_id": 1,
+                "batch_id": "X",
+                "lot_id": "X",
+                "timestamp": datetime.now(UTC),
+            }
+        ],
+    )
 st.write("Modify cells, add new rows at the bottom, or delete rows:")
 
 # Render editable spreadsheet layout
 edited_df = st.data_editor(
     st.session_state.bulk_data,
-    num_rows="dynamic",  # Enables add/delete row buttons
+    num_rows="fixed",  # Enables add/delete row buttons
     use_container_width=True,
+    hide_index=True,
 )
 
 # Button to commit modifications

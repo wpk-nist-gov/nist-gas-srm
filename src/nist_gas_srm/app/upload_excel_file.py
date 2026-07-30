@@ -6,40 +6,35 @@ from nist_gas_srm import read_excel
 
 st.title("📋 Data upload portal")
 
-if "srm" not in st.session_state:
-    st.session_state.srm = None
+if "srm_file" not in st.session_state:
+    st.session_state.srm_file = None
 
 # Input widgets
 upload_file = st.file_uploader("Excel file to upload", type=".xls")
 
 if upload_file is not None:
-    st.session_state.srm = read_excel.SRMExcelFile(upload_file)
+    st.session_state.srm_file = read_excel.SRMExcelFile(upload_file)
 
 
 # 3. Process the submitted form data
-if st.session_state.srm is not None:
+if st.session_state.srm_file is not None:
     submit_to_database = st.button("Upload to database")
-    tabs = st.tabs([
-        "Ratio data",
-        "Vendor data",
-        "Standards",
-        "Ratio analysis",
-        "Past lot standards",
-        "Additional lot standards",
-    ])
+    data = st.session_state.srm_file
 
-    data = st.session_state.srm
+    tabs_mapping = {
+        "Ratio data": data.ratio_data,
+        "Vendor data": data.vendor_data,
+        "Standards": data.standards_data,
+        "Ratio analysis": data.ratio_analysis_random_effects,
+        "Past lot standards": data.past_lot_standards,
+        "Additional lot standards": data.additional_lot_standards,
+    }
+
+    tabs = st.tabs(list(tabs_mapping.keys()))
 
     for tab, func in zip(
         tabs,
-        [
-            data.ratio_data,
-            data.vendor_data,
-            data.standards_data,
-            data.ratio_analysis_random_effects,
-            data.past_lot_standards,
-            data.additional_lot_standards,
-        ],
+        tabs_mapping.values(),
         strict=True,
     ):
         with tab:
