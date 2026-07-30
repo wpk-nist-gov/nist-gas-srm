@@ -37,6 +37,8 @@ dependencies = [
     "python-calamine>=0.6.2",
     "sqlmodel>=0.0.38",
     "statsmodels>=0.14.6",
+    "streamlit>=1.60.0",
+    "streamlit-pydantic>=0.6.0",
     "xlrd>=2.0.2",
 ]
 
@@ -113,8 +115,6 @@ build-backend.source-include = [ "tests/**" ]
 pip.annotation-style = "line"
 pip.generate-hashes = true
 
-# [tool.uv.sources]
-# pandas-stubs = { git = "https://github.com/pandas-dev/pandas-stubs", branch="main"}
 [tool.uv.dependency-groups]
 dev.requires-python = ">=3.14"
 docs-live.requires-python = ">=3.14"
@@ -124,6 +124,10 @@ ipython.requires-python = ">=3.14"
 mypy.requires-python = ">=3.14"
 notebook.requires-python = ">=3.14"
 nox.requires-python = ">=3.14"
+
+[tool.uv.sources]
+# pandas-stubs = { git = "https://github.com/pandas-dev/pandas-stubs", branch = "main" }
+streamlit-pydantic = { git = "https://github.com/lukasmasuch/streamlit-pydantic", branch = "main" }
 
 # * Checks ---------------------------------------------------------------------
 [tool.repo-review]
@@ -153,6 +157,7 @@ expand_tables = [
     "tool.typos",
     "tool.uv.dependency-groups",
     "tool.uv.exclude-newer-package",
+    "tool.uv.sources",
 ]
 indent = 4
 keep_full_version = true
@@ -256,6 +261,10 @@ root = "tests"
 # reportMissingImports = false
 reportUnusedCallResult = false
 
+[[tool.pyright.executionEnvironments]]
+root = "src/nist_gas_srm/app"
+reportUnusedCallResult = false
+
 [tool.ty]
 src.include = [
     "examples/usage/*.ipynb",
@@ -343,7 +352,7 @@ pip-deps = [
     "pyright>=1.1.411",
     "rooster>=0.1.1",
     "twine>=6.2.0",
-    "ty>=0.0.62",
+    "ty>=0.0.63",
 ]
 groups = [
     "basedpyright",

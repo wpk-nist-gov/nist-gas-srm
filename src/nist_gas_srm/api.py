@@ -1,4 +1,5 @@
-from collections.abc import Sequence
+from collections.abc import AsyncGenerator, Sequence
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated
 
@@ -6,8 +7,11 @@ from fastapi import FastAPI, HTTPException
 from pydantic import AfterValidator
 from sqlmodel import Session, create_engine, select
 
+from ._model import SRMDataPublic
 from .core.validate import validate_optional_str_to_lower
-from .model import SRMData, SRMDataPublic, create_db_and_tables
+from .model import SRMData, create_db_and_tables
+
+_OptStrAsLower = Annotated[str | None, AfterValidator(validate_optional_str_to_lower)]
 
 sqlite_file_path = Path("database.db")
 sqlite_url = f"sqlite:///{sqlite_file_path}"
@@ -16,18 +20,21 @@ connect_args = {"check_same_thread": False}
 engine = create_engine(sqlite_url, echo=True, connect_args=connect_args)
 
 
-app = FastAPI()
-
-_OptStrAsLower = Annotated[str | None, AfterValidator(validate_optional_str_to_lower)]
-
-
-@app.on_event("startup")
-def on_startup() -> None:
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:  # ruff:ignore[unused-function-argument]
+    # 1. Startup: Code here runs BEFORE the application starts accepting requests
     create_db_and_tables(engine)
+
+    yield  # The application runs while paused here
+
+    # 2. Shutdown: Code here runs AFTER the application finishes handling requests
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/srm/", response_model=list[SRMDataPublic])
-def read_srms() -> list[SRMData]:
+def read_srms() -> Sequence[SRMData]:
     with Session(engine) as session:
         return session.exec(select(SRMData)).all()
 

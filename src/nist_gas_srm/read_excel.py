@@ -16,6 +16,7 @@ import pandas as pd
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Container, Generator, Iterator
+    from io import BytesIO
     from pathlib import Path
     from typing import Any, TypeVar
 
@@ -86,7 +87,9 @@ def _get_value_from_worksheet(
 
 
 @contextmanager
-def _as_excelfile(path_or_excelfile: Path | pd.ExcelFile) -> Generator[pd.ExcelFile]:
+def _as_excelfile(
+    path_or_excelfile: Path | BytesIO | pd.ExcelFile,
+) -> Generator[pd.ExcelFile]:
     if isinstance(path_or_excelfile, pd.ExcelFile):
         yield path_or_excelfile
     else:
@@ -94,7 +97,7 @@ def _as_excelfile(path_or_excelfile: Path | pd.ExcelFile) -> Generator[pd.ExcelF
 
 
 def _get_frame_with_len_check(
-    path_or_excelfile: Path | pd.ExcelFile,
+    path_or_excelfile: Path | BytesIO | pd.ExcelFile,
     sheet_name: str,
     usecols: str,
     rowx: int,
@@ -135,7 +138,7 @@ class _Sheet:
 class _SRMExcelFileBase:
     sheet: ClassVar[type[_Sheet]] = _Sheet
 
-    def __init__(self, path_or_excelfile: Path | pd.ExcelFile) -> None:
+    def __init__(self, path_or_excelfile: Path | BytesIO | pd.ExcelFile) -> None:
         with _as_excelfile(path_or_excelfile) as excelfile:
             self.excelfile = excelfile
 

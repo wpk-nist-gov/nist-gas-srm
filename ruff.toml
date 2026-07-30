@@ -57,6 +57,7 @@ runtime-evaluated-base-classes = [
 
 
 [lint.isort]
+combine-as-imports = true
 known-first-party = [
     "nist_gas_srm",
 ]
