@@ -6,5 +6,4 @@
 .. autosummary::
    :toctree: generated/
 
-   example_function
 ```
