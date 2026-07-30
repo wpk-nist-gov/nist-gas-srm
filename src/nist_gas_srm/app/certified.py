@@ -36,7 +36,7 @@ if (srm_file := st.session_state.get("srm_file")) is not None:
     ):
         data_ = func()
         with tab:
-            st.dataframe(data_, use_container_width=True)
+            st.dataframe(data_, width="content", hide_index=True)
 
         if name == "Cylinder results" and data_ is not None:
             # plot of Cylinder results
