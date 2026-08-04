@@ -1,10 +1,9 @@
 """Basic model"""
 
-# ruff:file-ignore[commented-out-code, useless-import-alias]
+# ruff:file-ignore[commented-out-code]
 
 # ruff:file-ignore[print]
 import logging
-import re
 from collections.abc import Iterator, Sequence
 from pathlib import Path
 from typing import Any, cast
@@ -12,6 +11,7 @@ from typing import Any, cast
 import pandas as pd
 from sqlalchemy import Engine
 from sqlmodel import (
+    Relationship,
     Session,
     SQLModel,
     col,
@@ -19,20 +19,35 @@ from sqlmodel import (
     delete,
     select,
 )
+from sqlmodel._compat import SQLModelConfig  # ruff:ignore[import-private-name]
 from sqlmodel.sql._expression_select_cls import Select, SelectOfScalar
 
+# from ._model import (
+#     AdditionalLotStandardsData as AdditionalLotStandardsData,
+#     PastLotStandardsData as PastLotStandardsData,
+#     RatioAnalysisFixedEffectsData as RatioAnalysisFixedEffectsData,
+#     RatioAnalysisRandomEffectsData as RatioAnalysisRandomEffectsData,
+#     RatioData as RatioData,
+#     SRMData as SRMData,
+#     SRMDataCreate,
+#     SRMDataForeignKey,
+#     StandardsData as StandardsData,
+#     VendorData as VendorData,
+# )
 from ._model import (
-    AdditionalLotStandardsData as AdditionalLotStandardsData,
-    PastLotStandardsData as PastLotStandardsData,
-    RatioAnalysisFixedEffectsData as RatioAnalysisFixedEffectsData,
-    RatioAnalysisRandomEffectsData as RatioAnalysisRandomEffectsData,
-    RatioData as RatioData,
-    SRMData as SRMData,
+    AdditionalLotStandardsDataBase,
+    IDPrimaryKey,
+    PastLotStandardsDataBase,
+    RatioAnalysisFixedEffectsDataBase,
+    RatioAnalysisRandomEffectsDataBase,
+    RatioDataBase,
+    SRMDataBase,
     SRMDataCreate,
     SRMDataForeignKey,
-    StandardsData as StandardsData,
-    VendorData as VendorData,
+    StandardsDataBase,
+    VendorDataBase,
 )
+from .core.utils import parse_excel_filename_to_metadata
 from .read_excel import (
     SRMExcelFile,
     frame_to_list_of_models,
@@ -43,9 +58,90 @@ logging.basicConfig(level=logging.INFO, format=FORMAT)
 logger = logging.getLogger(__name__)
 
 
-# * Utils
+# Sql Models ------------------------------------------------------------------
+class SRMData(SRMDataBase, IDPrimaryKey, table=True):
+    """Metadata table"""
+
+    model_config = SQLModelConfig(str_to_lower=True)
+
+    ratios: list["RatioData"] = Relationship(
+        back_populates="srmdata", cascade_delete=True
+    )
+    vendors: list["VendorData"] = Relationship(
+        back_populates="srmdata", cascade_delete=True
+    )
+    standards: list["StandardsData"] = Relationship(
+        back_populates="srmdata", cascade_delete=True
+    )
+    past_lot_standards: list["PastLotStandardsData"] = Relationship(
+        back_populates="srmdata",
+        cascade_delete=True,
+    )
+    additional_lot_standards: list["AdditionalLotStandardsData"] = Relationship(
+        back_populates="srmdata",
+        cascade_delete=True,
+    )
+    ratio_analysis_random_effects: list["RatioAnalysisRandomEffectsData"] = (
+        Relationship(
+            back_populates="srmdata",
+            cascade_delete=True,
+        )
+    )
+    ratio_analysis_fixed_effects: list["RatioAnalysisFixedEffectsData"] = Relationship(
+        back_populates="srmdata",
+        cascade_delete=True,
+    )
 
 
+class RatioData(RatioDataBase, IDPrimaryKey, table=True):
+    """Ratio Data table"""
+
+    srmdata: SRMData | None = Relationship(back_populates="ratios")
+
+
+class RatioAnalysisRandomEffectsData(
+    RatioAnalysisRandomEffectsDataBase, IDPrimaryKey, table=True
+):
+    srmdata: SRMData | None = Relationship(
+        back_populates="ratio_analysis_random_effects"
+    )
+
+
+class RatioAnalysisFixedEffectsData(
+    RatioAnalysisFixedEffectsDataBase, IDPrimaryKey, table=True
+):
+    srmdata: SRMData | None = Relationship(
+        back_populates="ratio_analysis_fixed_effects"
+    )
+
+
+class VendorData(VendorDataBase, IDPrimaryKey, table=True):
+    """Vendor data table"""
+
+    srmdata: SRMData | None = Relationship(back_populates="vendors")
+
+
+class StandardsData(StandardsDataBase, IDPrimaryKey, table=True):
+    """Standards data table"""
+
+    srmdata: SRMData | None = Relationship(back_populates="standards")
+
+
+class PastLotStandardsData(PastLotStandardsDataBase, IDPrimaryKey, table=True):
+    """Past lot standards table"""
+
+    srmdata: SRMData | None = Relationship(back_populates="past_lot_standards")
+
+
+class AdditionalLotStandardsData(
+    AdditionalLotStandardsDataBase, IDPrimaryKey, table=True
+):
+    """Additional lot standards table"""
+
+    srmdata: SRMData | None = Relationship(back_populates="additional_lot_standards")
+
+
+# * Utils ---------------------------------------------------------------------
 def select_columns(*columns: Any) -> Select[Any] | SelectOfScalar[Any]:
     """For typing purposes"""
     return cast("Select[Any] | SelectOfScalar[Any]", select(*columns))
@@ -54,23 +150,6 @@ def select_columns(*columns: Any) -> Select[Any] | SelectOfScalar[Any]:
 # * Options -------------------------------------------------------------------
 def create_db_and_tables(engine: Engine) -> None:
     SQLModel.metadata.create_all(engine)
-
-
-def _parse_name_to_ids(name: str) -> dict[str, Any]:
-    m = re.match(
-        r"srm(?P<srm_id>\d+)(?P<batch_id>\w*)_Series(?P<lot_id>\w*)_(.*).xls",
-        name,
-        flags=re.IGNORECASE,
-    )
-    if m is None:
-        msg = f"Unable to parse ids from {name}"
-        raise ValueError(msg)
-
-    out = m.groupdict().copy()
-    if not out["batch_id"]:
-        out["batch_id"] = None
-
-    return out
 
 
 def add_srm(
@@ -83,7 +162,7 @@ def add_srm(
     # here: https://github.com/fastapi/sqlmodel/issues/453
     srm_metadata = SRMDataCreate(
         name=path.name,
-        **_parse_name_to_ids(path.name),
+        **parse_excel_filename_to_metadata(path.name),
     )
 
     srm = SRMData(

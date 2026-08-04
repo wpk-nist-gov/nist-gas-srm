@@ -9,7 +9,6 @@ from sqlalchemy import Column, DateTime
 from sqlmodel import (
     VARCHAR,
     Field,
-    Relationship,
     SQLModel,
 )
 from sqlmodel._compat import SQLModelConfig  # ruff:ignore[import-private-name]
@@ -22,7 +21,7 @@ from .core.validate import (
 
 
 # * Common --------------------------------------------------------------------
-class _IDPrimaryKey(SQLModel):
+class IDPrimaryKey(SQLModel):
     id: int | None = Field(default=None, primary_key=True)
 
 
@@ -73,40 +72,6 @@ class SRMDataBase(SQLModel):
     )
 
 
-class SRMData(SRMDataBase, _IDPrimaryKey, table=True):
-    """Metadata table"""
-
-    model_config = SQLModelConfig(str_to_lower=True)
-
-    ratios: list["RatioData"] = Relationship(
-        back_populates="srmdata", cascade_delete=True
-    )
-    vendors: list["VendorData"] = Relationship(
-        back_populates="srmdata", cascade_delete=True
-    )
-    standards: list["StandardsData"] = Relationship(
-        back_populates="srmdata", cascade_delete=True
-    )
-    past_lot_standards: list["PastLotStandardsData"] = Relationship(
-        back_populates="srmdata",
-        cascade_delete=True,
-    )
-    additional_lot_standards: list["AdditionalLotStandardsData"] = Relationship(
-        back_populates="srmdata",
-        cascade_delete=True,
-    )
-    ratio_analysis_random_effects: list["RatioAnalysisRandomEffectsData"] = (
-        Relationship(
-            back_populates="srmdata",
-            cascade_delete=True,
-        )
-    )
-    ratio_analysis_fixed_effects: list["RatioAnalysisFixedEffectsData"] = Relationship(
-        back_populates="srmdata",
-        cascade_delete=True,
-    )
-
-
 class SRMDataPublic(SRMDataBase, _IDPrimaryKeyPublic):
     pass
 
@@ -134,12 +99,6 @@ class RatioDataBase(_SampleIDAndNumber, SRMDataForeignKey):
     port: int
     value_g: float
     test: Annotated[str | None, BeforeValidator(validate_nan_to_none)]
-
-
-class RatioData(RatioDataBase, _IDPrimaryKey, table=True):
-    """Ratio Data table"""
-
-    srmdata: SRMData | None = Relationship(back_populates="ratios")
 
 
 class RatioDataPublic(RatioDataBase, _IDPrimaryKeyPublic):
@@ -172,14 +131,6 @@ class RatioAnalysisRandomEffectsDataBase(SRMDataForeignKey):
     )
 
 
-class RatioAnalysisRandomEffectsData(
-    RatioAnalysisRandomEffectsDataBase, _IDPrimaryKey, table=True
-):
-    srmdata: SRMData | None = Relationship(
-        back_populates="ratio_analysis_random_effects"
-    )
-
-
 class RatioAnalysisRandomEffectsDataPublic(
     RatioAnalysisRandomEffectsDataBase, _IDPrimaryKeyPublic
 ):
@@ -199,14 +150,6 @@ class RatioAnalysisFixedEffectsDataBase(SRMDataForeignKey):
     estimate: float
     stderr: float = Field(alias="Std Error")
     t_value: float = Field(alias="t value")
-
-
-class RatioAnalysisFixedEffectsData(
-    RatioAnalysisFixedEffectsDataBase, _IDPrimaryKey, table=True
-):
-    srmdata: SRMData | None = Relationship(
-        back_populates="ratio_analysis_fixed_effects"
-    )
 
 
 class RatioAnalysisFixedEffectsDataPublic(
@@ -229,12 +172,6 @@ class VendorDataBase(_SampleIDAndNumber, SRMDataForeignKey):
 
     cylinder_number: str = Field(alias="CylinderNo")
     ratio: float = Field(alias="VendorRatio")
-
-
-class VendorData(VendorDataBase, _IDPrimaryKey, table=True):
-    """Vendor data table"""
-
-    srmdata: SRMData | None = Relationship(back_populates="vendors")
 
 
 class VendorDataPublic(VendorDataBase, _IDPrimaryKeyPublic):
@@ -260,12 +197,6 @@ class StandardsDataBase(SRMDataForeignKey):
     concentration: float = Field(alias="SConc")
     unc: float = Field(alias="Sunc")
     uncert: float = Field(alias="Suncert")
-
-
-class StandardsData(StandardsDataBase, _IDPrimaryKey, table=True):
-    """Standards data table"""
-
-    srmdata: SRMData | None = Relationship(back_populates="standards")
 
 
 class StandardsDataPublic(StandardsDataBase, _IDPrimaryKeyPublic):
@@ -296,12 +227,6 @@ class PastLotStandardsDataBase(SRMDataForeignKey):
     pred_conc: float = Field(alias="Pred Conc")
 
 
-class PastLotStandardsData(PastLotStandardsDataBase, _IDPrimaryKey, table=True):
-    """Past lot standards table"""
-
-    srmdata: SRMData | None = Relationship(back_populates="past_lot_standards")
-
-
 class PastLotStandardsDataPublic(PastLotStandardsDataBase, _IDPrimaryKeyPublic):
     pass
 
@@ -324,14 +249,6 @@ class AdditionalLotStandardsDataBase(SRMDataForeignKey):
     name: str = Field(alias="ID")
     number: int = Field(alias="LS#")
     ratio: float = Field(alias="Ratio")
-
-
-class AdditionalLotStandardsData(
-    AdditionalLotStandardsDataBase, _IDPrimaryKey, table=True
-):
-    """Additional lot standards table"""
-
-    srmdata: SRMData | None = Relationship(back_populates="additional_lot_standards")
 
 
 class AdditionalLotStandardsDataPublic(

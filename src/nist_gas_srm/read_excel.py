@@ -118,8 +118,7 @@ def _get_frame_with_len_check(
                 msg = "No check value found"
                 raise ValueError(msg)
 
-            check = int(val)
-            if check != len(df):
+            if (check := int(val)) != len(df):
                 msg = f"Wrong check shape {check=} != {len(df)}"
                 raise ValueError(msg)
 

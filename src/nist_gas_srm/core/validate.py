@@ -14,7 +14,7 @@ def validate_nan_to_none(x: Any) -> Any:
     if x is None or isinstance(x, str):
         return x
 
-    try:
+    try:  # pylint: disable=too-many-try-statements
         if isnan(x):
             return None
     except TypeError:

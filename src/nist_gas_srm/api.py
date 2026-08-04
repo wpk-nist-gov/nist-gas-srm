@@ -35,15 +35,16 @@ app = FastAPI(lifespan=lifespan)
 
 @app.get("/srm/", response_model=list[SRMDataPublic])
 def read_srms() -> Sequence[SRMData]:
+    """Get all SRMs"""
     with Session(engine) as session:
         return session.exec(select(SRMData)).all()
 
 
 @app.get("/srm/index/{index}", response_model=SRMDataPublic)
 def read_srm_index(index: int) -> SRMData:
+    """Get single SRM"""
     with Session(engine) as session:
-        data = session.get(SRMData, index)
-        if data is None:
+        if (data := session.get(SRMData, index)) is None:
             raise HTTPException(status_code=404, detail=f"srm with {index=} not found")
         return data
 

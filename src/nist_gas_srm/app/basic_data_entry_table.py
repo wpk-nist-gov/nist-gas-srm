@@ -3,6 +3,8 @@ from datetime import UTC, datetime
 import pandas as pd
 import streamlit as st
 
+# pylint: disable=duplicate-code
+
 st.title("📊 SRM data entry")
 
 # Initialize an empty starting template

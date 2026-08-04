@@ -373,3 +373,16 @@ copier-update *options="":
     copier update --trust -A \
     -r main \
     {{ options }}
+
+# * runners
+[group("run")]
+run-api-dev *options:
+    {{ UVRUN }} fastapi dev src/nist_gas_srm/api.py {{ options }}
+
+[group("run")]
+run-streamlit-dev *options:
+    {{ UVRUN }} streamlit run src/nist_gas_srm/multipage_app.py {{ options }}
+
+[group("run")]
+run-sqlmodel-dev *options="--clean":
+    {{ UVRUN }} ❯ -m nist_gas_srm.model --clean tmp/data/SRM2627a_SeriesI_CAG+CEC_CEC-RV6.4.xls
