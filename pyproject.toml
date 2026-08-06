@@ -1,7 +1,7 @@
 [build-system]
 build-backend = "uv_build"
 requires = [
-    "uv-build>=0.11.30,<0.12.0",
+    "uv-build>=0.12.0,<0.13.0",
 ]
 
 [project]
@@ -146,6 +146,8 @@ src_dir = [ "src" ]
 toplevel = [ "nist_gas_srm" ]
 
 [tool.pyproject-fmt]
+indent = 4
+keep_full_version = true
 # max_supported_python = "3.13"
 expand_tables = [
     "project.entry-points",
@@ -161,8 +163,6 @@ expand_tables = [
     "tool.uv.exclude-newer-package",
     "tool.uv.sources",
 ]
-indent = 4
-keep_full_version = true
 
 [tool.typos.default]
 # nbqa generated
@@ -349,12 +349,12 @@ pip-deps = [
     "copier>=9.17.0",
     "grayskull>=3.1.1",
     "nbqa>=1.9.1",
-    "prek>=0.4.10",
+    "prek>=0.4.11",
     "pyrefly>=1.1.1",
     "pyright>=1.1.411",
     "rooster>=0.1.1",
-    "twine>=6.2.0",
-    "ty>=0.0.63",
+    "twine>=7.0.0",
+    "ty>=0.0.65",
 ]
 groups = [
     "basedpyright",
