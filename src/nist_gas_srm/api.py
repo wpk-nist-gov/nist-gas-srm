@@ -7,9 +7,9 @@ from fastapi import Depends, FastAPI, HTTPException
 from pydantic import AfterValidator
 from sqlmodel import Session, create_engine, select
 
-from ._model import SRMDataComplete, SRMDataPublic, StandardsDataPublic
+from ._models import SRMDataComplete, SRMDataPublic, StandardsDataPublic
 from .core.validate import validate_optional_str_to_lower
-from .model import SRMData, StandardsData, create_db_and_tables
+from .models import SRMData, StandardsData, create_db_and_tables
 
 _OptStrAsLower = Annotated[str | None, AfterValidator(validate_optional_str_to_lower)]
 

@@ -86,6 +86,7 @@ TABLES = [
         "vendor_data": "Vendor data",
         "standards_data": "Standards",
         "ratio_analysis_random_effects": "Ratio analysis",
+        "ratio_analysis_fixed_effects_intercept": "Ratio analysis fixed effects",
         "past_lot_standards": "Past lot standards",
         "additional_lot_standards": "Additional lot standards",
         # certifiede values

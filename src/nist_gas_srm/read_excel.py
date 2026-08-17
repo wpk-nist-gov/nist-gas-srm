@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Container, Generator, Iterator
+    from collections.abc import Callable, Container, Generator, Hashable, Iterator
     from io import BytesIO
     from pathlib import Path
     from typing import Any, TypeVar
@@ -333,6 +333,11 @@ class SRMExcelFile(_SRMExcelFileBase):
         return self._get_optional_frame(
             self.sheet.ratio_analysis, usecols="AD:AF", skiprows=1, **kwargs
         )
+
+
+def frame_to_list_of_dicts(df: pd.DataFrame | None) -> list[dict[Hashable, Any]]:
+
+    return [] if df is None else df.to_dict(orient="records")
 
 
 def frame_to_list_of_models(

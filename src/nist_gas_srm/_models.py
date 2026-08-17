@@ -277,7 +277,7 @@ class AdditionalLotStandardsDataUpdate(
 # * RCertification -----------------------------------------------------------
 class RCertForeignKey(SQLModel):
     rcert_id: int | None = Field(
-        default=None, foreign_key="rcert.id", ondelete="CASCADE"
+        default=None, foreign_key="rcertdata.id", ondelete="CASCADE"
     )
 
 
@@ -308,7 +308,7 @@ class RCertSRMValuesBase(RCertForeignKey):
     """RCert.srm_values"""
 
     name: str
-    value: float
+    value: Annotated[float | None, BeforeValidator(validate_nan_to_none)]
 
 
 class RCertSRMValuesPublic(RCertSRMValuesBase, _IDPrimaryKeyPublic):
@@ -328,10 +328,12 @@ class RCertSRMValuesUpdate(_RCertForeignKeyUpdate):
 class RCertStandardsValuesBase(RCertForeignKey):
     """Rcert.standards_values"""
 
-    value: float
-    uncert: float
-    predicted: float
-    predicted_uncert: float
+    model_config = SQLModelConfig(populate_by_name=True)
+
+    value: float = Field(alias="Value")
+    uncert: float = Field(alias="Uncert (k=2)")
+    predicted: float = Field(alias="Predicted")
+    predicted_uncert: float = Field(alias="Predicted Uncert (k=2)")
 
 
 class RCertStandardsValuesPublic(RCertStandardsValuesBase, _IDPrimaryKeyPublic):
@@ -381,10 +383,12 @@ class RCertAdditionalLotStandardsUpdate(_RCertForeignKeyUpdate):
 
 # ** Cylinder results
 class RCertCylinderResultsBase(RCertForeignKey):
+    model_config = SQLModelConfig(populate_by_name=True)
+
     name: str
     value: float
     uncert: float
-    uncert_ci95: float
+    uncert_ci95: float = Field(alias="confidence_level_95")
 
 
 class RCertCylinderResultsPublic(RCertCylinderResultsBase, _IDPrimaryKeyPublic):
@@ -450,9 +454,11 @@ class RCertCorrelationCoefficientsUpdate(_RCertForeignKeyUpdate):
 
 # ** outliers
 class RCertOutliersBase(RCertForeignKey):
-    name: str
-    test: str  # TODO(wpk): make this a bool with where test == "OUT"
+    model_config = SQLModelConfig(alias_generator=to_pascal, populate_by_name=True)
+    name: str = Field(alias="SampleID")
+    # TODO(wpk): make this a bool with where test == "OUT"
     ratio: float
+    test: Annotated[str | None, BeforeValidator(validate_nan_to_none)]
     value: float
 
 
@@ -466,7 +472,8 @@ class RCertOutliersCreate(RCertOutliersBase):
 
 class RCertOutliersUpdate(_RCertForeignKeyUpdate):
     name: str | None = None
-    test: str | None = None  # TODO(wpk): make this a bool with where test == "OUT"
+    # TODO(wpk): make this a bool with where test == "OUT"
+    test: Annotated[str | None, BeforeValidator(validate_nan_to_none)] = None
     ratio: float | None = None
     value: float | None = None
 
@@ -477,7 +484,7 @@ class RCertComplete(_IDPrimaryKeyPublic):
     standards_values: list[RCertStandardsValuesPublic] = []
     additional_lot_standards: list[RCertAdditionalLotStandardsPublic] = []
     cylinder_results: list[RCertCylinderResultsPublic] = []
-    analysis_functions_coefficients: list[RCertAnalysisFunctionCoefficientsPublic] = []
+    analysis_function_coefficients: list[RCertAnalysisFunctionCoefficientsPublic] = []
     correlation_coefficients: list[RCertCorrelationCoefficientsPublic] = []
     outliers: list[RCertOutliersPublic] = []
 

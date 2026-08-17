@@ -5,6 +5,7 @@
 # ruff:file-ignore[print]
 import logging
 from collections.abc import Iterator, Sequence
+from operator import methodcaller
 from pathlib import Path
 from typing import Any, cast
 
@@ -22,25 +23,21 @@ from sqlmodel import (
 from sqlmodel._compat import SQLModelConfig  # ruff:ignore[import-private-name]
 from sqlmodel.sql._expression_select_cls import Select, SelectOfScalar
 
-# from ._model import (
-#     AdditionalLotStandardsData as AdditionalLotStandardsData,
-#     PastLotStandardsData as PastLotStandardsData,
-#     RatioAnalysisFixedEffectsData as RatioAnalysisFixedEffectsData,
-#     RatioAnalysisRandomEffectsData as RatioAnalysisRandomEffectsData,
-#     RatioData as RatioData,
-#     SRMData as SRMData,
-#     SRMDataCreate,
-#     SRMDataForeignKey,
-#     StandardsData as StandardsData,
-#     VendorData as VendorData,
-# )
-from ._model import (
+from ._models import (
     AdditionalLotStandardsDataBase,
     IDPrimaryKey,
     PastLotStandardsDataBase,
     RatioAnalysisFixedEffectsDataBase,
     RatioAnalysisRandomEffectsDataBase,
     RatioDataBase,
+    RCertAdditionalLotStandardsBase,
+    RCertAnalysisFunctionCoefficientsBase,
+    RCertBase,
+    RCertCorrelationCoefficientsBase,
+    RCertCylinderResultsBase,
+    RCertOutliersBase,
+    RCertSRMValuesBase,
+    RCertStandardsValuesBase,
     SRMDataBase,
     SRMDataCreate,
     SRMDataForeignKey,
@@ -92,6 +89,8 @@ class SRMData(SRMDataBase, IDPrimaryKey, table=True):
         cascade_delete=True,
     )
 
+    rcert: "RCertData" = Relationship(back_populates="srmdata", cascade_delete=True)
+
 
 # * subtables
 class RatioData(RatioDataBase, IDPrimaryKey, table=True):
@@ -142,6 +141,110 @@ class AdditionalLotStandardsData(
     srmdata: SRMData | None = Relationship(back_populates="additional_lot_standards")
 
 
+# * RCert
+class RCertData(RCertBase, IDPrimaryKey, table=True):
+    """R Certified values"""
+
+    model_config = SQLModelConfig(str_to_lower=True)
+
+    srmdata: SRMData | None = Relationship(back_populates="rcert")
+
+    srm_values: list["RCertSRMValues"] = Relationship(
+        back_populates="rcertdata", cascade_delete=True
+    )
+    standards_values: list["RCertStandardsValues"] = Relationship(
+        back_populates="rcertdata", cascade_delete=True
+    )
+    additional_lot_standards: list["RCertAdditionalLotStandards"] = Relationship(
+        back_populates="rcertdata", cascade_delete=True
+    )
+    cylinder_results: list["RCertCylinderResults"] = Relationship(
+        back_populates="rcertdata", cascade_delete=True
+    )
+    analysis_function_coefficients: list["RCertAnalysisFunctionCoefficients"] = (
+        Relationship(back_populates="rcertdata", cascade_delete=True)
+    )
+    correlation_coefficients: list["RCertCorrelationCoefficients"] = Relationship(
+        back_populates="rcertdata", cascade_delete=True
+    )
+    outliers: list["RCertOutliers"] = Relationship(
+        back_populates="rcertdata", cascade_delete=True
+    )
+
+
+class RCertSRMValues(RCertSRMValuesBase, IDPrimaryKey, table=True):
+    rcertdata: RCertData | None = Relationship(back_populates="srm_values")
+
+
+class RCertStandardsValues(RCertStandardsValuesBase, IDPrimaryKey, table=True):
+    rcertdata: RCertData | None = Relationship(back_populates="standards_values")
+
+
+class RCertAdditionalLotStandards(
+    RCertAdditionalLotStandardsBase, IDPrimaryKey, table=True
+):
+    rcertdata: RCertData | None = Relationship(
+        back_populates="additional_lot_standards"
+    )
+
+
+class RCertCylinderResults(RCertCylinderResultsBase, IDPrimaryKey, table=True):
+    rcertdata: RCertData | None = Relationship(back_populates="cylinder_results")
+
+
+class RCertAnalysisFunctionCoefficients(
+    RCertAnalysisFunctionCoefficientsBase, IDPrimaryKey, table=True
+):
+    rcertdata: RCertData | None = Relationship(
+        back_populates="analysis_function_coefficients"
+    )
+
+
+class RCertCorrelationCoefficients(
+    RCertCorrelationCoefficientsBase, IDPrimaryKey, table=True
+):
+    rcertdata: RCertData | None = Relationship(
+        back_populates="correlation_coefficients"
+    )
+
+
+class RCertOutliers(RCertOutliersBase, IDPrimaryKey, table=True):
+    rcertdata: RCertData | None = Relationship(back_populates="outliers")
+
+
+# * name/getter/cls triples
+SRMDATA_NAME_GETTER_CLS = [
+    (name, methodcaller(name if attr is None else attr), cls)
+    for name, attr, cls in [
+        ("ratios", "ratio_data", RatioData),
+        ("vendords", "vendor_data", VendorData),
+        ("standards", "standards_data", StandardsData),
+        ("ratio_analysis_random_effects", None, RatioAnalysisRandomEffectsData),
+        ("ratio_analysis_fixed_effects", None, RatioAnalysisFixedEffectsData),
+        ("past_lot_standards", None, PastLotStandardsData),
+        ("additional_lot_standards", None, AdditionalLotStandardsData),
+    ]
+]
+
+
+RCERTDATA_NAME_GETTER_CLS = [
+    (name, methodcaller(name if attr is None else attr), cls)
+    for name, attr, cls in [
+        ("srm_values", None, RCertSRMValues),
+        ("standards_values", None, RCertStandardsValues),
+        ("additional_lot_standards", None, RCertAdditionalLotStandards),
+        ("cylinder_results", None, RCertCylinderResults),
+        ("analysis_function_coefficients", None, RCertAnalysisFunctionCoefficients),
+        (
+            "correlation_coefficients",
+            "correlation_coefficients_flat",
+            RCertCorrelationCoefficients,
+        ),
+        ("outliers", None, RCertOutliers),
+    ]
+]
+
+
 # * Utils ---------------------------------------------------------------------
 def select_columns(*columns: Any) -> Select[Any] | SelectOfScalar[Any]:
     """For typing purposes"""
@@ -189,6 +292,41 @@ def add_srm(
             frame_to_list_of_models(
                 srmxls.additional_lot_standards(), AdditionalLotStandardsData
             )
+        ),
+        rcert=RCertData(
+            srm_values=list(
+                frame_to_list_of_models(srmxls.rcert.srm_values(), RCertSRMValues)
+            ),
+            standards_values=list(
+                frame_to_list_of_models(
+                    srmxls.rcert.standards_values(), RCertStandardsValues
+                )
+            ),
+            additional_lot_standards=list(
+                frame_to_list_of_models(
+                    srmxls.rcert.additional_lot_standards(), RCertAdditionalLotStandards
+                )
+            ),
+            cylinder_results=list(
+                frame_to_list_of_models(
+                    srmxls.rcert.cylinder_results(), RCertCylinderResults
+                )
+            ),
+            analysis_function_coefficients=list(
+                frame_to_list_of_models(
+                    srmxls.rcert.analysis_function_coefficients(),
+                    RCertAnalysisFunctionCoefficients,
+                )
+            ),
+            correlation_coefficients=list(
+                frame_to_list_of_models(
+                    srmxls.rcert.correlation_coefficients_flat(),
+                    RCertCorrelationCoefficients,
+                )
+            ),
+            outliers=list(
+                frame_to_list_of_models(srmxls.rcert.outliers(), RCertOutliers)
+            ),
         ),
     )
 
@@ -295,10 +433,11 @@ def main(argv: Sequence[str] | None = None) -> bool:
             for path in paths:
                 logger.info("Path: %s", path)
                 add_srm(session, path)
+        return False
 
         new_ratio = RatioData.model_validate({
             "name": "abc",
-            "number": 100,
+            "number": "100",
             "ratio": 0.5,
             "ls_set": 100,
             "break_set": 100,
@@ -311,11 +450,11 @@ def main(argv: Sequence[str] | None = None) -> bool:
             add_srm_subtable_row(session, paths[0].name, new_ratio)
 
     # delete a subtable
-    # with Session(engine) as session:
-    #     delete_subtable(session, paths[0].name, RatioAnalysisFixedEffectsData)
+    with Session(engine) as session:
+        delete_subtable(session, paths[0].name, RatioAnalysisFixedEffectsData)
 
-    # with Session(engine) as session:
-    #     delete_srm(session, paths[0].name)
+    with Session(engine) as session:
+        delete_srm(session, paths[0].name)
 
     # with Session(engine) as session:
     #     print(

@@ -220,7 +220,7 @@ typeCheckingMode = "strict"
 #     "tools/*.py",
 # ]
 include = [
-    "examples/usage/*.ipynb",
+    # "examples/usage/*.ipynb",
     "noxfile.py",
     "src",
     "tests",

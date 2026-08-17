@@ -385,4 +385,4 @@ run-streamlit-dev *options:
 
 [group("run")]
 run-sqlmodel-dev *options="--help":
-    {{ UVRUN }} -m nist_gas_srm.model {{ options }}
+    {{ UVRUN }} -m nist_gas_srm.models {{ options }}
