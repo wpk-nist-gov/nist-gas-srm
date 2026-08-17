@@ -93,6 +93,7 @@ class SRMData(SRMDataBase, IDPrimaryKey, table=True):
     )
 
 
+# * subtables
 class RatioData(RatioDataBase, IDPrimaryKey, table=True):
     """Ratio Data table"""
 

@@ -205,14 +205,18 @@ class _RCertification(_SRMExcelFileBase):
         )
 
     def analysis_function_coefficients(self) -> pd.DataFrame | None:
-        return _maybe_dropna(
+        out = _maybe_dropna(
             self._get_optional_frame(
                 self.sheet.rcert,
                 usecols="G:H",
                 skiprows=_skipper(lower=46, upper=50),
+                names=["value", "uncert"],
             ),
             how="all",
         )
+        if out is not None:
+            out = out.assign(order=range(len(out)))
+        return out
 
     def correlation_coefficients(self) -> pd.DataFrame | None:
         out = self._get_optional_frame(
@@ -221,7 +225,31 @@ class _RCertification(_SRMExcelFileBase):
             skiprows=_skipper(lower=52, upper=56),
         )
         out = _maybe_dropna(out, how="all")
+
+        if out is not None:
+            out = out.assign(order=range(len(out)))
+
         return _maybe_dropna(out, how="all", axis=1)
+
+    def correlation_coefficients_flat(self) -> pd.DataFrame | None:
+
+        if (df := self.correlation_coefficients()) is None:
+            return df
+
+        return pd.melt(
+            df.rename(columns=lambda x: x if x == "order" else int(x[1:])),
+            id_vars="order",
+            var_name="order_other",
+        )
+
+    @staticmethod
+    def stack_flat_correlation_coefficients(df: pd.DataFrame) -> pd.DataFrame:
+        return (
+            pd
+            .pivot(df, columns="order_other", index="order", values="value")
+            .rename_axis(columns=None)
+            .reset_index()
+        )
 
     def outliers(self) -> pd.DataFrame | None:
         return self._get_optional_frame(

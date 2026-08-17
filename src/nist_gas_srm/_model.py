@@ -1,4 +1,5 @@
 """Basic model"""
+# ruff:file-ignore[commented-out-code,missing-todo-link,line-contains-todo]
 
 from datetime import UTC, datetime
 from typing import Annotated
@@ -191,6 +192,8 @@ class VendorDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpdate):
 class StandardsDataBase(SRMDataForeignKey):
     """Standards Data"""
 
+    model_config = SQLModelConfig(populate_by_name=True)
+
     name: str = Field(alias="StandardID")
     number: int = Field(alias="StandardNo")
     ratio: float = Field(alias="SRatio")
@@ -220,6 +223,7 @@ class StandardsDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpdate):
 class PastLotStandardsDataBase(SRMDataForeignKey):
     """Past lot standards"""
 
+    model_config = SQLModelConfig(populate_by_name=True)
     name: str = Field(alias="LS ID")
     number: int = Field(alias="LS#")
     ratio: float = Field(alias="Ratio")
@@ -246,6 +250,7 @@ class PastLotStandardsDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpd
 class AdditionalLotStandardsDataBase(SRMDataForeignKey):
     """AdditionalLotStandards"""
 
+    model_config = SQLModelConfig(populate_by_name=True)
     name: str = Field(alias="ID")
     number: int = Field(alias="LS#")
     ratio: float = Field(alias="Ratio")
@@ -270,11 +275,228 @@ class AdditionalLotStandardsDataUpdate(
 
 
 # * RCertification -----------------------------------------------------------
-# ruff:file-ignore[commented-out-code]
+class RCertForeignKey(SQLModel):
+    rcert_id: int | None = Field(
+        default=None, foreign_key="rcert.id", ondelete="CASCADE"
+    )
+
+
+class _RCertForeignKeyUpdate(SQLModel):
+    rcert_id: int | None = None
+
+
+# ** RCert
+class RCertBase(SRMDataForeignKey):
+    """Points back to srmdata"""
+
+
+class RCertPublic(RCertBase, _IDPrimaryKeyPublic):
+    pass
+
+
+class RCertCreate(RCertBase):
+    pass
+
+
+class RCertUpdate(_SRMDataForeignKeyUpdate):
+    pass
+
+
+# ** SRMValues
+# Each of these point back to rcert
+class RCertSRMValuesBase(RCertForeignKey):
+    """RCert.srm_values"""
+
+    name: str
+    value: float
+
+
+class RCertSRMValuesPublic(RCertSRMValuesBase, _IDPrimaryKeyPublic):
+    pass
+
+
+class RCertSRMValuesCreate(RCertSRMValuesBase):
+    pass
+
+
+class RCertSRMValuesUpdate(_RCertForeignKeyUpdate):
+    name: str | None = None
+    value: float | None = None
+
+
+# ** Standard Values
+class RCertStandardsValuesBase(RCertForeignKey):
+    """Rcert.standards_values"""
+
+    value: float
+    uncert: float
+    predicted: float
+    predicted_uncert: float
+
+
+class RCertStandardsValuesPublic(RCertStandardsValuesBase, _IDPrimaryKeyPublic):
+    pass
+
+
+class RCertStandardsValuesCreate(RCertStandardsValuesBase):
+    pass
+
+
+class RCertStandardsValuesUpdate(_RCertForeignKeyUpdate):
+    value: float | None = None
+    uncert: float | None = None
+    predicted: float | None = None
+    predicted_uncert: float | None = None
+
+
+# ** Additional lot standards
+class RCertAdditionalLotStandardsBase(RCertForeignKey):
+    model_config = SQLModelConfig(populate_by_name=True)
+
+    name: str = Field(alias="Additional LSs")
+    number: int = Field(alias="LS #")
+
+    value: float = Field(alias="Value")
+    uncert: float = Field(alias="Uncert")
+    uncert_ci95: float = Field(alias="95% CI")  # 95 % confidence interval
+
+
+class RCertAdditionalLotStandardsPublic(
+    RCertAdditionalLotStandardsBase, _IDPrimaryKeyPublic
+):
+    pass
+
+
+class RCertAdditionalLotStandardsCreate(RCertAdditionalLotStandardsBase):
+    pass
+
+
+class RCertAdditionalLotStandardsUpdate(_RCertForeignKeyUpdate):
+    name: str | None = None
+    number: int | None = None
+    value: float | None = None
+    uncert: float | None = None
+    uncert_ci95: float | None = None
+
+
+# ** Cylinder results
+class RCertCylinderResultsBase(RCertForeignKey):
+    name: str
+    value: float
+    uncert: float
+    uncert_ci95: float
+
+
+class RCertCylinderResultsPublic(RCertCylinderResultsBase, _IDPrimaryKeyPublic):
+    pass
+
+
+class RCertCylinderResultsCreate(RCertCylinderResultsBase):
+    pass
+
+
+class RCertCylinderResultsUpdate(_RCertForeignKeyUpdate):
+    name: str | None = None
+    value: float | None = None
+    uncert: float | None = None
+    uncert_ci95: float | None = None
+
+
+# ** Analysis function coefficients
+class RCertAnalysisFunctionCoefficientsBase(RCertForeignKey):
+    order: int
+    value: float
+    uncert: float
+
+
+class RCertAnalysisFunctionCoefficientsPublic(
+    RCertAnalysisFunctionCoefficientsBase, _IDPrimaryKeyPublic
+):
+    pass
+
+
+class RCertAnalysisFunctionCoefficientsCreate(RCertAnalysisFunctionCoefficientsBase):
+    pass
+
+
+class RCertAnalysisFunctionCoefficientsUpdate(_RCertForeignKeyUpdate):
+    order: int | None = None
+    value: float | None = None
+    uncert: float | None = None
+
+
+# ** Correlation coefficients
+class RCertCorrelationCoefficientsBase(RCertForeignKey):
+    order: int
+    order_other: int
+    value: float
+
+
+class RCertCorrelationCoefficientsPublic(
+    RCertCorrelationCoefficientsBase, _IDPrimaryKeyPublic
+):
+    pass
+
+
+class RCertCorrelationCoefficientsCreate(RCertCorrelationCoefficientsBase):
+    pass
+
+
+class RCertCorrelationCoefficientsUpdate(_RCertForeignKeyUpdate):
+    order: int | None = None
+    order_other: int | None = None
+    value: float | None = None
+
+
+# ** outliers
+class RCertOutliersBase(RCertForeignKey):
+    name: str
+    test: str  # TODO(wpk): make this a bool with where test == "OUT"
+    ratio: float
+    value: float
+
+
+class RCertOutliersPublic(RCertOutliersBase, _IDPrimaryKeyPublic):
+    pass
+
+
+class RCertOutliersCreate(RCertOutliersBase):
+    pass
+
+
+class RCertOutliersUpdate(_RCertForeignKeyUpdate):
+    name: str | None = None
+    test: str | None = None  # TODO(wpk): make this a bool with where test == "OUT"
+    ratio: float | None = None
+    value: float | None = None
+
+
+# * "Complete" data
+class RCertComplete(_IDPrimaryKeyPublic):
+    srm_values: list[RCertSRMValuesPublic] = []
+    standards_values: list[RCertStandardsValuesPublic] = []
+    additional_lot_standards: list[RCertAdditionalLotStandardsPublic] = []
+    cylinder_results: list[RCertCylinderResultsPublic] = []
+    analysis_functions_coefficients: list[RCertAnalysisFunctionCoefficientsPublic] = []
+    correlation_coefficients: list[RCertCorrelationCoefficientsPublic] = []
+    outliers: list[RCertOutliersPublic] = []
+
+
+class SRMDataComplete(SRMDataBase, _IDPrimaryKeyPublic):
+    ratios: list[RatioDataPublic] = []
+    vendors: list[VendorDataPublic] = []
+    standards: list[StandardsDataPublic] = []
+    past_lot_standards: list[PastLotStandardsDataPublic] = []
+    additional_lot_standards: list[AdditionalLotStandardsDataPublic] = []
+    ratio_analysis_random_effects: list[RatioAnalysisRandomEffectsDataPublic] = []
+    ratio_analysis_fixed_effects: list[RatioAnalysisFixedEffectsDataPublic] = []
+
+    # rcert: RCertComplete
+
+
 # class RCertificationDataBase(SRMDataForeignKey):
 
 #     timestamp: datetime = Field
-
 #     srm_value: float
 #     srm_uncertainty: float
 #     srm_cl_95: float

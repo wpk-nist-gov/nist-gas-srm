@@ -23,7 +23,7 @@ if (srm_file := st.session_state.get("srm_file")) is not None:
         "Additional lot standards": data.additional_lot_standards,
         "Cylinder results": data.cylinder_results,
         "Ananalysis function coefficients": data.analysis_function_coefficients,
-        "Correlation coefficients": data.correlation_coefficients,
+        "Correlation coefficients": data.correlation_coefficients_flat,
         "Outliers": data.outliers,
     }
 

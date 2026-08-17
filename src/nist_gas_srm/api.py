@@ -1,15 +1,15 @@
-from collections.abc import AsyncGenerator, Sequence
+from collections.abc import AsyncGenerator, Generator, Sequence
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from pydantic import AfterValidator
 from sqlmodel import Session, create_engine, select
 
-from ._model import SRMDataPublic
+from ._model import SRMDataComplete, SRMDataPublic, StandardsDataPublic
 from .core.validate import validate_optional_str_to_lower
-from .model import SRMData, create_db_and_tables
+from .model import SRMData, StandardsData, create_db_and_tables
 
 _OptStrAsLower = Annotated[str | None, AfterValidator(validate_optional_str_to_lower)]
 
@@ -33,38 +33,83 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:  # ruff:ignore[unused-
 app = FastAPI(lifespan=lifespan)
 
 
-@app.get("/srm/", response_model=list[SRMDataPublic])
-def read_srms() -> Sequence[SRMData]:
-    """Get all SRMs"""
+def get_session() -> Generator[Session]:
     with Session(engine) as session:
-        return session.exec(select(SRMData)).all()
+        yield session
+
+
+SessionDepends = Annotated[Session, Depends(get_session)]
+
+
+@app.get("/srm/", response_model=list[SRMDataPublic])
+def read_srms(*, session: SessionDepends) -> Sequence[SRMData]:
+    """Get all SRMs"""
+    return session.exec(select(SRMData)).all()
 
 
 @app.get("/srm/index/{index}", response_model=SRMDataPublic)
-def read_srm_index(index: int) -> SRMData:
+def read_srm_index(*, session: SessionDepends, index: int) -> SRMData:
     """Get single SRM"""
-    with Session(engine) as session:
-        if (data := session.get(SRMData, index)) is None:
-            raise HTTPException(status_code=404, detail=f"srm with {index=} not found")
-        return data
+    if (data := session.get(SRMData, index)) is None:
+        raise HTTPException(status_code=404, detail=f"srm with {index=} not found")
+    return data
 
 
 @app.get("/srm/{srm_id}", response_model=list[SRMDataPublic])
 def read_srm(
+    *,
+    session: SessionDepends,
     srm_id: int,
     batch_id: _OptStrAsLower = None,
     lot_id: _OptStrAsLower = None,
 ) -> Sequence[SRMData]:
 
-    with Session(engine) as session:
-        query = select(SRMData).where(SRMData.srm_id == srm_id)
+    query = select(SRMData).where(SRMData.srm_id == srm_id)
 
-        if batch_id:
-            query = query.where(SRMData.batch_id == batch_id)
-        if lot_id:
-            query = query.where(SRMData.lot_id == lot_id)
+    if batch_id:
+        query = query.where(SRMData.batch_id == batch_id)
+    if lot_id:
+        query = query.where(SRMData.lot_id == lot_id)
 
-        return session.exec(query).all()
+    return session.exec(query).all()
+
+
+@app.get("/srm-complete/{srm_id}", response_model=list[SRMDataComplete])
+def read_srm_complete(
+    *,
+    session: SessionDepends,
+    srm_id: int,
+    batch_id: _OptStrAsLower = None,
+    lot_id: _OptStrAsLower = None,
+) -> Sequence[SRMData]:
+
+    query = select(SRMData).where(SRMData.srm_id == srm_id)
+
+    if batch_id:
+        query = query.where(SRMData.batch_id == batch_id)
+    if lot_id:
+        query = query.where(SRMData.lot_id == lot_id)
+
+    return session.exec(query).all()
+
+
+@app.get("/standards/{srm_id}", response_model=list[StandardsDataPublic])
+def read_srm_standards(
+    *,
+    session: SessionDepends,
+    srm_id: int,
+    batch_id: _OptStrAsLower = None,
+    lot_id: _OptStrAsLower = None,
+) -> list[StandardsData]:
+
+    query = select(SRMData).where(SRMData.srm_id == srm_id)
+
+    if batch_id:
+        query = query.where(SRMData.batch_id == batch_id)
+    if lot_id:
+        query = query.where(SRMData.lot_id == lot_id)
+
+    return session.exec(query).one().standards
 
 
 # @app.get("/ratios/{srm_id}", response_model=RatioDataPublic)
