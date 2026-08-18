@@ -69,7 +69,7 @@ class SRMDataBase(SQLModel):
         UniqueConstraint("srm_id", "batch_id", "lot_id", name="unique_user_product"),
     )
 
-    name: str = Field(sa_column=Column("name", VARCHAR, unique=True, index=True))
+    name: str = Field(sa_column=Column("name", VARCHAR))
     srm_id: int = Field(index=True)
     batch_id: Annotated[
         str | None, BeforeValidator(validate_optional_str_to_lower)
@@ -335,8 +335,18 @@ class RCertUpdate(_SRMDataForeignKeyUpdate):
 class RCertSRMValuesBase(RCertForeignKey):
     """RCert.srm_values"""
 
-    name: str
-    value: Annotated[float | None, BeforeValidator(validate_nan_to_none)]
+    model_config = SQLModelConfig(populate_by_name=True)
+
+    value: float = Field(validation_alias="SRM Value")
+    uncert: float = Field(validation_alias="SRM uncertainty")
+    uncert_ci95: float = Field(validation_alias="SRM 95 % C.L.")
+    uhistorical: Annotated[float | None, BeforeValidator(validate_nan_to_none)] = Field(
+        validation_alias="uHistorical"
+    )
+
+    ls_value: float = Field(validation_alias="LS Value")
+    ls_uncert: float = Field(validation_alias="LS uncertainty")
+    ls_uncert_ci95: float = Field(validation_alias="LS 95 % C.L.")
 
 
 class RCertSRMValuesPublic(RCertSRMValuesBase, _IDPrimaryKeyPublic):
@@ -348,8 +358,14 @@ class RCertSRMValuesCreate(RCertSRMValuesBase):
 
 
 class RCertSRMValuesUpdate(_RCertForeignKeyUpdate):
-    name: str | None = None
     value: float | None = None
+    uncert: float | None = None
+    uncert_ci95: float | None = None
+    uhistorical: Annotated[float | None, BeforeValidator(validate_nan_to_none)] = None
+
+    ls_value: float | None = None
+    ls_uncert: float | None = None
+    ls_uncert_ci95: float | None = None
 
 
 # ** Standard Values
@@ -512,7 +528,7 @@ class RCertOutliersUpdate(_RCertForeignKeyUpdate):
 
 # * "Complete" data
 # ** Public
-class RCertPublicComplete(_IDPrimaryKeyPublic):
+class RCertPublicComplete(RCertPublic):
     srm_values: list[RCertSRMValuesPublic] = []
     standards_values: list[RCertStandardsValuesPublic] = []
     additional_lot_standards: list[RCertAdditionalLotStandardsPublic] = []
@@ -522,7 +538,7 @@ class RCertPublicComplete(_IDPrimaryKeyPublic):
     outliers: list[RCertOutliersPublic] = []
 
 
-class SRMDataPublicComplete(SRMDataBase, _IDPrimaryKeyPublic):
+class SRMDataPublicComplete(SRMDataPublic):
     ratios: list[RatioDataPublic] = []
     vendors: list[VendorDataPublic] = []
     standards: list[StandardsDataPublic] = []
@@ -537,8 +553,24 @@ class SRMRCertPublicComplete(SRMDataPublicComplete):
 
 
 # ** Create
-class RCertCreateComplete:
-    pass
+class RCertCreateComplete(RCertCreate):
+    srm_values: list[RCertSRMValuesCreate] = []
+    standards_values: list[RCertStandardsValuesCreate] = []
+    additional_lot_standards: list[RCertAdditionalLotStandardsCreate] = []
+    cylinder_results: list[RCertCylinderResultsCreate] = []
+    analysis_function_coefficients: list[RCertAnalysisFunctionCoefficientsCreate] = []
+    correlation_coefficients: list[RCertCorrelationCoefficientsCreate] = []
+    outliers: list[RCertOutliersCreate] = []
+
+
+class SRMDataCreateComplete(SRMDataCreate):
+    ratios: list[RatioDataPublic] = []
+    vendors: list[VendorDataPublic] = []
+    standards: list[StandardsDataPublic] = []
+    past_lot_standards: list[PastLotStandardsDataPublic] = []
+    additional_lot_standards: list[AdditionalLotStandardsDataPublic] = []
+    ratio_analysis_random_effects: list[RatioAnalysisRandomEffectsDataPublic] = []
+    ratio_analysis_fixed_effects: list[RatioAnalysisFixedEffectsDataPublic] = []
 
 
 # Useful typealiases
@@ -561,6 +593,7 @@ RCertSubTableCreate: TypeAlias = (
     | RCertCorrelationCoefficientsCreate
     | RCertOutliersCreate
 )
+
 
 # class RCertificationDataBase(SRMDataForeignKey):
 

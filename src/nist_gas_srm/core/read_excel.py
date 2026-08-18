@@ -164,7 +164,7 @@ class _RCertification(_SRMExcelFileBase):
             return datetime.strptime(value, "%B %d %Y").astimezone(UTC)
         return None
 
-    def srm_values(self) -> pd.DataFrame | None:
+    def srm_values_excel(self) -> pd.DataFrame | None:
         # relative_uncertainty <- confidence_level / value
         # effective k <- confidence_level / uncertainty
         return self._get_optional_frame(
@@ -174,6 +174,17 @@ class _RCertification(_SRMExcelFileBase):
             skiprows=_skipper(include={47, 48, 49, 52, 53, 54, 55}),
             names=["name", "value"],
         )
+
+    def srm_values(self) -> pd.DataFrame | None:
+        # NOTE: to convert back to stacked data
+        # use pd.melt(out, var_name="name", value_name="value")
+        if (df := self.srm_values_excel()) is None:
+            return df
+        new = cast(
+            "pd.DataFrame",
+            pd.pivot(df.assign(dummy=0).set_index("dummy"), columns="name")["value"],
+        )
+        return new.rename_axis(columns=None, index=None)
 
     def standards_values(self) -> pd.DataFrame | None:
         out = self._get_optional_frame(

@@ -257,9 +257,24 @@ def read_rcerts_cylinder_results(
 
 @app.post("/srm/", response_model=basemodels.SRMDataPublic)
 def create_srm(
-    *, session: SessionDepends, srmdata_in: basemodels.SRMDataCreate
+    *,
+    session: SessionDepends,
+    srmdata_in: basemodels.SRMDataCreate,
 ) -> models.SRMData:
-    db_srmdata = models.SRMData.model_validate(srmdata_in, update={"id": 0})
+    db_srmdata = models.SRMData.model_validate(srmdata_in)
+    session.add(db_srmdata)
+    session.commit()
+    session.refresh(db_srmdata)
+    return db_srmdata
+
+
+@app.post("/srm/complete/", response_model=basemodels.SRMDataPublic)
+def create_srm_complete(
+    *,
+    session: SessionDepends,
+    srmdata_in: basemodels.SRMDataCreateComplete,
+) -> models.SRMData:
+    db_srmdata = models.SRMData.model_validate(srmdata_in)
     session.add(db_srmdata)
     session.commit()
     session.refresh(db_srmdata)
