@@ -377,12 +377,20 @@ copier-update *options="":
 # * runners
 [group("run")]
 run-api-dev *options:
-    {{ UVRUN }} fastapi dev src/nist_gas_srm/api.py {{ options }}
+    {{ UVRUN }} fastapi dev {{ options }}
 
 [group("run")]
 run-streamlit-dev *options:
     {{ UVRUN }} streamlit run src/nist_gas_srm/app/multipage_app.py {{ options }}
 
+# [group("run")]
+# run-sqlmodel-dev *options="--help":
+#     {{ UVRUN }} -m nist_gas_srm.backend.models {{ options }}
+
 [group("run")]
-run-sqlmodel-dev *options="--help":
-    {{ UVRUN }} -m nist_gas_srm.models {{ options }}
+run-initial-data:
+    {{ UVRUN }} -m nist_gas_srm.backend.initial_data
+
+[group("run")]
+run-initial-data-from-files *options="--help":
+    {{ UVRUN }} -m nist_gas_srm.backend.initial_data_from_files {{ options }}

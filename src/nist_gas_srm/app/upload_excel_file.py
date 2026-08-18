@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, cast, override
 import pandas as pd
 import streamlit as st
 
-from nist_gas_srm import read_excel
+from nist_gas_srm.backend import read_excel
 
 if TYPE_CHECKING:
     from collections.abc import Iterable

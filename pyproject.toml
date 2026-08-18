@@ -1,3 +1,5 @@
+#:tombi schema.strict = false
+
 [build-system]
 build-backend = "uv_build"
 requires = [
@@ -35,6 +37,7 @@ dependencies = [
     "openpyxl>=3.1.5",
     "pandas>=2.3.3",
     "plotly-express>=0.4.1",
+    "pydantic-settings>=2.14.2",
     "python-calamine>=0.6.2",
     "sqlmodel>=0.0.38",
     "statsmodels>=0.14.6",
@@ -403,3 +406,6 @@ section-labels.Documentation = [ "documentation" ]
 section-labels.Enhancements = [ "enhancement" ]
 section-labels.Internal = [ "internal" ]
 section-labels."Other changes" = [ "__unknown__" ]
+
+[tool.fastapi]
+entrypoint = "nist_gas_srm.backend.main:app"

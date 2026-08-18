@@ -2,7 +2,7 @@
 # ruff:file-ignore[commented-out-code,missing-todo-link,line-contains-todo]
 
 from datetime import UTC, datetime
-from typing import Annotated
+from typing import Annotated, TypeAlias
 
 from pydantic import BeforeValidator
 from pydantic.alias_generators import to_pascal
@@ -11,10 +11,11 @@ from sqlmodel import (
     VARCHAR,
     Field,
     SQLModel,
+    UniqueConstraint,
 )
 from sqlmodel._compat import SQLModelConfig  # ruff:ignore[import-private-name]
 
-from .core.validate import (
+from nist_gas_srm.core.validate import (
     validate_nan_to_none,
     validate_optional_str_to_lower,
     validate_str_to_lower,
@@ -57,6 +58,10 @@ class _SRMDataForeignKeyUpdate(SQLModel):
 # * Top level data (per worksheet) --------------------------------------------
 class SRMDataBase(SQLModel):
     """Metadata base class"""
+
+    __table_args__ = (
+        UniqueConstraint("srm_id", "batch_id", "lot_id", name="unique_user_product"),
+    )
 
     name: str = Field(sa_column=Column("name", VARCHAR, unique=True, index=True))
     srm_id: int = Field(index=True)
@@ -138,6 +143,10 @@ class RatioAnalysisRandomEffectsDataPublic(
     pass
 
 
+class RatioAnalysisRandomEffectsDataCreate(RatioAnalysisRandomEffectsDataBase):
+    pass
+
+
 class RatioAnalysisRandomEffectsDataUpdate(_SRMDataForeignKeyUpdate):
     groups: str | None
     name: str | None
@@ -156,6 +165,10 @@ class RatioAnalysisFixedEffectsDataBase(SRMDataForeignKey):
 class RatioAnalysisFixedEffectsDataPublic(
     RatioAnalysisFixedEffectsDataBase, _IDPrimaryKeyPublic
 ):
+    pass
+
+
+class RatioAnalysisFixedEffectsDataCreate(RatioAnalysisFixedEffectsDataBase):
     pass
 
 
@@ -235,7 +248,7 @@ class PastLotStandardsDataPublic(PastLotStandardsDataBase, _IDPrimaryKeyPublic):
     pass
 
 
-class PastLogStandardsDataCreate(PastLotStandardsDataBase):
+class PastLotStandardsDataCreate(PastLotStandardsDataBase):
     pass
 
 
@@ -262,7 +275,7 @@ class AdditionalLotStandardsDataPublic(
     pass
 
 
-class AdditionalLogStandardsDataCreate(AdditionalLotStandardsDataBase):
+class AdditionalLotStandardsDataCreate(AdditionalLotStandardsDataBase):
     pass
 
 
@@ -500,6 +513,27 @@ class SRMDataComplete(SRMDataBase, _IDPrimaryKeyPublic):
 
     # rcert: RCertComplete
 
+
+# Useful typealiases
+SRMSubTableCreate: TypeAlias = (
+    RatioDataCreate
+    | VendorDataCreate
+    | StandardsDataCreate
+    | RatioAnalysisRandomEffectsDataCreate
+    | RatioAnalysisFixedEffectsDataCreate
+    | PastLotStandardsDataCreate
+    | AdditionalLotStandardsDataCreate
+)
+
+RCertSubTableCreate: TypeAlias = (
+    RCertSRMValuesCreate
+    | RCertStandardsValuesCreate
+    | RCertAdditionalLotStandardsCreate
+    | RCertCylinderResultsCreate
+    | RCertAnalysisFunctionCoefficientsCreate
+    | RCertCorrelationCoefficientsCreate
+    | RCertOutliersCreate
+)
 
 # class RCertificationDataBase(SRMDataForeignKey):
 
