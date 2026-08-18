@@ -16,9 +16,9 @@ from sqlmodel import (
 
 from nist_gas_srm.core.utils import parse_excel_filename_to_metadata
 
-from . import _models as basemodels, models
+from . import _models as basemodels, crud, models
 from .core.db import engine, init_db
-from .read_excel import SRMExcelFile, frame_to_list_of_models
+from .read_excel import SRMExcelFile
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -43,23 +43,27 @@ def add_srm(
         **parse_excel_filename_to_metadata(path.name),
     )
 
-    data: dict[str, Any] = {
-        name: list(frame_to_list_of_models(caller(srmxls), cls))
-        for name, caller, cls in models.SRMDATA_NAME_CALLER_CLS
-    }
+    _ = crud.add_srm_from_excel_obj(
+        session=session, srmdata_create=srm_metadata, srmxls=srmxls
+    )
 
-    data_rcert: dict[str, Any] = {
-        name: list(frame_to_list_of_models(caller(srmxls.rcert), cls))
-        for name, caller, cls in models.RCERTDATA_NAME_CALLER_CLS
-    }
+    # data: dict[str, Any] = {
+    #     name: list(frame_to_list_of_models(caller(srmxls), cls))
+    #     for name, caller, cls in models.SRMDATA_NAME_CALLER_CLS
+    # }
 
-    data["rcert"] = models.RCertData(**data_rcert)
+    # data_rcert: dict[str, Any] = {
+    #     name: list(frame_to_list_of_models(caller(srmxls.rcert), cls))
+    #     for name, caller, cls in models.RCERTDATA_NAME_CALLER_CLS
+    # }
 
-    srm = models.SRMData(**srm_metadata.model_dump(), **data)
+    # data["rcert"] = models.RCertData(**data_rcert)
 
-    # NOTE: see https://github.com/fastapi/sqlmodel/issues/254
-    session.add(srm)
-    session.commit()
+    # srm = models.SRMData(**srm_metadata.model_dump(), **data)
+
+    # # NOTE: see https://github.com/fastapi/sqlmodel/issues/254
+    # session.add(srm)
+    # session.commit()
 
 
 def get_srm_by_name(session: Session, srm: str | models.SRMData) -> models.SRMData:

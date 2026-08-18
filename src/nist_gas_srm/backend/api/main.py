@@ -1,15 +1,16 @@
 # ruff:file-ignore[commented-out-code]
-
 from collections.abc import AsyncGenerator, Generator, Sequence
 from contextlib import asynccontextmanager
-from typing import Annotated
+from io import BytesIO
+from typing import Annotated, Any
 
-from fastapi import Depends, FastAPI
-from pydantic import AfterValidator
+from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
+from pydantic import AfterValidator, ValidationError
 from sqlmodel import Session
 
 from nist_gas_srm.backend import _models as basemodels, crud, models
 from nist_gas_srm.backend.core.db import engine, init_db
+from nist_gas_srm.backend.read_excel import SRMExcelFile
 from nist_gas_srm.core.validate import validate_optional_str_to_lower
 
 _OptStrAsLower = Annotated[str | None, AfterValidator(validate_optional_str_to_lower)]
@@ -35,6 +36,24 @@ def get_session() -> Generator[Session]:
 
 
 SessionDepends = Annotated[Session, Depends(get_session)]
+
+
+def _raise_if_srms_exist(
+    session: Session,
+    srm_id: int | None = None,
+    batch_id: _OptStrAsLower = None,
+    lot_id: _OptStrAsLower = None,
+) -> None:
+    if crud.get_srms(
+        session=session,
+        srm_id=srm_id,
+        batch_id=batch_id,
+        lot_id=lot_id,
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail=f"SRM with {srm_id=}, {batch_id=}, {lot_id=} exists.",
+        )
 
 
 @app.get("/")
@@ -180,6 +199,61 @@ def read_rcerts_complete(
         batch_id=batch_id,
         lot_id=lot_id,
     )
+
+
+@app.post("/srm/", response_model=basemodels.SRMDataPublic)
+def create_srm(
+    *, session: SessionDepends, srmdata_in: basemodels.SRMDataCreate
+) -> models.SRMData:
+    db_srmdata = models.SRMData.model_validate(srmdata_in, update={"id": 0})
+    session.add(db_srmdata)
+    session.commit()
+    session.refresh(db_srmdata)
+    return db_srmdata
+
+
+@app.post("/upload-excel/", response_model=basemodels.SRMDataPublic)
+async def create_upload_file(
+    *,
+    session: SessionDepends,
+    srmdata_in: Annotated[
+        str, Form()
+    ] = '{"name": "string", "srm_id": 0, "batch_id": null, "lot_id": "string", "timestamp": null}',
+    file: Annotated[UploadFile, File()],
+) -> Any:  # models.SRMData:
+
+    try:
+        srmdata_create = basemodels.SRMDataCreate.model_validate_json(srmdata_in)
+    except ValidationError as e:
+        raise HTTPException(status_code=422, detail=e.errors()) from e
+
+    _raise_if_srms_exist(
+        session=session,
+        srm_id=srmdata_create.srm_id,
+        batch_id=srmdata_create.batch_id,
+        lot_id=srmdata_create.lot_id,
+    )
+
+    if file.filename is None or not file.filename.endswith(".xls"):
+        raise HTTPException(
+            status_code=400, detail="Invalid file type. Please upload an Excel file."
+        )
+
+    # 2. Read the file contents into memory
+    contents = await file.read()
+
+    try:
+        # 3. Load the byte stream into a Pandas DataFrame
+        srmxls = SRMExcelFile(BytesIO(contents))
+        return crud.add_srm_from_excel_obj(
+            session=session, srmdata_create=srmdata_create, srmxls=srmxls
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error processing Excel file: {e!s}",
+        ) from e
 
 
 # @app.get("/standards/{srm_id}", response_model=list[StandardsDataPublic])

@@ -19,6 +19,7 @@ from nist_gas_srm.core.validate import (
     validate_nan_to_none,
     validate_optional_str_to_lower,
     validate_str_to_lower,
+    validate_timestamp,
 )
 
 
@@ -72,7 +73,7 @@ class SRMDataBase(SQLModel):
         str, BeforeValidator(validate_str_to_lower)
     ]  # = Field(index=True)
 
-    timestamp: datetime = Field(
+    timestamp: Annotated[datetime, BeforeValidator(validate_timestamp)] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False),
         default_factory=lambda: datetime.now(UTC),
     )

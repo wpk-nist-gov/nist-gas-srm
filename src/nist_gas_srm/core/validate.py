@@ -30,3 +30,12 @@ def validate_optional_str_to_lower(x: str | None) -> str | None:
     if x is None:
         return x
     return x.lower()
+
+
+def validate_timestamp(x: str | None) -> str:
+    if x is None:
+        from datetime import UTC, datetime
+
+        return str(datetime.now(UTC))
+
+    return x
