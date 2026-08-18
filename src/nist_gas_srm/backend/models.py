@@ -4,11 +4,16 @@ import logging
 from operator import methodcaller
 from typing import Any, TypeAlias, cast
 
+from pydantic import model_validator
 from sqlmodel import (
     Relationship,
+    SQLModel,
     select,
 )
-from sqlmodel._compat import SQLModelConfig  # ruff:ignore[import-private-name]
+from sqlmodel._compat import (  # ruff: ignore[import-private-name]
+    SQLModelConfig,
+    get_relationship_to,
+)
 from sqlmodel.sql._expression_select_cls import Select, SelectOfScalar
 
 from nist_gas_srm.core.basemodels import (
@@ -37,7 +42,42 @@ logger = logging.getLogger(__name__)
 
 
 # Sql Models ------------------------------------------------------------------
-class SRMData(SRMDataBase, IDPrimaryKey, table=True):
+class _FixMixin(SQLModel):
+    # see https://github.com/fastapi/sqlmodel/issues/293
+    @model_validator(mode="before")
+    @classmethod
+    def convert_relationships(cls, model: Any) -> Any:
+        for rel_name, rel_info in cls.__sqlmodel_relationships__.items():
+            attr = getattr(model, rel_name, None)
+            if attr is None:
+                continue
+
+            # use sqlmodel internal function to get class
+            ann = cls.__annotations__[rel_name].__args__[0]
+            rel_class_name = get_relationship_to(
+                name=rel_name, rel_info=rel_info, annotation=ann
+            )
+
+            # might be type or string depending on how it was declared
+            rel_class: Any
+            if isinstance(rel_class_name, type):
+                rel_class = rel_class_name
+            else:
+                rel_class = globals()[rel_class_name]
+
+            # convert attribute(s) with their model's validator
+            items: Any
+            if isinstance(attr, list):
+                items = [rel_class.model_validate(item) for item in attr]
+                setattr(model, rel_name, items)
+            else:
+                item = rel_class.model_validate(attr)
+                setattr(model, rel_name, item)
+
+        return model
+
+
+class SRMData(SRMDataBase, IDPrimaryKey, _FixMixin, table=True):
     """Metadata table"""
 
     model_config = SQLModelConfig(str_to_lower=True)
@@ -123,7 +163,7 @@ class AdditionalLotStandardsData(
 
 
 # * RCert
-class RCertData(RCertBase, IDPrimaryKey, table=True):
+class RCertData(RCertBase, IDPrimaryKey, _FixMixin, table=True):
     """R Certified values"""
 
     model_config = SQLModelConfig(str_to_lower=True)

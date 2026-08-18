@@ -2,9 +2,11 @@
 from collections.abc import AsyncGenerator, Generator, Sequence
 from contextlib import asynccontextmanager
 from io import BytesIO
+from pathlib import Path
 from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 from pydantic import AfterValidator, ValidationError
 from sqlmodel import Session
 
@@ -62,7 +64,7 @@ def welcome() -> dict[str, str]:
     return {"detail": "Welcome to NIST Gas SRM database"}
 
 
-@app.get("/srm/", response_model=basemodels.SRMDataPublic)
+@app.get("/srm", response_model=basemodels.SRMDataPublic)
 def read_srm(
     *,
     session: SessionDepends,
@@ -80,7 +82,7 @@ def read_srm(
     )
 
 
-@app.get("/srms/", response_model=list[basemodels.SRMDataPublic])
+@app.get("/srms", response_model=list[basemodels.SRMDataPublic])
 def read_srms(
     *,
     session: SessionDepends,
@@ -97,7 +99,7 @@ def read_srms(
     )
 
 
-@app.get("/srm/complete/", response_model=basemodels.SRMDataPublicComplete)
+@app.get("/srm/complete", response_model=basemodels.SRMDataPublicComplete)
 def read_srm_complete(
     *,
     session: SessionDepends,
@@ -113,7 +115,7 @@ def read_srm_complete(
     )
 
 
-@app.get("/srms/complete/", response_model=list[basemodels.SRMDataPublicComplete])
+@app.get("/srms/complete", response_model=list[basemodels.SRMDataPublicComplete])
 def read_srms_complete(
     *,
     session: SessionDepends,
@@ -130,7 +132,7 @@ def read_srms_complete(
     )
 
 
-@app.get("/rcert/", response_model=basemodels.RCertPublic)
+@app.get("/rcert", response_model=basemodels.RCertPublic)
 def read_rcert(
     *,
     session: SessionDepends,
@@ -148,7 +150,7 @@ def read_rcert(
     )
 
 
-@app.get("/rcerts/", response_model=list[basemodels.RCertPublic])
+@app.get("/rcerts", response_model=list[basemodels.RCertPublic])
 def read_rcerts(
     *,
     session: SessionDepends,
@@ -166,7 +168,7 @@ def read_rcerts(
     )
 
 
-@app.get("/srmrcert/complete/", response_model=basemodels.SRMRCertPublicComplete)
+@app.get("/srmrcert/complete", response_model=basemodels.SRMRCertPublicComplete)
 def read_srmrcert_complete(
     *,
     session: SessionDepends,
@@ -182,7 +184,7 @@ def read_srmrcert_complete(
     )
 
 
-@app.get("/srmrcerts/complete/", response_model=list[basemodels.SRMRCertPublicComplete])
+@app.get("/srmrcerts/complete", response_model=list[basemodels.SRMRCertPublicComplete])
 def read_srmrcerts_complete(
     *,
     session: SessionDepends,
@@ -235,7 +237,7 @@ def read_rcerts_complete(
 
 
 @app.get(
-    "/rcert/cylinder-results/",
+    "/rcert/cylinder-results",
     response_model=list[basemodels.RCertCylinderResultsPublic],
 )
 def read_rcerts_cylinder_results(
@@ -255,33 +257,34 @@ def read_rcerts_cylinder_results(
     ).cylinder_results
 
 
-@app.post("/srm/", response_model=basemodels.SRMDataPublic)
+@app.post("/srm", response_model=basemodels.SRMDataPublic)
 def create_srm(
     *,
     session: SessionDepends,
     srmdata_in: basemodels.SRMDataCreate,
 ) -> models.SRMData:
-    db_srmdata = models.SRMData.model_validate(srmdata_in)
-    session.add(db_srmdata)
-    session.commit()
-    session.refresh(db_srmdata)
-    return db_srmdata
+    return crud.add_srm_from_create(session=session, srmdata_in=srmdata_in)
 
 
-@app.post("/srm/complete/", response_model=basemodels.SRMDataPublic)
+@app.post("/srm/complete", response_model=basemodels.SRMDataPublic)
 def create_srm_complete(
     *,
     session: SessionDepends,
     srmdata_in: basemodels.SRMDataCreateComplete,
 ) -> models.SRMData:
-    db_srmdata = models.SRMData.model_validate(srmdata_in)
-    session.add(db_srmdata)
-    session.commit()
-    session.refresh(db_srmdata)
-    return db_srmdata
+    return crud.add_srm_from_create(session=session, srmdata_in=srmdata_in)
 
 
-@app.post("/upload-excel/", response_model=basemodels.SRMDataPublic)
+@app.post("/srmrcert/complete", response_model=basemodels.SRMDataPublic)
+def create_srmrcert_complete(
+    *,
+    session: SessionDepends,
+    srmdata_in: basemodels.SRMRCertCreateComplete,
+) -> models.SRMData:
+    return crud.add_srm_from_create(session=session, srmdata_in=srmdata_in)
+
+
+@app.post("/upload-excel", response_model=basemodels.SRMDataPublic)
 async def create_upload_file(
     *,
     session: SessionDepends,
@@ -323,6 +326,31 @@ async def create_upload_file(
             status_code=500,
             detail=f"Error processing Excel file: {e!s}",
         ) from e
+
+
+# Just for demo purposes
+@app.get("/download-excel")
+async def download_excel() -> FileResponse:
+    # Path to the file stored on your server
+    file_path = (
+        Path(__file__).parent
+        / "../../../../tmp/data/SRM2627a_SeriesI_CAG+CEC_CEC-RV6.4.xls"
+    )
+
+    if not file_path.exists():
+        raise HTTPException(status_code=400, detail="Error generating excel file")
+
+    # Explicitly set the custom name the user sees when saving
+    display_filename = "monthly_report.xlsx"
+
+    # Official MIME type for modern .xlsx Excel files
+    excel_media_type = (
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+    return FileResponse(
+        path=file_path, filename=display_filename, media_type=excel_media_type
+    )
 
 
 # @app.get("/standards/{srm_id}", response_model=list[StandardsDataPublic])

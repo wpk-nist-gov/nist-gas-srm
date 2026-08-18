@@ -2,6 +2,7 @@
 # ruff:file-ignore[commented-out-code,missing-todo-link,line-contains-todo]
 
 from datetime import UTC, datetime
+from operator import methodcaller
 from typing import Annotated, TypeAlias
 
 from pydantic import AliasGenerator, BeforeValidator
@@ -125,12 +126,16 @@ class RatioDataCreate(RatioDataBase):
 
 
 class RatioDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpdate):
+    model_config = SQLModelConfig(
+        alias_generator=to_pascal,
+        populate_by_name=True,
+    )
     ratio: float | None = None
     ls_set: int | None = None
     break_set: int | None = None
     day: int | None = None
     port: int | None = None
-    value_g: float
+    value_g: float | None = None
     test: Annotated[str | None, BeforeValidator(validate_nan_to_none)] = None
 
 
@@ -564,16 +569,49 @@ class RCertCreateComplete(RCertCreate):
 
 
 class SRMDataCreateComplete(SRMDataCreate):
-    ratios: list[RatioDataPublic] = []
-    vendors: list[VendorDataPublic] = []
-    standards: list[StandardsDataPublic] = []
-    past_lot_standards: list[PastLotStandardsDataPublic] = []
-    additional_lot_standards: list[AdditionalLotStandardsDataPublic] = []
-    ratio_analysis_random_effects: list[RatioAnalysisRandomEffectsDataPublic] = []
-    ratio_analysis_fixed_effects: list[RatioAnalysisFixedEffectsDataPublic] = []
+    ratios: list[RatioDataCreate] = []
+    vendors: list[VendorDataCreate] = []
+    standards: list[StandardsDataCreate] = []
+    past_lot_standards: list[PastLotStandardsDataCreate] = []
+    additional_lot_standards: list[AdditionalLotStandardsDataCreate] = []
+    ratio_analysis_random_effects: list[RatioAnalysisRandomEffectsDataCreate] = []
+    ratio_analysis_fixed_effects: list[RatioAnalysisFixedEffectsDataCreate] = []
 
 
-# Useful typealiases
+class SRMRCertCreateComplete(SRMDataCreateComplete):
+    rcert: RCertCreateComplete
+
+
+# * name/getter/cls triples
+SRMDATA_NAME_CALLER_MAPPING = {
+    name: methodcaller(name if attr is None else attr)
+    for name, attr in {
+        "ratios": "ratio_data",
+        "vendors": "vendor_data",
+        "standards": "standards_data",
+        "ratio_analysis_random_effects": None,
+        "ratio_analysis_fixed_effects": "ratio_analysis_fixed_effects_intercept",
+        "past_lot_standards": None,
+        "additional_lot_standards": None,
+    }.items()
+}
+
+
+RCERTDATA_NAME_CALLER_MAPPING = {
+    name: methodcaller(name if attr is None else attr)
+    for name, attr in {
+        "srm_values": None,
+        "standards_values": None,
+        "additional_lot_standards": None,
+        "cylinder_results": None,
+        "analysis_function_coefficients": None,
+        "correlation_coefficients": "correlation_coefficients_flat",
+        "outliers": None,
+    }.items()
+}
+
+
+# * Useful typealiases
 SRMSubTableCreate: TypeAlias = (
     RatioDataCreate
     | VendorDataCreate

@@ -158,6 +158,34 @@ def create_rcert_item(
     return db_item
 
 
+# ruff:file-ignore[commented-out-code]
+# the "other" way of doing it.  Have a hack that seems to work for now below
+# def add_srm_from_excel_obj(
+#     *,
+#     session: Session,
+#     srmdata_create: basemodels.SRMDataCreate,
+#     srmxls: read_excel.SRMExcelFile,
+# ) -> models.SRMData:
+
+#     data: dict[str, Any] = {
+#         name: list(read_excel.frame_to_list_of_models(caller(srmxls), cls))
+#         for name, caller, cls in models.SRMDATA_NAME_CALLER_CLS
+#     }
+
+#     data_rcert: dict[str, Any] = {
+#         name: list(read_excel.frame_to_list_of_models(caller(srmxls.rcert), cls))
+#         for name, caller, cls in models.RCERTDATA_NAME_CALLER_CLS
+#     }
+
+#     data["rcert"] = models.RCertData(**data_rcert)
+
+#     srm = models.SRMData(**srmdata_create.model_dump(), **data)
+#     session.add(srm)
+#     session.commit()
+#     session.refresh(srm)
+#     return srm
+
+
 def add_srm_from_excel_obj(
     *,
     session: Session,
@@ -166,18 +194,30 @@ def add_srm_from_excel_obj(
 ) -> models.SRMData:
 
     data: dict[str, Any] = {
-        name: list(read_excel.frame_to_list_of_models(caller(srmxls), cls))
-        for name, caller, cls in models.SRMDATA_NAME_CALLER_CLS
+        name: read_excel.frame_to_list_of_dicts(caller(srmxls))
+        for name, caller in basemodels.SRMDATA_NAME_CALLER_MAPPING.items()
     }
 
-    data_rcert: dict[str, Any] = {
-        name: list(read_excel.frame_to_list_of_models(caller(srmxls.rcert), cls))
-        for name, caller, cls in models.RCERTDATA_NAME_CALLER_CLS
+    data["rcert"] = {
+        name: read_excel.frame_to_list_of_dicts(caller(srmxls.rcert))
+        for name, caller in basemodels.RCERTDATA_NAME_CALLER_MAPPING.items()
     }
 
-    data["rcert"] = models.RCertData(**data_rcert)
+    data.update(srmdata_create.model_dump())
 
-    srm = models.SRMData(**srmdata_create.model_dump(), **data)
+    srmdata_in = basemodels.SRMRCertCreateComplete.model_validate(data)
+    return add_srm_from_create(session=session, srmdata_in=srmdata_in)
+
+
+def add_srm_from_create(
+    *,
+    session: Session,
+    srmdata_in: basemodels.SRMDataCreate,
+) -> models.SRMData:
+
+    # NOTE: this only works with the _FixMixin in models.py
+    # see https://github.com/fastapi/sqlmodel/issues/293
+    srm = models.SRMData.model_validate(srmdata_in)
     session.add(srm)
     session.commit()
     session.refresh(srm)
