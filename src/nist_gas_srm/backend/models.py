@@ -11,7 +11,7 @@ from sqlmodel import (
 from sqlmodel._compat import SQLModelConfig  # ruff:ignore[import-private-name]
 from sqlmodel.sql._expression_select_cls import Select, SelectOfScalar
 
-from ._models import (
+from nist_gas_srm.core.basemodels import (
     AdditionalLotStandardsDataBase,
     IDPrimaryKey,
     PastLotStandardsDataBase,
@@ -170,6 +170,7 @@ class RCertAdditionalLotStandards(
 
 
 class RCertCylinderResults(RCertCylinderResultsBase, IDPrimaryKey, table=True):
+    model_config = SQLModelConfig(populate_by_name=True, serialize_by_alias=False)
     rcertdata: RCertData | None = Relationship(back_populates="cylinder_results")
 
 

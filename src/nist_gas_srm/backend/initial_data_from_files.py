@@ -14,11 +14,12 @@ from sqlmodel import (
     select,
 )
 
+from nist_gas_srm.core import basemodels
+from nist_gas_srm.core.read_excel import SRMExcelFile
 from nist_gas_srm.core.utils import parse_excel_filename_to_metadata
 
-from . import _models as basemodels, crud, models
+from . import crud, models
 from .core.db import engine, init_db
-from .read_excel import SRMExcelFile
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

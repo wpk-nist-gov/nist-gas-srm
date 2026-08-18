@@ -8,9 +8,10 @@ from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
 from pydantic import AfterValidator, ValidationError
 from sqlmodel import Session
 
-from nist_gas_srm.backend import _models as basemodels, crud, models
+from nist_gas_srm.backend import crud, models
 from nist_gas_srm.backend.core.db import engine, init_db
-from nist_gas_srm.backend.read_excel import SRMExcelFile
+from nist_gas_srm.core import basemodels
+from nist_gas_srm.core.read_excel import SRMExcelFile
 from nist_gas_srm.core.validate import validate_optional_str_to_lower
 
 _OptStrAsLower = Annotated[str | None, AfterValidator(validate_optional_str_to_lower)]
@@ -96,7 +97,23 @@ def read_srms(
     )
 
 
-@app.get("/srms/complete/", response_model=list[basemodels.SRMDataComplete])
+@app.get("/srm/complete/", response_model=basemodels.SRMDataPublicComplete)
+def read_srm_complete(
+    *,
+    session: SessionDepends,
+    srm_id: int | None = None,
+    batch_id: _OptStrAsLower = None,
+    lot_id: _OptStrAsLower = None,
+) -> models.SRMData:
+    return crud.get_srm(
+        session=session,
+        srm_id=srm_id,
+        batch_id=batch_id,
+        lot_id=lot_id,
+    )
+
+
+@app.get("/srms/complete/", response_model=list[basemodels.SRMDataPublicComplete])
 def read_srms_complete(
     *,
     session: SessionDepends,
@@ -106,22 +123,6 @@ def read_srms_complete(
 ) -> Sequence[models.SRMData]:
 
     return crud.get_srms(
-        session=session,
-        srm_id=srm_id,
-        batch_id=batch_id,
-        lot_id=lot_id,
-    )
-
-
-@app.get("/srm/complete/", response_model=basemodels.SRMDataComplete)
-def read_srm_complete(
-    *,
-    session: SessionDepends,
-    srm_id: int | None = None,
-    batch_id: _OptStrAsLower = None,
-    lot_id: _OptStrAsLower = None,
-) -> models.SRMData:
-    return crud.get_srm(
         session=session,
         srm_id=srm_id,
         batch_id=batch_id,
@@ -165,7 +166,39 @@ def read_rcerts(
     )
 
 
-@app.get("/rcert/complete", response_model=basemodels.RCertComplete)
+@app.get("/srmrcert/complete/", response_model=basemodels.SRMRCertPublicComplete)
+def read_srmrcert_complete(
+    *,
+    session: SessionDepends,
+    srm_id: int | None = None,
+    batch_id: _OptStrAsLower = None,
+    lot_id: _OptStrAsLower = None,
+) -> models.SRMData:
+    return crud.get_srm(
+        session=session,
+        srm_id=srm_id,
+        batch_id=batch_id,
+        lot_id=lot_id,
+    )
+
+
+@app.get("/srmrcerts/complete/", response_model=list[basemodels.SRMRCertPublicComplete])
+def read_srmrcerts_complete(
+    *,
+    session: SessionDepends,
+    srm_id: int | None = None,
+    batch_id: _OptStrAsLower = None,
+    lot_id: _OptStrAsLower = None,
+) -> Sequence[models.SRMData]:
+    return crud.get_srms(
+        session=session,
+        srm_id=srm_id,
+        batch_id=batch_id,
+        lot_id=lot_id,
+    )
+
+
+@app.get("/rcert/complete", response_model=basemodels.RCertPublicComplete)
 def read_rcert_complete(
     *,
     session: SessionDepends,
@@ -183,7 +216,7 @@ def read_rcert_complete(
     )
 
 
-@app.get("/rcerts/", response_model=list[basemodels.RCertComplete])
+@app.get("/rcerts/", response_model=list[basemodels.RCertPublicComplete])
 def read_rcerts_complete(
     *,
     session: SessionDepends,
@@ -199,6 +232,27 @@ def read_rcerts_complete(
         batch_id=batch_id,
         lot_id=lot_id,
     )
+
+
+@app.get(
+    "/rcert/cylinder-results/",
+    response_model=list[basemodels.RCertCylinderResultsPublic],
+)
+def read_rcerts_cylinder_results(
+    *,
+    session: SessionDepends,
+    srm_id: int | None = None,
+    batch_id: _OptStrAsLower = None,
+    lot_id: _OptStrAsLower = None,
+) -> Sequence[models.RCertCylinderResults]:
+    """Get list of srms"""
+
+    return crud.get_rcert(
+        session=session,
+        srm_id=srm_id,
+        batch_id=batch_id,
+        lot_id=lot_id,
+    ).cylinder_results
 
 
 @app.post("/srm/", response_model=basemodels.SRMDataPublic)

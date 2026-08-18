@@ -5,11 +5,13 @@ from typing import Any
 
 from sqlmodel import Session, select
 
-from . import _models as pmodels, models, read_excel
+from nist_gas_srm.core import basemodels, read_excel
+
+from . import models
 
 
 def create_srm(
-    *, session: Session, srmdata_create: pmodels.SRMDataCreate
+    *, session: Session, srmdata_create: basemodels.SRMDataCreate
 ) -> models.SRMData:
     obj = models.SRMData.model_validate(srmdata_create)
     session.add(obj)
@@ -19,7 +21,10 @@ def create_srm(
 
 
 def update_srm(
-    *, session: Session, db_srmdata: models.SRMData, srmdata_in: pmodels.SRMDataUpdate
+    *,
+    session: Session,
+    db_srmdata: models.SRMData,
+    srmdata_in: basemodels.SRMDataUpdate,
 ) -> models.SRMData:
     srmdata_data = srmdata_in.model_dump(exclude_unset=True)
 
@@ -129,7 +134,7 @@ def create_srm_item(
     *,
     session: Session,
     srmdata_id: int,
-    item_in: pmodels.SRMSubTableCreate,
+    item_in: basemodels.SRMSubTableCreate,
     cls: type[models.SRMSubTable],
 ) -> models.SRMSubTable:
 
@@ -144,7 +149,7 @@ def create_rcert_item(
     *,
     session: Session,
     rcert_id: int,
-    item_in: pmodels.RCertSubTableCreate,
+    item_in: basemodels.RCertSubTableCreate,
     cls: type[models.RCertSubTable],
 ) -> models.RCertSubTable:
     db_item = cls.model_validate(item_in, update={"rcert_id": rcert_id})
@@ -156,7 +161,7 @@ def create_rcert_item(
 def add_srm_from_excel_obj(
     *,
     session: Session,
-    srmdata_create: pmodels.SRMDataCreate,
+    srmdata_create: basemodels.SRMDataCreate,
     srmxls: read_excel.SRMExcelFile,
 ) -> models.SRMData:
 

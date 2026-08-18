@@ -2,7 +2,7 @@
 # ruff:file-ignore[commented-out-code,missing-todo-link,line-contains-todo]
 
 from datetime import UTC, datetime
-from typing import Annotated, TypeAlias
+from typing import Annotated, Any, TypeAlias, override
 
 from pydantic import BeforeValidator
 from pydantic.alias_generators import to_pascal
@@ -10,7 +10,7 @@ from sqlalchemy import Column, DateTime
 from sqlmodel import (
     VARCHAR,
     Field,
-    SQLModel,
+    SQLModel as SQLModelBase,
     UniqueConstraint,
 )
 from sqlmodel._compat import SQLModelConfig  # ruff:ignore[import-private-name]
@@ -21,6 +21,14 @@ from nist_gas_srm.core.validate import (
     validate_str_to_lower,
     validate_timestamp,
 )
+
+
+class SQLModel(SQLModelBase):
+    @override
+    def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        # Force by_alias default or ensure it respects False
+        kwargs.setdefault("by_alias", False)
+        return super().model_dump(*args, **kwargs)
 
 
 # * Common --------------------------------------------------------------------
@@ -97,10 +105,12 @@ class SRMDataUpdate(SQLModel):
 class RatioDataBase(_SampleIDAndNumber, SRMDataForeignKey):
     """Ratio data base class"""
 
-    model_config = SQLModelConfig(alias_generator=to_pascal, populate_by_name=True)
+    model_config = SQLModelConfig(
+        alias_generator=to_pascal, populate_by_name=True, serialize_by_alias=False
+    )
 
     ratio: float
-    ls_set: int = Field(alias="LSSet")
+    ls_set: int = Field(alias="LSSet", serialization_alias="ls_set")
     break_set: int
     day: int
     port: int
@@ -128,7 +138,9 @@ class RatioDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpdate):
 
 # ** Ratio Analysis -----------------------------------------------------------
 class RatioAnalysisRandomEffectsDataBase(SRMDataForeignKey):
-    model_config = SQLModelConfig(alias_generator=to_pascal, populate_by_name=True)
+    model_config = SQLModelConfig(
+        alias_generator=to_pascal, populate_by_name=True, serialize_by_alias=False
+    )
 
     groups: str
     name: Annotated[str | None, BeforeValidator(validate_nan_to_none)]
@@ -156,7 +168,9 @@ class RatioAnalysisRandomEffectsDataUpdate(_SRMDataForeignKeyUpdate):
 
 
 class RatioAnalysisFixedEffectsDataBase(SRMDataForeignKey):
-    model_config = SQLModelConfig(alias_generator=to_pascal, populate_by_name=True)
+    model_config = SQLModelConfig(
+        alias_generator=to_pascal, populate_by_name=True, serialize_by_alias=False
+    )
 
     estimate: float
     stderr: float = Field(alias="Std Error")
@@ -183,7 +197,9 @@ class RatioAnalysisFixedEffectsDataUpdate(_SRMDataForeignKeyUpdate):
 class VendorDataBase(_SampleIDAndNumber, SRMDataForeignKey):
     """Vendor data"""
 
-    model_config = SQLModelConfig(alias_generator=to_pascal, populate_by_name=True)
+    model_config = SQLModelConfig(
+        alias_generator=to_pascal, populate_by_name=True, serialize_by_alias=False
+    )
 
     cylinder_number: str = Field(alias="CylinderNo")
     ratio: float = Field(alias="VendorRatio")
@@ -206,7 +222,7 @@ class VendorDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpdate):
 class StandardsDataBase(SRMDataForeignKey):
     """Standards Data"""
 
-    model_config = SQLModelConfig(populate_by_name=True)
+    model_config = SQLModelConfig(populate_by_name=True, serialize_by_alias=False)
 
     name: str = Field(alias="StandardID")
     number: int = Field(alias="StandardNo")
@@ -237,7 +253,7 @@ class StandardsDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpdate):
 class PastLotStandardsDataBase(SRMDataForeignKey):
     """Past lot standards"""
 
-    model_config = SQLModelConfig(populate_by_name=True)
+    model_config = SQLModelConfig(populate_by_name=True, serialize_by_alias=False)
     name: str = Field(alias="LS ID")
     number: int = Field(alias="LS#")
     ratio: float = Field(alias="Ratio")
@@ -264,7 +280,7 @@ class PastLotStandardsDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpd
 class AdditionalLotStandardsDataBase(SRMDataForeignKey):
     """AdditionalLotStandards"""
 
-    model_config = SQLModelConfig(populate_by_name=True)
+    model_config = SQLModelConfig(populate_by_name=True, serialize_by_alias=False)
     name: str = Field(alias="ID")
     number: int = Field(alias="LS#")
     ratio: float = Field(alias="Ratio")
@@ -342,7 +358,7 @@ class RCertSRMValuesUpdate(_RCertForeignKeyUpdate):
 class RCertStandardsValuesBase(RCertForeignKey):
     """Rcert.standards_values"""
 
-    model_config = SQLModelConfig(populate_by_name=True)
+    model_config = SQLModelConfig(populate_by_name=True, serialize_by_alias=False)
 
     value: float = Field(alias="Value")
     uncert: float = Field(alias="Uncert (k=2)")
@@ -367,7 +383,7 @@ class RCertStandardsValuesUpdate(_RCertForeignKeyUpdate):
 
 # ** Additional lot standards
 class RCertAdditionalLotStandardsBase(RCertForeignKey):
-    model_config = SQLModelConfig(populate_by_name=True)
+    model_config = SQLModelConfig(populate_by_name=True, serialize_by_alias=False)
 
     name: str = Field(alias="Additional LSs")
     number: int = Field(alias="LS #")
@@ -397,7 +413,7 @@ class RCertAdditionalLotStandardsUpdate(_RCertForeignKeyUpdate):
 
 # ** Cylinder results
 class RCertCylinderResultsBase(RCertForeignKey):
-    model_config = SQLModelConfig(populate_by_name=True)
+    model_config = SQLModelConfig(populate_by_name=True, serialize_by_alias=False)
 
     name: str
     value: float
@@ -406,7 +422,7 @@ class RCertCylinderResultsBase(RCertForeignKey):
 
 
 class RCertCylinderResultsPublic(RCertCylinderResultsBase, _IDPrimaryKeyPublic):
-    pass
+    model_config = SQLModelConfig(populate_by_name=True, serialize_by_alias=False)
 
 
 class RCertCylinderResultsCreate(RCertCylinderResultsBase):
@@ -468,7 +484,9 @@ class RCertCorrelationCoefficientsUpdate(_RCertForeignKeyUpdate):
 
 # ** outliers
 class RCertOutliersBase(RCertForeignKey):
-    model_config = SQLModelConfig(alias_generator=to_pascal, populate_by_name=True)
+    model_config = SQLModelConfig(
+        alias_generator=to_pascal, populate_by_name=True, serialize_by_alias=False
+    )
     name: str = Field(alias="SampleID")
     # TODO(wpk): make this a bool with where test == "OUT"
     ratio: float
@@ -493,7 +511,9 @@ class RCertOutliersUpdate(_RCertForeignKeyUpdate):
 
 
 # * "Complete" data
-class RCertComplete(_IDPrimaryKeyPublic):
+# ** Public
+class RCertPublicComplete(_IDPrimaryKeyPublic):
+    model_config = SQLModelConfig(serialize_by_alias=False)
     srm_values: list[RCertSRMValuesPublic] = []
     standards_values: list[RCertStandardsValuesPublic] = []
     additional_lot_standards: list[RCertAdditionalLotStandardsPublic] = []
@@ -503,7 +523,8 @@ class RCertComplete(_IDPrimaryKeyPublic):
     outliers: list[RCertOutliersPublic] = []
 
 
-class SRMDataComplete(SRMDataBase, _IDPrimaryKeyPublic):
+class SRMDataPublicComplete(SRMDataBase, _IDPrimaryKeyPublic):
+    model_config = SQLModelConfig(serialize_by_alias=False)
     ratios: list[RatioDataPublic] = []
     vendors: list[VendorDataPublic] = []
     standards: list[StandardsDataPublic] = []
@@ -512,7 +533,14 @@ class SRMDataComplete(SRMDataBase, _IDPrimaryKeyPublic):
     ratio_analysis_random_effects: list[RatioAnalysisRandomEffectsDataPublic] = []
     ratio_analysis_fixed_effects: list[RatioAnalysisFixedEffectsDataPublic] = []
 
-    # rcert: RCertComplete
+
+class SRMRCertPublicComplete(SRMDataPublicComplete):
+    rcert: RCertPublicComplete
+
+
+# ** Create
+class RCertCreateComplete:
+    pass
 
 
 # Useful typealiases
