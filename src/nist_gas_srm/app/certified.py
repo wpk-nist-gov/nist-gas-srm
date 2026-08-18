@@ -42,9 +42,9 @@ if (srm_file := st.session_state.get("srm_file")) is not None:
             # plot of Cylinder results
             fig = px.scatter(  # pyright: ignore[reportUnknownMemberType]
                 data_,
-                x="name",
-                y="value",
-                error_y="confidence_level_95",
+                x="Sample",
+                y="Value",
+                error_y="95% CI",
                 title="Cylinder reulsts",
             )
             st.plotly_chart(fig)  # pyright: ignore[reportUnknownMemberType]

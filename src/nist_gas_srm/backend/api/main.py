@@ -216,7 +216,7 @@ def read_rcert_complete(
     )
 
 
-@app.get("/rcerts/", response_model=list[basemodels.RCertPublicComplete])
+@app.get("/rcerts/complete", response_model=list[basemodels.RCertPublicComplete])
 def read_rcerts_complete(
     *,
     session: SessionDepends,

@@ -133,3 +133,4 @@ tuna-loadtime.log
 /requirements/lock/py*-dev-user.txt*
 
 *.db
+.DS_Store

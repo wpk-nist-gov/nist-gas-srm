@@ -170,7 +170,6 @@ class RCertAdditionalLotStandards(
 
 
 class RCertCylinderResults(RCertCylinderResultsBase, IDPrimaryKey, table=True):
-    model_config = SQLModelConfig(populate_by_name=True, serialize_by_alias=False)
     rcertdata: RCertData | None = Relationship(back_populates="cylinder_results")
 
 

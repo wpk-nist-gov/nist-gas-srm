@@ -176,18 +176,19 @@ class _RCertification(_SRMExcelFileBase):
         )
 
     def standards_values(self) -> pd.DataFrame | None:
-        out = _maybe_dropna(
-            self._get_optional_frame(
-                self.sheet.rcert,
-                usecols="B:E",
-                skiprows=_skipper(lower=58, upper=68),
-            ),
-            how="all",
+        out = self._get_optional_frame(
+            self.sheet.rcert,
+            usecols="A:E",
+            skiprows=_skipper(lower=58, upper=68),
         )
+
         if out is not None:
             columns = list(out.columns)
             columns[-1] = "Predicted " + columns[-1]
             out.columns = columns
+
+            out = _maybe_dropna(out, how="all", subset=out.columns[1:])
+
         return out
 
     def additional_lot_standards(self) -> pd.DataFrame | None:
@@ -199,9 +200,7 @@ class _RCertification(_SRMExcelFileBase):
         return self._get_optional_frame(
             self.sheet.rcert,
             usecols="M:P",
-            skiprows=47,
-            header=None,
-            names=["name", "value", "uncert", "confidence_level_95"],
+            skiprows=46,
         )
 
     def analysis_function_coefficients(self) -> pd.DataFrame | None:
@@ -297,7 +296,7 @@ class SRMExcelFile(_SRMExcelFileBase):
         df = _get_frame_with_len_check(
             self.excelfile,
             self.sheet.standards,
-            usecols="A:F",
+            usecols="A:E",
             rowx=1,
             colx="H",
             **kwargs,
