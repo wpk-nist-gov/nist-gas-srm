@@ -68,7 +68,7 @@ class _FixMixin(SQLModel):
             # convert attribute(s) with their model's validator
             items: Any
             if isinstance(attr, list):
-                items = [rel_class.model_validate(item) for item in attr]
+                items = [rel_class.model_validate(item) for item in attr]  # pyright: ignore[reportUnknownVariableType]
                 setattr(model, rel_name, items)
             else:
                 item = rel_class.model_validate(attr)

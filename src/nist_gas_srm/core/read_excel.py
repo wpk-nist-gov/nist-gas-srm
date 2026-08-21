@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 _strip_trailing_numbers = partial(re.compile(r"\.[1-9]+").sub, "")
 
 
-def _skipper(
+def skipper(
     lower: int | None = None,
     upper: int | None = None,
     include: Container[int] | None = None,
@@ -45,13 +45,13 @@ def _skipper(
     return func
 
 
-def _maybe_dropna(df: pd.DataFrame | None, **kwargs: Any) -> pd.DataFrame | None:
+def maybe_dropna(df: pd.DataFrame | None, **kwargs: Any) -> pd.DataFrame | None:
     if df is not None:
         return cast("pd.DataFrame | None", df.dropna(**kwargs))
     return df
 
 
-def _get_frame(
+def get_frame(
     io: Any,
     sheet_name: str,
     **kwargs: Any,
@@ -59,14 +59,14 @@ def _get_frame(
     return pd.read_excel(io, sheet_name=sheet_name, **kwargs).dropna(how="all")  # pyright: ignore[reportUnknownMemberType]
 
 
-def _validate_no_null(x: T) -> T:
+def validate_no_null(x: T) -> T:
     if np.any(pd.isnull(cast("np.ndarray[Any, Any]", x))):
         msg = "Null values found"
         raise ValueError(msg)
     return x
 
 
-def _get_value_from_worksheet(
+def get_value_from_worksheet(
     xls: pd.ExcelFile, sheet_name: str, rowx: int, colx: int | str
 ) -> Any:
     if isinstance(colx, str):
@@ -87,7 +87,7 @@ def _get_value_from_worksheet(
 
 
 @contextmanager
-def _as_excelfile(
+def as_excelfile(
     path_or_excelfile: Path | BytesIO | pd.ExcelFile,
 ) -> Generator[pd.ExcelFile]:
     if isinstance(path_or_excelfile, pd.ExcelFile):
@@ -96,7 +96,7 @@ def _as_excelfile(
         yield pd.ExcelFile(path_or_excelfile)
 
 
-def _get_frame_with_len_check(
+def get_frame_with_len_check(
     path_or_excelfile: Path | BytesIO | pd.ExcelFile,
     sheet_name: str,
     usecols: str,
@@ -106,12 +106,12 @@ def _get_frame_with_len_check(
     **kwargs: Any,
 ) -> pd.DataFrame:
 
-    with _as_excelfile(path_or_excelfile) as xls:
-        df = _get_frame(xls, sheet_name=sheet_name, usecols=usecols, **kwargs)
+    with as_excelfile(path_or_excelfile) as xls:
+        df = get_frame(xls, sheet_name=sheet_name, usecols=usecols, **kwargs)
 
         if require_check:
             if (
-                val := _get_value_from_worksheet(
+                val := get_value_from_worksheet(
                     xls, sheet_name=sheet_name, rowx=rowx, colx=colx
                 )
             ) is None:
@@ -138,7 +138,7 @@ class _SRMExcelFileBase:
     sheet: ClassVar[type[_Sheet]] = _Sheet
 
     def __init__(self, path_or_excelfile: Path | BytesIO | pd.ExcelFile) -> None:
-        with _as_excelfile(path_or_excelfile) as excelfile:
+        with as_excelfile(path_or_excelfile) as excelfile:
             self.excelfile = excelfile
 
     # *  Ratio Analysis
@@ -146,7 +146,7 @@ class _SRMExcelFileBase:
         self, sheet_name: str, usecols: str, **kwargs: Any
     ) -> pd.DataFrame | None:
         if sheet_name in self.excelfile.sheet_names:
-            df = _get_frame(
+            df = get_frame(
                 self.excelfile,
                 sheet_name,
                 usecols=usecols,
@@ -158,7 +158,7 @@ class _SRMExcelFileBase:
 
 class _RCertification(_SRMExcelFileBase):
     def analysis_date(self) -> datetime | None:
-        if value := _get_value_from_worksheet(
+        if value := get_value_from_worksheet(
             self.excelfile, self.sheet.rcert, rowx=43, colx="B"
         ):
             return datetime.strptime(value, "%B %d %Y").astimezone(UTC)
@@ -171,7 +171,7 @@ class _RCertification(_SRMExcelFileBase):
             self.sheet.rcert,
             usecols="A:B",
             header=None,
-            skiprows=_skipper(include={47, 48, 49, 52, 53, 54, 55}),
+            skiprows=skipper(include={47, 48, 49, 52, 53, 54, 55}),
             names=["name", "value"],
         )
 
@@ -190,7 +190,7 @@ class _RCertification(_SRMExcelFileBase):
         out = self._get_optional_frame(
             self.sheet.rcert,
             usecols="A:E",
-            skiprows=_skipper(lower=58, upper=68),
+            skiprows=skipper(lower=58, upper=68),
         )
 
         if out is not None:
@@ -198,13 +198,13 @@ class _RCertification(_SRMExcelFileBase):
             columns[-1] = "Predicted " + columns[-1]
             out.columns = columns
 
-            out = _maybe_dropna(out, how="all", subset=out.columns[1:])
+            out = maybe_dropna(out, how="all", subset=out.columns[1:])
 
         return out
 
     def additional_lot_standards(self) -> pd.DataFrame | None:
         return self._get_optional_frame(
-            self.sheet.rcert, usecols="A:E", skiprows=_skipper(lower=71, upper=75)
+            self.sheet.rcert, usecols="A:E", skiprows=skipper(lower=71, upper=75)
         )
 
     def cylinder_results(self) -> pd.DataFrame | None:
@@ -215,11 +215,11 @@ class _RCertification(_SRMExcelFileBase):
         )
 
     def analysis_function_coefficients(self) -> pd.DataFrame | None:
-        out = _maybe_dropna(
+        out = maybe_dropna(
             self._get_optional_frame(
                 self.sheet.rcert,
                 usecols="G:H",
-                skiprows=_skipper(lower=46, upper=50),
+                skiprows=skipper(lower=46, upper=50),
                 names=["value", "uncert"],
             ),
             how="all",
@@ -232,14 +232,14 @@ class _RCertification(_SRMExcelFileBase):
         out = self._get_optional_frame(
             self.sheet.rcert,
             usecols="G:J",
-            skiprows=_skipper(lower=52, upper=56),
+            skiprows=skipper(lower=52, upper=56),
         )
-        out = _maybe_dropna(out, how="all")
+        out = maybe_dropna(out, how="all")
 
         if out is not None:
             out = out.assign(order=range(len(out)))
 
-        return _maybe_dropna(out, how="all", axis=1)
+        return maybe_dropna(out, how="all", axis=1)
 
     def correlation_coefficients_flat(self) -> pd.DataFrame | None:
 
@@ -272,7 +272,7 @@ class _RCertification(_SRMExcelFileBase):
         out = self._get_optional_frame(
             self.sheet.ratio,
             usecols="J:K",
-            skiprows=_skipper(lower=24, upper=25),
+            skiprows=skipper(lower=24, upper=25),
             header=None,
             names=["parameter", "value"],
         )
@@ -292,19 +292,19 @@ class SRMExcelFile(_SRMExcelFileBase):
         return _RCertification(self.excelfile)
 
     def ratio_data(self, **kwargs: Any) -> pd.DataFrame:
-        df = _get_frame_with_len_check(
+        df = get_frame_with_len_check(
             self.excelfile, self.sheet.ratio, usecols="A:I", rowx=16, colx="L", **kwargs
         )
-        _ = _validate_no_null(df.drop(columns="Test"))
+        _ = validate_no_null(df.drop(columns="Test"))
         return df
 
     def vendor_data(self, **kwargs: Any) -> pd.DataFrame:
-        return _get_frame(
+        return get_frame(
             self.excelfile, sheet_name=self.sheet.vendor, usecols="A:D", **kwargs
         )
 
     def standards_data(self, **kwargs: Any) -> pd.DataFrame:
-        df = _get_frame_with_len_check(
+        df = get_frame_with_len_check(
             self.excelfile,
             self.sheet.standards,
             usecols="A:E",
@@ -312,10 +312,10 @@ class SRMExcelFile(_SRMExcelFileBase):
             colx="H",
             **kwargs,
         )
-        return _validate_no_null(df)
+        return validate_no_null(df)
 
     def past_lot_standards(self, **kwargs: Any) -> pd.DataFrame:
-        return _get_frame(
+        return get_frame(
             self.excelfile,
             self.sheet.lot_standards,
             usecols="A:F",
@@ -324,7 +324,7 @@ class SRMExcelFile(_SRMExcelFileBase):
         ).rename(columns=_strip_trailing_numbers)
 
     def additional_lot_standards(self, **kwargs: Any) -> pd.DataFrame:
-        return _get_frame(
+        return get_frame(
             self.excelfile,
             self.sheet.lot_standards,
             usecols="H:J",
