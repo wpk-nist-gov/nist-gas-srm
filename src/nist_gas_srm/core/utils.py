@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import re
-from collections.abc import MutableMapping
-from typing import TYPE_CHECKING
+from collections.abc import Callable, MutableMapping
+from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
     from typing import Any
+
+    import pandas as pd
 
 EXCEL_FILENAME_PATTERN = re.compile(
     r"srm(?P<srm_id>\d+)(?P<batch_id>\w*)_Series(?P<lot_id>\w*)_(.*).xls",
@@ -30,8 +32,25 @@ def parse_excel_filename_to_metadata(name: str) -> dict[str, Any]:
     return out
 
 
+def optional_dataframe_func_wrapper(
+    func: Callable[..., pd.DataFrame],
+    xls: pd.ExcelFile,
+    sheet_name: str,
+    **kwargs: Any,
+) -> pd.DataFrame | None:
+
+    if sheet_name in xls.sheet_names:
+        df = func(
+            xls,
+            sheet_name,
+            **kwargs,
+        )
+        return None if df.empty else df
+    return None
+
+
 def flatten_dict(
-    d: dict[str, Any], parent_key: str = "", sep: str = "."
+    d: MutableMapping[str, Any], parent_key: str = "", sep: str = "."
 ) -> dict[str, Any]:
     """Convert nested dict to flat dict."""
     items: list[tuple[str, Any]] = []
@@ -41,7 +60,11 @@ def flatten_dict(
 
         # If the value is another dictionary, recurse deeper
         if isinstance(v, MutableMapping):
-            items.extend(flatten_dict(v, new_key, sep=sep).items())
+            items.extend(
+                flatten_dict(
+                    cast("MutableMapping[str, Any]", v), new_key, sep=sep
+                ).items()
+            )
         else:
             items.append((new_key, v))
 

@@ -20,10 +20,10 @@ from .read_excel import (
     skipper,
     validate_no_null,
 )
+from .utils import optional_dataframe_func_wrapper
 
 if TYPE_CHECKING:
     from collections.abc import (
-        Callable,
         Container,
         Hashable,
         ItemsView,
@@ -98,23 +98,6 @@ RCERT_COLNAMES_TO_DBNAMES_MAPPER = {
 }
 
 
-def _optional_wrap(
-    func: Callable[..., pd.DataFrame],
-    xls: pd.ExcelFile,
-    sheet_name: str,
-    **kwargs: Any,
-) -> pd.DataFrame | None:
-
-    if sheet_name in xls.sheet_names:
-        df = func(
-            xls,
-            sheet_name,
-            **kwargs,
-        )
-        return None if df.empty else df
-    return None
-
-
 class DataProtocol(Protocol):
     sheet_name: ClassVar[SheetNames]
     table_name: ClassVar[str]
@@ -162,7 +145,7 @@ class DataProtocol(Protocol):
     def _get_optional_frame(
         self, strip_trailing_numbers: bool = False, **kwargs: Any
     ) -> pd.DataFrame | None:
-        out = _optional_wrap(
+        out = optional_dataframe_func_wrapper(
             get_frame, self.excelfile, sheet_name=self.sheet_name.value, **kwargs
         )
         if out is not None and strip_trailing_numbers:
@@ -170,7 +153,7 @@ class DataProtocol(Protocol):
         return out
 
     def _get_optional_frame_with_len_check(self, **kwargs: Any) -> pd.DataFrame | None:
-        return _optional_wrap(
+        return optional_dataframe_func_wrapper(
             get_frame_with_len_check,
             self.excelfile,
             sheet_name=self.sheet_name.value,
@@ -268,8 +251,7 @@ class PastLotStandards(DataProtocol):
     @override
     def excel_to_dataframe(self) -> pd.DataFrame | None:
         return self._get_frame(
-            usecols="A:F",
-            skiprows=1,
+            usecols="A:F", skiprows=1, strip_trailing_numbers=True
         ).rename(columns=_strip_trailing_numbers)
 
 

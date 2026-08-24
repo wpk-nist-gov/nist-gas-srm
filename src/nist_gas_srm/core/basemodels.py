@@ -3,8 +3,9 @@
 
 from datetime import UTC, datetime
 from operator import methodcaller
-from typing import Annotated, TypeAlias
+from typing import Annotated, TypeAlias, cast, override
 
+import pandas as pd
 from pydantic import AliasGenerator, BeforeValidator
 from pydantic.alias_generators import to_pascal as to_pascal_base
 from sqlalchemy import Column, DateTime
@@ -22,6 +23,9 @@ from nist_gas_srm.core.validate import (
     validate_str_to_lower,
     validate_timestamp,
 )
+
+from ._model_mixin import SheetNames, SQLDataFrameInterface
+from .read_excel import maybe_dropna, skipper, validate_no_null
 
 to_pascal = AliasGenerator(
     validation_alias=to_pascal_base,
@@ -121,8 +125,22 @@ class RatioDataPublic(RatioDataBase, _IDPrimaryKeyPublic):
     pass
 
 
-class RatioDataCreate(RatioDataBase):
-    pass
+class RatioDataCreate(RatioDataBase, SQLDataFrameInterface):
+    _table_name = "ratios"
+    _sheet_name = SheetNames.ratio
+
+    @override
+    @classmethod
+    def excel_to_dataframe(cls, excelfile: pd.ExcelFile) -> pd.DataFrame | None:
+        out = cls._get_frame_with_len_check(
+            excelfile,
+            usecols="A:I",
+            rowx=16,
+            colx="L",
+        )
+
+        _ = validate_no_null(out.drop(columns="Test"))
+        return out
 
 
 class RatioDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpdate):
@@ -137,6 +155,157 @@ class RatioDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpdate):
     port: int | None = None
     value_g: float | None = None
     test: Annotated[str | None, BeforeValidator(validate_nan_to_none)] = None
+
+
+# ** Vendor Data --------------------------------------------------------------
+class VendorDataBase(_SampleIDAndNumber, SRMDataForeignKey):
+    """Vendor data"""
+
+    model_config = SQLModelConfig(
+        alias_generator=to_pascal,
+        populate_by_name=True,
+    )
+
+    cylinder_number: str = Field(validation_alias="CylinderNo")
+    ratio: float = Field(validation_alias="VendorRatio")
+
+
+class VendorDataPublic(VendorDataBase, _IDPrimaryKeyPublic):
+    pass
+
+
+class VendorDataCreate(VendorDataBase, SQLDataFrameInterface):
+    _table_name = "vendors"
+    _sheet_name = SheetNames.vendor
+
+    @override
+    @classmethod
+    def excel_to_dataframe(cls, excelfile: pd.ExcelFile) -> pd.DataFrame | None:
+        return cls._get_frame(excelfile, usecols="A:D")
+
+
+class VendorDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpdate):
+    cylinder_number: str | None = None
+    ratio: float | None = None
+
+
+# ** Standards Data -----------------------------------------------------------
+class StandardsDataBase(SRMDataForeignKey):
+    """Standards Data"""
+
+    model_config = SQLModelConfig(populate_by_name=True)
+
+    name: str = Field(validation_alias="StandardID")
+    number: int = Field(validation_alias="StandardNo")
+    ratio: float = Field(validation_alias="SRatio")
+    concentration: float = Field(validation_alias="SConc")
+    uncert: float = Field(validation_alias="Sunc")
+
+
+class StandardsDataPublic(StandardsDataBase, _IDPrimaryKeyPublic):
+    pass
+
+
+class StandardsDataCreate(StandardsDataBase, SQLDataFrameInterface):
+    _table_name = "standards"
+    _sheet_name = SheetNames.standards
+
+    @override
+    @classmethod
+    def excel_to_dataframe(cls, excelfile: pd.ExcelFile) -> pd.DataFrame | None:
+        return cls._get_frame_with_len_check(
+            excelfile,
+            usecols="A:E",
+            rowx=1,
+            colx="H",
+        )
+
+
+class StandardsDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpdate):
+    name: str | None = None
+    number: int | None = None
+    ratio: float | None = None
+    concentration: float | None = None
+    uncert: float | None = None
+
+
+# ** Past lot standards -------------------------------------------------------
+class PastLotStandardsDataBase(SRMDataForeignKey):
+    """Past lot standards"""
+
+    model_config = SQLModelConfig(populate_by_name=True)
+    name: str = Field(validation_alias="LS ID")
+    number: int = Field(validation_alias="LS#")
+    ratio: float = Field(validation_alias="Ratio")
+    value: float = Field(validation_alias="Past Conc")
+
+
+class PastLotStandardsDataPublic(PastLotStandardsDataBase, _IDPrimaryKeyPublic):
+    pass
+
+
+class PastLotStandardsDataCreate(PastLotStandardsDataBase, SQLDataFrameInterface):
+    _table_name = "past_lot_standards"
+    _sheet_name = SheetNames.lot_standards
+
+    @override
+    @classmethod
+    def excel_to_dataframe(cls, excelfile: pd.ExcelFile) -> pd.DataFrame | None:
+        return cls._get_frame(
+            excelfile,
+            strip_trailing_numbers=True,
+            usecols="A:F",
+            skiprows=1,
+        )
+
+
+class PastLotStandardsDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpdate):
+    name: str | None = None
+    number: int | None = None
+    ratio: float | None = None
+    past_conc: float | None = None
+    pred_conc: float | None = None
+
+
+# ** Additional lot standards -------------------------------------------------
+class AdditionalLotStandardsDataBase(SRMDataForeignKey):
+    """AdditionalLotStandards"""
+
+    model_config = SQLModelConfig(populate_by_name=True)
+    name: str = Field(validation_alias="ID")
+    number: int = Field(validation_alias="LS#")
+    ratio: float = Field(validation_alias="Ratio")
+
+
+class AdditionalLotStandardsDataPublic(
+    AdditionalLotStandardsDataBase, _IDPrimaryKeyPublic
+):
+    pass
+
+
+class AdditionalLotStandardsDataCreate(
+    AdditionalLotStandardsDataBase, SQLDataFrameInterface
+):
+    _table_name = "additional_lot_standards"
+    _sheet_name = SheetNames.lot_standards
+
+    @override
+    @classmethod
+    def excel_to_dataframe(cls, excelfile: pd.ExcelFile) -> pd.DataFrame | None:
+        return cls._get_frame(
+            excelfile,
+            strip_trailing_numbers=True,
+            usecols="H:J",
+            skiprows=1,
+        )
+
+
+class AdditionalLotStandardsDataUpdate(
+    _SampleIDAndNumberUpdate, _SRMDataForeignKeyUpdate
+):
+    name: str | None = None
+    number: int | None = None
+    ratio: float | None = None
 
 
 # ** Ratio Analysis -----------------------------------------------------------
@@ -160,8 +329,21 @@ class RatioAnalysisRandomEffectsDataPublic(
     pass
 
 
-class RatioAnalysisRandomEffectsDataCreate(RatioAnalysisRandomEffectsDataBase):
-    pass
+class RatioAnalysisRandomEffectsDataCreate(
+    RatioAnalysisRandomEffectsDataBase, SQLDataFrameInterface
+):
+    _table_name = "ratio_analysis_random_effects"
+    _sheet_name = SheetNames.ratio_analysis
+
+    @override
+    @classmethod
+    def excel_to_dataframe(cls, excelfile: pd.ExcelFile) -> pd.DataFrame | None:
+        return cls._get_optional_frame(
+            excelfile,
+            usecols="X:Y,AA,AC",
+            skiprows=1,
+            strip_trailing_numbers=True,
+        )
 
 
 class RatioAnalysisRandomEffectsDataUpdate(_SRMDataForeignKeyUpdate):
@@ -188,123 +370,27 @@ class RatioAnalysisFixedEffectsDataPublic(
     pass
 
 
-class RatioAnalysisFixedEffectsDataCreate(RatioAnalysisFixedEffectsDataBase):
-    pass
+class RatioAnalysisFixedEffectsDataCreate(
+    RatioAnalysisFixedEffectsDataBase, SQLDataFrameInterface
+):
+    _table_name = "ratio_analysis_fixed_effects"
+    _sheet_name = SheetNames.ratio_analysis
+
+    @override
+    @classmethod
+    def excel_to_dataframe(cls, excelfile: pd.ExcelFile) -> pd.DataFrame | None:
+        return cls._get_optional_frame(
+            excelfile,
+            usecols="AD:AF",
+            skiprows=1,
+            strip_trailing_numbers=True,
+        )
 
 
 class RatioAnalysisFixedEffectsDataUpdate(_SRMDataForeignKeyUpdate):
     estimate: float | None
     stderr: float | None
     t_value: float | None
-
-
-# ** Vendor Data --------------------------------------------------------------
-class VendorDataBase(_SampleIDAndNumber, SRMDataForeignKey):
-    """Vendor data"""
-
-    model_config = SQLModelConfig(
-        alias_generator=to_pascal,
-        populate_by_name=True,
-    )
-
-    cylinder_number: str = Field(validation_alias="CylinderNo")
-    ratio: float = Field(validation_alias="VendorRatio")
-
-
-class VendorDataPublic(VendorDataBase, _IDPrimaryKeyPublic):
-    pass
-
-
-class VendorDataCreate(VendorDataBase):
-    pass
-
-
-class VendorDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpdate):
-    cylinder_number: str | None = None
-    ratio: float | None = None
-
-
-# ** Standards Data -----------------------------------------------------------
-class StandardsDataBase(SRMDataForeignKey):
-    """Standards Data"""
-
-    model_config = SQLModelConfig(populate_by_name=True)
-
-    name: str = Field(validation_alias="StandardID")
-    number: int = Field(validation_alias="StandardNo")
-    ratio: float = Field(validation_alias="SRatio")
-    concentration: float = Field(validation_alias="SConc")
-    uncert: float = Field(validation_alias="Sunc")
-
-
-class StandardsDataPublic(StandardsDataBase, _IDPrimaryKeyPublic):
-    pass
-
-
-class StandardsDataCreate(StandardsDataBase):
-    pass
-
-
-class StandardsDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpdate):
-    name: str | None = None
-    number: int | None = None
-    ratio: float | None = None
-    concentration: float | None = None
-    uncert: float | None = None
-
-
-# ** Past lot standards -------------------------------------------------------
-class PastLotStandardsDataBase(SRMDataForeignKey):
-    """Past lot standards"""
-
-    model_config = SQLModelConfig(populate_by_name=True)
-    name: str = Field(validation_alias="LS ID")
-    number: int = Field(validation_alias="LS#")
-    ratio: float = Field(validation_alias="Ratio")
-    value: float = Field(validation_alias="Past Conc")
-
-
-class PastLotStandardsDataPublic(PastLotStandardsDataBase, _IDPrimaryKeyPublic):
-    pass
-
-
-class PastLotStandardsDataCreate(PastLotStandardsDataBase):
-    pass
-
-
-class PastLotStandardsDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpdate):
-    name: str | None = None
-    number: int | None = None
-    ratio: float | None = None
-    past_conc: float | None = None
-    pred_conc: float | None = None
-
-
-class AdditionalLotStandardsDataBase(SRMDataForeignKey):
-    """AdditionalLotStandards"""
-
-    model_config = SQLModelConfig(populate_by_name=True)
-    name: str = Field(validation_alias="ID")
-    number: int = Field(validation_alias="LS#")
-    ratio: float = Field(validation_alias="Ratio")
-
-
-class AdditionalLotStandardsDataPublic(
-    AdditionalLotStandardsDataBase, _IDPrimaryKeyPublic
-):
-    pass
-
-
-class AdditionalLotStandardsDataCreate(AdditionalLotStandardsDataBase):
-    pass
-
-
-class AdditionalLotStandardsDataUpdate(
-    _SampleIDAndNumberUpdate, _SRMDataForeignKeyUpdate
-):
-    name: str | None = None
-    number: int | None = None
-    ratio: float | None = None
 
 
 # * RCertification -----------------------------------------------------------
@@ -358,8 +444,32 @@ class RCertSRMValuesPublic(RCertSRMValuesBase, _IDPrimaryKeyPublic):
     pass
 
 
-class RCertSRMValuesCreate(RCertSRMValuesBase):
-    pass
+class RCertSRMValuesCreate(RCertSRMValuesBase, SQLDataFrameInterface):
+    _table_name = "srm_values"
+    _sheet_name = SheetNames.rcert
+
+    @classmethod
+    def excel_to_dataframe_transposed(
+        cls, excelfile: pd.ExcelFile
+    ) -> pd.DataFrame | None:
+        return cls._get_optional_frame(
+            excelfile,
+            usecols="A:B",
+            header=None,
+            skiprows=skipper(include={47, 48, 49, 52, 53, 54, 55}),
+            names=["name", "value"],
+        )
+
+    @override
+    @classmethod
+    def excel_to_dataframe(cls, excelfile: pd.ExcelFile) -> pd.DataFrame | None:
+        if (df := cls.excel_to_dataframe_transposed(excelfile)) is None:
+            return df
+        new = cast(
+            "pd.DataFrame",
+            pd.pivot(df.assign(dummy=0).set_index("dummy"), columns="name")["value"],
+        )
+        return new.rename_axis(columns=None, index=None)
 
 
 class RCertSRMValuesUpdate(_RCertForeignKeyUpdate):
@@ -390,8 +500,28 @@ class RCertStandardsValuesPublic(RCertStandardsValuesBase, _IDPrimaryKeyPublic):
     pass
 
 
-class RCertStandardsValuesCreate(RCertStandardsValuesBase):
-    pass
+class RCertStandardsValuesCreate(RCertStandardsValuesBase, SQLDataFrameInterface):
+    _table_name = "standards_values"
+    _sheet_name = SheetNames.rcert
+
+    @override
+    @classmethod
+    def excel_to_dataframe(cls, excelfile: pd.ExcelFile) -> pd.DataFrame | None:
+        out = cls._get_optional_frame(
+            excelfile,
+            strip_trailing_numbers=True,
+            usecols="A:E",
+            skiprows=skipper(lower=58, upper=68),
+        )
+
+        if out is not None:
+            columns = list(out.columns)
+            columns[-1] = "Predicted " + columns[-1]
+            out.columns = columns
+
+            out = maybe_dropna(out, how="all", subset=out.columns[1:])
+
+        return out
 
 
 class RCertStandardsValuesUpdate(_RCertForeignKeyUpdate):
@@ -419,8 +549,18 @@ class RCertAdditionalLotStandardsPublic(
     pass
 
 
-class RCertAdditionalLotStandardsCreate(RCertAdditionalLotStandardsBase):
-    pass
+class RCertAdditionalLotStandardsCreate(
+    RCertAdditionalLotStandardsBase, SQLDataFrameInterface
+):
+    _table_name = "additional_lot_standards"
+    _sheet_name = SheetNames.rcert
+
+    @override
+    @classmethod
+    def excel_to_dataframe(cls, excelfile: pd.ExcelFile) -> pd.DataFrame | None:
+        return cls._get_optional_frame(
+            excelfile, usecols="A:E", skiprows=skipper(lower=71, upper=75)
+        )
 
 
 class RCertAdditionalLotStandardsUpdate(_RCertForeignKeyUpdate):
@@ -445,8 +585,19 @@ class RCertCylinderResultsPublic(RCertCylinderResultsBase, _IDPrimaryKeyPublic):
     model_config = SQLModelConfig(populate_by_name=True)
 
 
-class RCertCylinderResultsCreate(RCertCylinderResultsBase):
-    pass
+class RCertCylinderResultsCreate(RCertCylinderResultsBase, SQLDataFrameInterface):
+    _table_name = "cylinder_results"
+    _sheet_name = SheetNames.rcert
+
+    @override
+    @classmethod
+    def excel_to_dataframe(cls, excelfile: pd.ExcelFile) -> pd.DataFrame | None:
+        return cls._get_optional_frame(
+            excelfile,
+            usecols="M:P",
+            skiprows=46,
+            strip_trailing_numbers=True,
+        )
 
 
 class RCertCylinderResultsUpdate(_RCertForeignKeyUpdate):
@@ -469,8 +620,27 @@ class RCertAnalysisFunctionCoefficientsPublic(
     pass
 
 
-class RCertAnalysisFunctionCoefficientsCreate(RCertAnalysisFunctionCoefficientsBase):
-    pass
+class RCertAnalysisFunctionCoefficientsCreate(
+    RCertAnalysisFunctionCoefficientsBase, SQLDataFrameInterface
+):
+    _table_name = "analysis_function_coefficients"
+    _sheet_name = SheetNames.rcert
+
+    @override
+    @classmethod
+    def excel_to_dataframe(cls, excelfile: pd.ExcelFile) -> pd.DataFrame | None:
+        out = maybe_dropna(
+            cls._get_optional_frame(
+                excelfile,
+                usecols="G:H",
+                skiprows=skipper(lower=46, upper=50),
+                names=["value", "uncert"],
+            ),
+            how="all",
+        )
+        if out is not None:
+            out = out.assign(order=range(len(out)))
+        return out
 
 
 class RCertAnalysisFunctionCoefficientsUpdate(_RCertForeignKeyUpdate):
@@ -492,8 +662,38 @@ class RCertCorrelationCoefficientsPublic(
     pass
 
 
-class RCertCorrelationCoefficientsCreate(RCertCorrelationCoefficientsBase):
-    pass
+class RCertCorrelationCoefficientsCreate(
+    RCertCorrelationCoefficientsBase, SQLDataFrameInterface
+):
+    _table_name = "correlation_coefficients"
+    _sheet_name = SheetNames.rcert
+
+    @classmethod
+    def excel_to_dataframe_matrix(cls, excelfile: pd.ExcelFile) -> pd.DataFrame | None:
+        out = cls._get_optional_frame(
+            excelfile,
+            usecols="G:J",
+            skiprows=skipper(lower=52, upper=56),
+        )
+        out = maybe_dropna(out, how="all")
+
+        if out is not None:
+            out = out.assign(order=range(len(out)))
+
+        return maybe_dropna(out, how="all", axis=1)
+
+    @override
+    @classmethod
+    def excel_to_dataframe(cls, excelfile: pd.ExcelFile) -> pd.DataFrame | None:
+
+        if (df := cls.excel_to_dataframe_matrix(excelfile)) is None:
+            return df
+
+        return pd.melt(
+            df.rename(columns=lambda x: x if x == "order" else int(x[1:])),
+            id_vars="order",
+            var_name="order_other",
+        )
 
 
 class RCertCorrelationCoefficientsUpdate(_RCertForeignKeyUpdate):
@@ -519,8 +719,18 @@ class RCertOutliersPublic(RCertOutliersBase, _IDPrimaryKeyPublic):
     pass
 
 
-class RCertOutliersCreate(RCertOutliersBase):
-    pass
+class RCertOutliersCreate(RCertOutliersBase, SQLDataFrameInterface):
+    _table_name = "outliers"
+    _sheet_name = SheetNames.rcert
+
+    @override
+    @classmethod
+    def excel_to_dataframe(cls, excelfile: pd.ExcelFile) -> pd.DataFrame | None:
+        return cls._get_optional_frame(
+            excelfile,
+            usecols="A:D",
+            skiprows=78,
+        )
 
 
 class RCertOutliersUpdate(_RCertForeignKeyUpdate):
