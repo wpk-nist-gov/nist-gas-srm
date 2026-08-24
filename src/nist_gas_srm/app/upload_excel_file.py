@@ -5,14 +5,14 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 from functools import partial
-from operator import attrgetter
+from operator import itemgetter
 from pathlib import Path
 from typing import TYPE_CHECKING, cast, override
 
 import pandas as pd
 import streamlit as st
 
-from nist_gas_srm.core import read_excel
+from nist_gas_srm.core import convert
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -57,15 +57,17 @@ class EditableTableSRM(EditableTableBase):
 
     def __init__(self, attr: str, name: str) -> None:
         self.attr = attr
-        self.getter = attrgetter(self.attr)
+        self.getter = itemgetter(self.attr)
         self.name = name
         super().__init__(keyname_base=attr)
 
     @override
     def editable_table_widget(
-        self, obj: read_excel.SRMExcelFile, **kwargs: Any
+        self, obj: convert.SRMRCertConverter, **kwargs: Any
     ) -> pd.DataFrame | None:
-        return super().editable_table_widget(self.getter(obj)(), **kwargs)
+        return super().editable_table_widget(
+            self.getter(obj).excel_to_dataframe(), **kwargs
+        )
 
     def refresh_table_widget(self) -> bool:
         return st.button(
@@ -82,11 +84,11 @@ def refresh_tables(tables: Iterable[EditableTableSRM]) -> None:
 TABLES = [
     EditableTableSRM(attr=attr, name=name)
     for attr, name in {
-        "ratio_data": "Ratio data",
-        "vendor_data": "Vendor data",
-        "standards_data": "Standards",
+        "ratios": "Ratio data",
+        "vendors": "Vendor data",
+        "standards": "Standards",
         "ratio_analysis_random_effects": "Ratio analysis",
-        "ratio_analysis_fixed_effects_intercept": "Ratio analysis fixed effects",
+        "ratio_analysis_fixed_effects": "Ratio analysis fixed effects",
         "past_lot_standards": "Past lot standards",
         "additional_lot_standards": "Additional lot standards",
         # certifiede values
@@ -131,7 +133,7 @@ edited_df = metadata_table.editable_table_widget(
 )
 
 if upload_file is not None:
-    st.session_state.srm_file = read_excel.SRMExcelFile(upload_file)
+    st.session_state.srm_file = convert.SRMRCertConverter(upload_file)
 
 
 def _get_metadata_from_filename() -> None:

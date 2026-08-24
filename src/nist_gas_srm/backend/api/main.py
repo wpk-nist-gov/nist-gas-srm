@@ -13,7 +13,7 @@ from sqlmodel import Session
 from nist_gas_srm.backend import crud, models
 from nist_gas_srm.backend.core.db import engine, init_db
 from nist_gas_srm.core import basemodels
-from nist_gas_srm.core.read_excel import SRMExcelFile
+from nist_gas_srm.core.convert import SRMRCertConverter
 from nist_gas_srm.core.validate import validate_optional_str_to_lower
 
 _OptStrAsLower = Annotated[str | None, AfterValidator(validate_optional_str_to_lower)]
@@ -316,7 +316,7 @@ async def create_upload_file(
 
     try:
         # 3. Load the byte stream into a Pandas DataFrame
-        srmxls = SRMExcelFile(BytesIO(contents))
+        srmxls = SRMRCertConverter(BytesIO(contents))
         return crud.add_srm_from_excel_obj(
             session=session, srmdata_create=srmdata_create, srmxls=srmxls
         )

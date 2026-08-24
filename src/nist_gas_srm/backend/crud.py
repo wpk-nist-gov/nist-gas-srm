@@ -1,11 +1,10 @@
 """Basic crud operations"""
 
 from collections.abc import Sequence
-from typing import Any
 
 from sqlmodel import Session, select
 
-from nist_gas_srm.core import basemodels, read_excel
+from nist_gas_srm.core import basemodels, convert  # , read_excel
 
 from . import models
 
@@ -190,19 +189,20 @@ def add_srm_from_excel_obj(
     *,
     session: Session,
     srmdata_create: basemodels.SRMDataCreate,
-    srmxls: read_excel.SRMExcelFile,
+    srmxls: convert.SRMRCertConverter,
 ) -> models.SRMData:
 
-    data: dict[str, Any] = {
-        name: read_excel.frame_to_list_of_dicts(caller(srmxls))
-        for name, caller in basemodels.SRMDATA_NAME_CALLER_MAPPING.items()
-    }
+    # data: dict[str, Any] = {
+    #     name: read_excel.frame_to_list_of_dicts(caller(srmxls))
+    #     for name, caller in basemodels.SRMDATA_NAME_CALLER_MAPPING.items()
+    # }
 
-    data["rcert"] = {
-        name: read_excel.frame_to_list_of_dicts(caller(srmxls.rcert))
-        for name, caller in basemodels.RCERTDATA_NAME_CALLER_MAPPING.items()
-    }
+    # data["rcert"] = {
+    #     name: read_excel.frame_to_list_of_dicts(caller(srmxls.rcert))
+    #     for name, caller in basemodels.RCERTDATA_NAME_CALLER_MAPPING.items()
+    # }
 
+    data = srmxls.model_dump()
     data.update(srmdata_create.model_dump())
 
     srmdata_in = basemodels.SRMRCertCreateComplete.model_validate(data)

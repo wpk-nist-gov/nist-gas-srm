@@ -15,7 +15,7 @@ from sqlmodel import (
 )
 
 from nist_gas_srm.core import basemodels
-from nist_gas_srm.core.read_excel import SRMExcelFile
+from nist_gas_srm.core.convert import SRMRCertConverter
 from nist_gas_srm.core.utils import parse_excel_filename_to_metadata
 
 from . import crud, models
@@ -35,7 +35,7 @@ def add_srm(
     session: Session,
     path: Path,
 ) -> None:
-    srmxls = SRMExcelFile(path)
+    srmxls = SRMRCertConverter(path)
 
     # do this to circumvent issues covered
     # here: https://github.com/fastapi/sqlmodel/issues/453

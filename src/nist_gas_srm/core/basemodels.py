@@ -582,6 +582,11 @@ class SRMRCertCreateComplete(SRMDataCreateComplete):
     rcert: RCertCreateComplete
 
 
+# create_map = {
+#     "ratios": RatioDataCreate,
+
+# }
+
 # * name/getter/cls triples
 SRMDATA_NAME_CALLER_MAPPING = {
     name: methodcaller(name if attr is None else attr)
