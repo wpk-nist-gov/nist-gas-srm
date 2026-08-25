@@ -5,14 +5,13 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 from functools import partial
-from operator import itemgetter
 from pathlib import Path
 from typing import TYPE_CHECKING, cast, override
 
 import pandas as pd
 import streamlit as st
 
-from nist_gas_srm.core import convert
+from nist_gas_srm.core import basemodels, excel_interface
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -57,16 +56,18 @@ class EditableTableSRM(EditableTableBase):
 
     def __init__(self, attr: str, name: str) -> None:
         self.attr = attr
-        self.getter = itemgetter(self.attr)
         self.name = name
         super().__init__(keyname_base=attr)
 
     @override
     def editable_table_widget(
-        self, obj: convert.SRMRCertConverter, **kwargs: Any
+        self, obj: pd.ExcelFile, **kwargs: Any
     ) -> pd.DataFrame | None:
         return super().editable_table_widget(
-            self.getter(obj).excel_to_dataframe(), **kwargs
+            excel_interface.excel_to_dataframe_by_name(
+                self.attr, excelfile, model=basemodels.SRMRCertCreateComplete
+            ),
+            **kwargs,
         )
 
     def refresh_table_widget(self) -> bool:
@@ -81,25 +82,27 @@ def refresh_tables(tables: Iterable[EditableTableSRM]) -> None:
 
 
 # * Initialize an empty starting template -------------------------------------
+DBNAMES_TABLENAMES_MAPPING = {
+    "ratios": "Ratio data",
+    "vendors": "Vendor data",
+    "standards": "Standards",
+    "ratio_analysis_random_effects": "Ratio analysis",
+    "ratio_analysis_fixed_effects": "Ratio analysis fixed effects",
+    "past_lot_standards": "Past lot standards",
+    "additional_lot_standards": "Additional lot standards",
+    # certifiede values
+    "rcert.srm_values": "SRM values",
+    "rcert.standards_values": "Standards values",
+    "rcert.additional_lot_standards": "Certified additional lot standards",
+    "rcert.cylinder_results": "Cylinder results",
+    "rcert.analysis_function_coefficients": "Analysis function coefficients",
+    "rcert.correlation_coefficients": "Correlation coefficients",
+    "rcert.outliers": "Outliers",
+}
+
 TABLES = [
     EditableTableSRM(attr=attr, name=name)
-    for attr, name in {
-        "ratios": "Ratio data",
-        "vendors": "Vendor data",
-        "standards": "Standards",
-        "ratio_analysis_random_effects": "Ratio analysis",
-        "ratio_analysis_fixed_effects": "Ratio analysis fixed effects",
-        "past_lot_standards": "Past lot standards",
-        "additional_lot_standards": "Additional lot standards",
-        # certifiede values
-        "rcert.srm_values": "SRM values",
-        "rcert.standards_values": "Standards values",
-        "rcert.additional_lot_standards": "Certified additional lot standards",
-        "rcert.cylinder_results": "Cylinder results",
-        "rcert.analysis_function_coefficients": "Analysis function coefficients",
-        "rcert.correlation_coefficients": "Correlation coefficients",
-        "rcert.outliers": "Outliers",
-    }.items()
+    for attr, name in DBNAMES_TABLENAMES_MAPPING.items()
 ]
 
 
@@ -133,7 +136,7 @@ edited_df = metadata_table.editable_table_widget(
 )
 
 if upload_file is not None:
-    st.session_state.srm_file = convert.SRMRCertConverter(upload_file)
+    st.session_state.srm_file = pd.ExcelFile(upload_file)
 
 
 def _get_metadata_from_filename() -> None:
@@ -156,7 +159,7 @@ refersh_tables = st.button(
 )
 
 if st.session_state.srm_file is not None:
-    data = st.session_state.srm_file
+    excelfile = st.session_state.srm_file
 
     tabs = st.tabs([table.name for table in TABLES])
 
@@ -164,7 +167,7 @@ if st.session_state.srm_file is not None:
         with tab:
             table.refresh_table_widget()
             table.editable_table_widget(
-                data,
+                excelfile,
                 num_rows="dynamic",
                 width="stretch",
                 hide_index=True,

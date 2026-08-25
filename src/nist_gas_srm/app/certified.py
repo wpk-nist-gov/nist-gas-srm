@@ -2,45 +2,35 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import plotly.express as px
 import streamlit as st
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    import pandas as pd
-
+from nist_gas_srm.core import basemodels, excel_interface
 
 st.title("Certified values")
 
-if (srm_file := st.session_state.get("srm_file")) is not None:
-    data = srm_file.rcert
-    tabs_mapping: dict[str, Callable[[], pd.DataFrame | None]] = {
-        "SRM values": data["srm_values"].excel_to_dataframe,
-        "Standards values": data["standards_values"].excel_to_dataframe,
-        "Additional lot standards": data["additional_lot_standards"].excel_to_dataframe,
-        "Cylinder results": data["cylinder_results"].excel_to_dataframe,
-        "Ananalysis function coefficients": data[
-            "analysis_function_coefficients"
-        ].excel_to_dataframe,
-        "Correlation coefficients": data["correlation_coefficients"].excel_to_dataframe,
-        "Outliers": data["outliers"].excel_to_dataframe,
-    }
 
-    tabs = st.tabs(list(tabs_mapping.keys()))
+DBNAMES_TABLENAMES_MAPPING = {
+    "srm_values": "SRM values",
+    "standards_values": "Standards values",
+    "additional_lot_standards": "Certified additional lot standards",
+    "cylinder_results": "Cylinder results",
+    "analysis_function_coefficients": "Analysis function coefficients",
+    "correlation_coefficients": "Correlation coefficients",
+    "outliers": "Outliers",
+}
 
-    for tab, (name, func) in zip(
-        tabs,
-        tabs_mapping.items(),
-        strict=True,
-    ):
-        data_ = func()
+if (excelfile := st.session_state.get("srm_file")) is not None:
+    tabs = st.tabs(list(DBNAMES_TABLENAMES_MAPPING.values()))
+    for tab, name in zip(tabs, DBNAMES_TABLENAMES_MAPPING, strict=True):
+        data_ = excel_interface.excel_to_dataframe_by_name(
+            name, excelfile, model=basemodels.RCertCreateComplete
+        )
+
         with tab:
             st.dataframe(data_, width="content", hide_index=True)
 
-        if name == "Cylinder results" and data_ is not None:
+        if name == "cylinder_results" and data_ is not None:
             # plot of Cylinder results
             fig = px.scatter(  # pyright: ignore[reportUnknownMemberType]
                 data_,

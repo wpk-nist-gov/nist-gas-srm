@@ -15,7 +15,6 @@ from sqlmodel import (
 )
 
 from nist_gas_srm.core import basemodels
-from nist_gas_srm.core.convert import SRMRCertConverter
 from nist_gas_srm.core.utils import parse_excel_filename_to_metadata
 
 from . import crud, models
@@ -35,7 +34,7 @@ def add_srm(
     session: Session,
     path: Path,
 ) -> None:
-    srmxls = SRMRCertConverter(path)
+    excelfile = pd.ExcelFile(path)
 
     # do this to circumvent issues covered
     # here: https://github.com/fastapi/sqlmodel/issues/453
@@ -45,26 +44,10 @@ def add_srm(
     )
 
     _ = crud.add_srm_from_excel_obj(
-        session=session, srmdata_create=srm_metadata, srmxls=srmxls
+        session=session,
+        srmdata_create=srm_metadata,
+        excelfile=excelfile,
     )
-
-    # data: dict[str, Any] = {
-    #     name: list(frame_to_list_of_models(caller(srmxls), cls))
-    #     for name, caller, cls in models.SRMDATA_NAME_CALLER_CLS
-    # }
-
-    # data_rcert: dict[str, Any] = {
-    #     name: list(frame_to_list_of_models(caller(srmxls.rcert), cls))
-    #     for name, caller, cls in models.RCERTDATA_NAME_CALLER_CLS
-    # }
-
-    # data["rcert"] = models.RCertData(**data_rcert)
-
-    # srm = models.SRMData(**srm_metadata.model_dump(), **data)
-
-    # # NOTE: see https://github.com/fastapi/sqlmodel/issues/254
-    # session.add(srm)
-    # session.commit()
 
 
 def get_srm_by_name(session: Session, srm: str | models.SRMData) -> models.SRMData:
