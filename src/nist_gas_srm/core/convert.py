@@ -11,16 +11,16 @@ from typing import TYPE_CHECKING, Any, ClassVar, Protocol, cast, override
 import pandas as pd
 
 from . import basemodels
-from .read_excel import (
-    _strip_trailing_numbers,
+from .utils import (
     as_excelfile,
     get_frame,
     get_frame_with_len_check,
     maybe_dropna,
+    optional_dataframe_func_wrapper,
     skipper,
+    strip_trailing_numbers as func_strip_trailing_numbers,
     validate_no_null,
 )
-from .utils import optional_dataframe_func_wrapper
 
 if TYPE_CHECKING:
     from collections.abc import (
@@ -149,7 +149,7 @@ class DataProtocol(Protocol):
             get_frame, self.excelfile, sheet_name=self.sheet_name.value, **kwargs
         )
         if out is not None and strip_trailing_numbers:
-            out = out.rename(columns=_strip_trailing_numbers)
+            out = out.rename(columns=func_strip_trailing_numbers)
         return out
 
     def _get_optional_frame_with_len_check(self, **kwargs: Any) -> pd.DataFrame | None:
@@ -251,8 +251,9 @@ class PastLotStandards(DataProtocol):
     @override
     def excel_to_dataframe(self) -> pd.DataFrame | None:
         return self._get_frame(
-            usecols="A:F", skiprows=1, strip_trailing_numbers=True
-        ).rename(columns=_strip_trailing_numbers)
+            usecols="A:F",
+            skiprows=1,
+        ).rename(columns=func_strip_trailing_numbers)
 
 
 class AdditionalLotStandards(DataProtocol):
@@ -264,7 +265,7 @@ class AdditionalLotStandards(DataProtocol):
         return self._get_frame(
             usecols="H:J",
             skiprows=1,
-        ).rename(columns=_strip_trailing_numbers)
+        ).rename(columns=func_strip_trailing_numbers)
 
 
 class RatioAnalysisRandomEffects(DataProtocol):
@@ -335,7 +336,7 @@ class RCertStandardsValues(RCertDataProtocol):
         )
 
         if out is not None:
-            out = out.rename(columns=_strip_trailing_numbers)
+            out = out.rename(columns=func_strip_trailing_numbers)
             columns = list(out.columns)
             columns[-1] = "Predicted " + columns[-1]
             out.columns = columns

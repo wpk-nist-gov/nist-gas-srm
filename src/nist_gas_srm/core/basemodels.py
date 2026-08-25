@@ -24,8 +24,8 @@ from nist_gas_srm.core.validate import (
     validate_timestamp,
 )
 
-from ._model_mixin import SheetNames, SQLDataFrameInterface
-from .read_excel import maybe_dropna, skipper, validate_no_null
+from .excel_interface import SheetNames, SQLDataFrameInterface
+from .utils import maybe_dropna, skipper, validate_no_null
 
 to_pascal = AliasGenerator(
     validation_alias=to_pascal_base,
@@ -126,8 +126,8 @@ class RatioDataPublic(RatioDataBase, _IDPrimaryKeyPublic):
 
 
 class RatioDataCreate(RatioDataBase, SQLDataFrameInterface):
-    _table_name = "ratios"
-    _sheet_name = SheetNames.ratio
+    dataframe_name = "ratios"
+    sheet_name = SheetNames.ratio
 
     @override
     @classmethod
@@ -175,8 +175,8 @@ class VendorDataPublic(VendorDataBase, _IDPrimaryKeyPublic):
 
 
 class VendorDataCreate(VendorDataBase, SQLDataFrameInterface):
-    _table_name = "vendors"
-    _sheet_name = SheetNames.vendor
+    dataframe_name = "vendors"
+    sheet_name = SheetNames.vendor
 
     @override
     @classmethod
@@ -207,8 +207,8 @@ class StandardsDataPublic(StandardsDataBase, _IDPrimaryKeyPublic):
 
 
 class StandardsDataCreate(StandardsDataBase, SQLDataFrameInterface):
-    _table_name = "standards"
-    _sheet_name = SheetNames.standards
+    dataframe_name = "standards"
+    sheet_name = SheetNames.standards
 
     @override
     @classmethod
@@ -245,8 +245,8 @@ class PastLotStandardsDataPublic(PastLotStandardsDataBase, _IDPrimaryKeyPublic):
 
 
 class PastLotStandardsDataCreate(PastLotStandardsDataBase, SQLDataFrameInterface):
-    _table_name = "past_lot_standards"
-    _sheet_name = SheetNames.lot_standards
+    dataframe_name = "past_lot_standards"
+    sheet_name = SheetNames.lot_standards
 
     @override
     @classmethod
@@ -286,8 +286,8 @@ class AdditionalLotStandardsDataPublic(
 class AdditionalLotStandardsDataCreate(
     AdditionalLotStandardsDataBase, SQLDataFrameInterface
 ):
-    _table_name = "additional_lot_standards"
-    _sheet_name = SheetNames.lot_standards
+    dataframe_name = "additional_lot_standards"
+    sheet_name = SheetNames.lot_standards
 
     @override
     @classmethod
@@ -332,8 +332,8 @@ class RatioAnalysisRandomEffectsDataPublic(
 class RatioAnalysisRandomEffectsDataCreate(
     RatioAnalysisRandomEffectsDataBase, SQLDataFrameInterface
 ):
-    _table_name = "ratio_analysis_random_effects"
-    _sheet_name = SheetNames.ratio_analysis
+    dataframe_name = "ratio_analysis_random_effects"
+    sheet_name = SheetNames.ratio_analysis
 
     @override
     @classmethod
@@ -373,8 +373,8 @@ class RatioAnalysisFixedEffectsDataPublic(
 class RatioAnalysisFixedEffectsDataCreate(
     RatioAnalysisFixedEffectsDataBase, SQLDataFrameInterface
 ):
-    _table_name = "ratio_analysis_fixed_effects"
-    _sheet_name = SheetNames.ratio_analysis
+    dataframe_name = "ratio_analysis_fixed_effects"
+    sheet_name = SheetNames.ratio_analysis
 
     @override
     @classmethod
@@ -445,8 +445,8 @@ class RCertSRMValuesPublic(RCertSRMValuesBase, _IDPrimaryKeyPublic):
 
 
 class RCertSRMValuesCreate(RCertSRMValuesBase, SQLDataFrameInterface):
-    _table_name = "srm_values"
-    _sheet_name = SheetNames.rcert
+    dataframe_name = "rcert.srm_values"
+    sheet_name = SheetNames.rcert
 
     @classmethod
     def excel_to_dataframe_transposed(
@@ -501,8 +501,8 @@ class RCertStandardsValuesPublic(RCertStandardsValuesBase, _IDPrimaryKeyPublic):
 
 
 class RCertStandardsValuesCreate(RCertStandardsValuesBase, SQLDataFrameInterface):
-    _table_name = "standards_values"
-    _sheet_name = SheetNames.rcert
+    dataframe_name = "rcert.standards_values"
+    sheet_name = SheetNames.rcert
 
     @override
     @classmethod
@@ -552,8 +552,8 @@ class RCertAdditionalLotStandardsPublic(
 class RCertAdditionalLotStandardsCreate(
     RCertAdditionalLotStandardsBase, SQLDataFrameInterface
 ):
-    _table_name = "additional_lot_standards"
-    _sheet_name = SheetNames.rcert
+    dataframe_name = "rcert.additional_lot_standards"
+    sheet_name = SheetNames.rcert
 
     @override
     @classmethod
@@ -586,8 +586,8 @@ class RCertCylinderResultsPublic(RCertCylinderResultsBase, _IDPrimaryKeyPublic):
 
 
 class RCertCylinderResultsCreate(RCertCylinderResultsBase, SQLDataFrameInterface):
-    _table_name = "cylinder_results"
-    _sheet_name = SheetNames.rcert
+    dataframe_name = "rcert.cylinder_results"
+    sheet_name = SheetNames.rcert
 
     @override
     @classmethod
@@ -623,8 +623,8 @@ class RCertAnalysisFunctionCoefficientsPublic(
 class RCertAnalysisFunctionCoefficientsCreate(
     RCertAnalysisFunctionCoefficientsBase, SQLDataFrameInterface
 ):
-    _table_name = "analysis_function_coefficients"
-    _sheet_name = SheetNames.rcert
+    dataframe_name = "rcert.analysis_function_coefficients"
+    sheet_name = SheetNames.rcert
 
     @override
     @classmethod
@@ -665,8 +665,8 @@ class RCertCorrelationCoefficientsPublic(
 class RCertCorrelationCoefficientsCreate(
     RCertCorrelationCoefficientsBase, SQLDataFrameInterface
 ):
-    _table_name = "correlation_coefficients"
-    _sheet_name = SheetNames.rcert
+    dataframe_name = "rcert.correlation_coefficients"
+    sheet_name = SheetNames.rcert
 
     @classmethod
     def excel_to_dataframe_matrix(cls, excelfile: pd.ExcelFile) -> pd.DataFrame | None:
@@ -720,8 +720,8 @@ class RCertOutliersPublic(RCertOutliersBase, _IDPrimaryKeyPublic):
 
 
 class RCertOutliersCreate(RCertOutliersBase, SQLDataFrameInterface):
-    _table_name = "outliers"
-    _sheet_name = SheetNames.rcert
+    dataframe_name = "rcert.outliers"
+    sheet_name = SheetNames.rcert
 
     @override
     @classmethod

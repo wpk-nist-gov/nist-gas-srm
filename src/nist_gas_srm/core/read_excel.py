@@ -5,124 +5,33 @@ Read excel files (:mod:`~nist_gas_srm.read_excel`)
 
 from __future__ import annotations
 
-import re
-from contextlib import contextmanager
 from datetime import UTC, datetime
-from functools import cached_property, partial
+from functools import cached_property
 from typing import TYPE_CHECKING, ClassVar, cast
 
-import numpy as np
 import pandas as pd
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Container, Generator, Hashable, Iterator
+    from collections.abc import Hashable, Iterator
     from io import BytesIO
     from pathlib import Path
     from typing import Any, TypeVar
 
     from pydantic import BaseModel
 
-    T = TypeVar("T")
-
     _Model = TypeVar("_Model", bound=BaseModel)
 
 
-_strip_trailing_numbers = partial(re.compile(r"\.[1-9]+").sub, "")
-
-
-def skipper(
-    lower: int | None = None,
-    upper: int | None = None,
-    include: Container[int] | None = None,
-) -> Callable[[int], bool]:
-    def func(x: int) -> bool:
-        return (
-            (lower is not None and x < lower)
-            or (upper is not None and x > upper)
-            or (include is not None and x not in include)
-        )
-
-    return func
-
-
-def maybe_dropna(df: pd.DataFrame | None, **kwargs: Any) -> pd.DataFrame | None:
-    if df is not None:
-        return cast("pd.DataFrame | None", df.dropna(**kwargs))
-    return df
-
-
-def get_frame(
-    io: Any,
-    sheet_name: str,
-    **kwargs: Any,
-) -> pd.DataFrame:
-    return pd.read_excel(io, sheet_name=sheet_name, **kwargs).dropna(how="all")  # pyright: ignore[reportUnknownMemberType]
-
-
-def validate_no_null(x: T) -> T:
-    if np.any(pd.isnull(cast("np.ndarray[Any, Any]", x))):
-        msg = "Null values found"
-        raise ValueError(msg)
-    return x
-
-
-def get_value_from_worksheet(
-    xls: pd.ExcelFile, sheet_name: str, rowx: int, colx: int | str
-) -> Any:
-    if isinstance(colx, str):
-        colx = ord(colx.lower()) - ord("a")
-
-    book: Any = xls.book  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
-    engine = cast("str | None", getattr(xls, "engine", None))
-    if engine == "xlrd":
-        return book.sheet_by_name(sheet_name).cell_value(rowx=rowx, colx=colx)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
-
-    if engine == "calamine":
-        return book.get_sheet_by_name(sheet_name).to_python(skip_empty_area=False)[  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
-            rowx
-        ][colx]
-
-    msg = f"Unknown engine={engine}"
-    raise ValueError(msg)
-
-
-@contextmanager
-def as_excelfile(
-    path_or_excelfile: Path | BytesIO | pd.ExcelFile,
-) -> Generator[pd.ExcelFile]:
-    if isinstance(path_or_excelfile, pd.ExcelFile):
-        yield path_or_excelfile
-    else:
-        yield pd.ExcelFile(path_or_excelfile)
-
-
-def get_frame_with_len_check(
-    path_or_excelfile: Path | BytesIO | pd.ExcelFile,
-    sheet_name: str,
-    usecols: str,
-    rowx: int,
-    colx: int | str,
-    require_check: bool = True,
-    **kwargs: Any,
-) -> pd.DataFrame:
-
-    with as_excelfile(path_or_excelfile) as xls:
-        df = get_frame(xls, sheet_name=sheet_name, usecols=usecols, **kwargs)
-
-        if require_check:
-            if (
-                val := get_value_from_worksheet(
-                    xls, sheet_name=sheet_name, rowx=rowx, colx=colx
-                )
-            ) is None:
-                msg = "No check value found"
-                raise ValueError(msg)
-
-            if (check := int(val)) != len(df):
-                msg = f"Wrong check shape {check=} != {len(df)}"
-                raise ValueError(msg)
-
-    return df
+from .utils import (
+    as_excelfile,
+    get_frame,
+    get_frame_with_len_check,
+    get_value_from_worksheet,
+    maybe_dropna,
+    skipper,
+    strip_trailing_numbers as func_strip_trailing_numbers,
+    validate_no_null,
+)
 
 
 class _Sheet:
@@ -152,7 +61,7 @@ class _SRMExcelFileBase:
                 usecols=usecols,
                 **kwargs,
             )
-            return None if df.empty else df.rename(columns=_strip_trailing_numbers)
+            return None if df.empty else df.rename(columns=func_strip_trailing_numbers)
         return None
 
 
@@ -321,7 +230,7 @@ class SRMExcelFile(_SRMExcelFileBase):
             usecols="A:F",
             skiprows=1,
             **kwargs,
-        ).rename(columns=_strip_trailing_numbers)
+        ).rename(columns=func_strip_trailing_numbers)
 
     def additional_lot_standards(self, **kwargs: Any) -> pd.DataFrame:
         return get_frame(
@@ -330,7 +239,7 @@ class SRMExcelFile(_SRMExcelFileBase):
             usecols="H:J",
             skiprows=1,
             **kwargs,
-        ).rename(columns=_strip_trailing_numbers)
+        ).rename(columns=func_strip_trailing_numbers)
 
     def ratio_analysis_random_effects(self, **kwargs: Any) -> pd.DataFrame | None:
         return self._get_optional_frame(
