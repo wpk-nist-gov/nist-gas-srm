@@ -18,13 +18,15 @@ st.title("Certified values")
 if (srm_file := st.session_state.get("srm_file")) is not None:
     data = srm_file.rcert
     tabs_mapping: dict[str, Callable[[], pd.DataFrame | None]] = {
-        "SRM values": data.srm_values,
-        "Standards values": data.standards_values,
-        "Additional lot standards": data.additional_lot_standards,
-        "Cylinder results": data.cylinder_results,
-        "Ananalysis function coefficients": data.analysis_function_coefficients,
-        "Correlation coefficients": data.correlation_coefficients_flat,
-        "Outliers": data.outliers,
+        "SRM values": data["srm_values"].excel_to_dataframe,
+        "Standards values": data["standards_values"].excel_to_dataframe,
+        "Additional lot standards": data["additional_lot_standards"].excel_to_dataframe,
+        "Cylinder results": data["cylinder_results"].excel_to_dataframe,
+        "Ananalysis function coefficients": data[
+            "analysis_function_coefficients"
+        ].excel_to_dataframe,
+        "Correlation coefficients": data["correlation_coefficients"].excel_to_dataframe,
+        "Outliers": data["outliers"].excel_to_dataframe,
     }
 
     tabs = st.tabs(list(tabs_mapping.keys()))
