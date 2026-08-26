@@ -1,5 +1,5 @@
 """Create initial data from files"""
-# ruff:file-ignore[magic-value-comparison,commented-out-code]
+# ruff:file-ignore[commented-out-code]
 
 import logging
 from collections.abc import Iterator, Sequence
@@ -145,28 +145,27 @@ def main(argv: Sequence[str] | None = None) -> bool:
             for path in paths:
                 logger.info("Path: %s", path)
                 add_srm(session, path)
-        return False
 
-        new_ratio = models.RatioData.model_validate({
-            "name": "abc",
-            "number": "100",
-            "ratio": 0.5,
-            "ls_set": 100,
-            "break_set": 100,
-            "day": 100,
-            "port": 100,
-            "value_g": 0.5,
-            "test": None,
-        })
-        with Session(engine) as session:
-            add_srm_subtable_row(session, paths[0].name, new_ratio)
+    #     new_ratio = models.RatioData.model_validate({
+    #         "name": "abc",
+    #         "number": "100",
+    #         "ratio": 0.5,
+    #         "ls_set": 100,
+    #         "break_set": 100,
+    #         "day": 100,
+    #         "port": 100,
+    #         "value_g": 0.5,
+    #         "test": None,
+    #     })
+    #     with Session(engine) as session:
+    #         add_srm_subtable_row(session, paths[0].name, new_ratio)
 
-    # delete a subtable
-    with Session(engine) as session:
-        delete_subtable(session, paths[0].name, models.RatioAnalysisFixedEffectsData)
+    # # delete a subtable
+    # with Session(engine) as session:
+    #     delete_subtable(session, paths[0].name, models.RatioAnalysisFixedEffectsData)
 
-    with Session(engine) as session:
-        delete_srm(session, paths[0].name)
+    # with Session(engine) as session:
+    #     delete_srm(session, paths[0].name)
 
     # with Session(engine) as session:
     #     print(
@@ -227,11 +226,11 @@ def main(argv: Sequence[str] | None = None) -> bool:
     #         else:
     #             print(get_ratio_data_stats_table(out, factor=None, col="ave"))
 
-    with Session(engine) as session:
-        data = session.exec(
-            select(models.SRMData).where(col(models.SRMData.srm_id) == 2627)
-        ).all()
-        logger.info("data %s", data)
+    # with Session(engine) as session:
+    #     data = session.exec(
+    #         select(models.SRMData).where(col(models.SRMData.srm_id) == 2627)
+    #     ).all()
+    #     logger.info("data %s", data)
 
     return False
 

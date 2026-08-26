@@ -29,7 +29,7 @@ def validate_str_to_lower(x: str) -> str:
 def validate_optional_str_to_lower(x: str | None) -> str | None:
     if x is None:
         return x
-    return x.lower()
+    return validate_str_to_lower(x)
 
 
 def validate_timestamp(x: str | None) -> str:
@@ -37,5 +37,28 @@ def validate_timestamp(x: str | None) -> str:
         from datetime import UTC, datetime
 
         return str(datetime.now(UTC))
+
+    return x
+
+
+def validate_test_out(x: Any) -> Any:  # ruff: ignore[too-many-return-statements]
+    if x is None:
+        return False
+
+    if isinstance(x, str):
+        if x.lower() == "out":
+            return True
+        if x.lower() == "in":
+            return False
+        return x
+
+    if isinstance(x, bool):
+        return x
+
+    try:
+        if isnan(x):
+            return False
+    except TypeError:
+        pass
 
     return x

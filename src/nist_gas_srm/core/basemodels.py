@@ -3,10 +3,10 @@
 
 from datetime import UTC, datetime
 from operator import methodcaller
-from typing import Annotated, Any, Self, TypeAlias, cast, override
+from typing import Annotated, Any, Literal, Self, TypeAlias, cast, override
 
 import pandas as pd
-from pydantic import AliasGenerator, BeforeValidator
+from pydantic import AliasGenerator, BeforeValidator, PlainSerializer
 from pydantic.alias_generators import to_pascal as to_pascal_base
 from sqlalchemy import Column, DateTime
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -22,16 +22,36 @@ from nist_gas_srm.core.validate import (
     validate_nan_to_none,
     validate_optional_str_to_lower,
     validate_str_to_lower,
+    validate_test_out,
     validate_timestamp,
 )
 
 from .excel_interface import SheetNames, SQLDataFrameInterface
 from .utils import SRM_PATTERN, maybe_dropna, skipper, validate_no_null
 
+# Utilities -------------------------------------------------------------------
 to_pascal = AliasGenerator(
     validation_alias=to_pascal_base,
     serialization_alias=lambda x: x,
 )
+
+
+def _serialize_test_out(x: bool) -> Literal["OUT"] | None:
+    return "OUT" if x else None
+
+
+TestOutAnn = Annotated[
+    bool,
+    BeforeValidator(validate_test_out),
+    PlainSerializer(_serialize_test_out),
+    Field(validation_alias="Test"),
+]
+TestOutOptionalAnn = Annotated[
+    bool | None,
+    BeforeValidator(validate_test_out),
+    PlainSerializer(_serialize_test_out),
+    Field(validation_alias="Test"),
+]
 
 
 # * Common --------------------------------------------------------------------
@@ -147,7 +167,7 @@ class RatioDataBase(_SampleIDAndNumber, SRMDataForeignKey):
     day: int
     port: int
     value_g: float
-    test: Annotated[str | None, BeforeValidator(validate_nan_to_none)]
+    test_out: TestOutAnn
 
 
 class RatioDataPublic(RatioDataBase, _IDPrimaryKeyPublic):
@@ -183,7 +203,7 @@ class RatioDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpdate):
     day: int | None = None
     port: int | None = None
     value_g: float | None = None
-    test: Annotated[str | None, BeforeValidator(validate_nan_to_none)] = None
+    test_out: TestOutOptionalAnn = None
 
 
 # ** Vendor Data --------------------------------------------------------------
@@ -740,7 +760,7 @@ class RCertOutliersBase(RCertForeignKey):
     name: str = Field(validation_alias="SampleID")
     ratio: float
     # TODO(wpk): make this a bool with where test == "OUT"
-    test: Annotated[str | None, BeforeValidator(validate_nan_to_none)]
+    test_out: TestOutAnn
     value: float
 
 
@@ -763,9 +783,9 @@ class RCertOutliersCreate(RCertOutliersBase, SQLDataFrameInterface):
 
 
 class RCertOutliersUpdate(_RCertForeignKeyUpdate):
-    name: str | None = None
+    name: str | None = Field(validation_alias="Test", default=None)
     # TODO(wpk): make this a bool with where test == "OUT"
-    test: Annotated[str | None, BeforeValidator(validate_nan_to_none)] = None
+    test_out: TestOutOptionalAnn = None
     ratio: float | None = None
     value: float | None = None
 
