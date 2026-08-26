@@ -1,6 +1,7 @@
 """Mixin for models"""
 # ruff:file-ignore[assert]
 
+import contextlib
 import re
 from collections.abc import Callable, Hashable
 from enum import StrEnum
@@ -187,13 +188,48 @@ def json_to_dict_of_models(
             # Recursive
             inner_model = annotation
             if v := inner_model.model_validate(
-                json_to_dict_of_models(data[name], inner_model)
+                json_to_dict_of_models(data[name], inner_model, update=update)
             ):
                 out[name] = v
 
         else:
             # anything else
             out[name] = data[name]
+    return out
+
+
+def json_to_dict_of_dataframes(
+    data: dict[str, Any],
+    model: type[SQLModel],
+    normalize: bool = True,
+) -> dict[str, Any]:
+
+    out: dict[str, Any] = {}
+    for name, field in model.model_fields.items():
+        if not normalize and name not in data:
+            continue
+
+        annotation: Any = field.annotation
+        if annotation is None or isinstance(annotation, UnionType):
+            pass
+        elif get_origin(annotation) is list:
+            # list
+            inner_model = _annotation_to_model(annotation, name)
+            if issubclass(inner_model, SQLDataFrameInterface):
+                if normalize:
+                    with contextlib.suppress(KeyError):
+                        out[name] = pd.json_normalize(
+                            data, name, ["srm_id", "batch_id", "lot_id"]
+                        ).rename(columns=inner_model.dbnames_to_colnames())
+                elif name in data:
+                    out[name] = inner_model.dicts_to_dataframe(data[name])
+        elif issubclass(annotation, SQLModel):
+            # Recursive
+            inner_model = annotation
+            if v := json_to_dict_of_dataframes(
+                data if normalize else data[name], inner_model, normalize
+            ):
+                out[name] = v
     return out
 
 

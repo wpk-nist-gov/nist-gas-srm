@@ -1,9 +1,11 @@
 """Basic crud operations"""
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 
 import pandas as pd
-from sqlmodel import Session, select
+from sqlalchemy.engine.result import ScalarResult
+from sqlalchemy.sql.elements import ColumnElement
+from sqlmodel import Session, SQLModel, and_ as sql_and_, or_ as sql_or_, select
 
 from nist_gas_srm.core import basemodels, excel_interface  # , read_excel
 
@@ -35,46 +37,111 @@ def update_srm(
     return db_srmdata
 
 
+def _validate_srm_query(
+    srm_query: basemodels.SRMDataQuery | str,
+) -> basemodels.SRMDataQuery:
+    if isinstance(srm_query, basemodels.SRMDataQuery):
+        return srm_query
+    return basemodels.SRMDataQuery.from_string(srm_query)
+
+
+def _validate_srm_queries(
+    srm_queries: Iterable[basemodels.SRMDataQuery | str],
+) -> list[basemodels.SRMDataQuery]:
+
+    return [_validate_srm_query(s) for s in srm_queries]
+
+
+def _get_sql_and_from_model(
+    query: basemodels.SRMDataQuery,
+    model: type[SQLModel] = models.SRMData,
+) -> ColumnElement[bool]:
+    return sql_and_(
+        *(
+            getattr(model, attr) == value
+            for attr, value in query.model_dump(exclude_unset=True).items()
+        )
+    )
+
+
+def _get_where_from_srm_query(
+    srm_query: str | basemodels.SRMDataQuery | Iterable[basemodels.SRMDataQuery | str],
+) -> ColumnElement[bool]:
+
+    if isinstance(srm_query, str):
+        srm_query = basemodels.SRMDataQuery.from_string(srm_query)
+
+    if isinstance(srm_query, basemodels.SRMDataQuery):
+        where_ = _get_sql_and_from_model(srm_query)
+
+    else:
+        srm_query = _validate_srm_queries(srm_query)
+        where_ = sql_or_(*(_get_sql_and_from_model(obj) for obj in srm_query))
+    return where_
+
+
+def _get_srm_result(
+    *,
+    session: Session,
+    srm_id: int | None = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
+    srm_query: str
+    | basemodels.SRMDataQuery
+    | Sequence[basemodels.SRMDataQuery | str]
+    | None = None,
+) -> ScalarResult[models.SRMData]:
+
+    query = select(models.SRMData)
+    if srm_query is not None:
+        where_ = _get_where_from_srm_query(srm_query)
+        query = query.where(where_)
+        return session.exec(query)
+    srm_query = basemodels.SRMDataQuery.from_params_exclude_none(
+        srm_id=srm_id, batch_id=batch_id, lot_id=lot_id
+    )
+    if srm_query.model_dump(exclude_unset=True):
+        where_ = _get_where_from_srm_query(srm_query)
+        query = query.where(where_)
+
+    return session.exec(query)
+
+
 def get_srm(
     *,
     session: Session,
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
+    srm_query: basemodels.SRMDataQuery | str | None = None,
 ) -> models.SRMData:
     """Get single srm"""
 
-    query = select(models.SRMData)
-
-    if srm_id is not None:
-        query = query.where(models.SRMData.srm_id == srm_id)
-    if batch_id is not None:
-        query = query.where(models.SRMData.batch_id == batch_id)
-    if lot_id is not None:
-        query = query.where(models.SRMData.lot_id == lot_id)
-
-    return session.exec(query).one()
+    return _get_srm_result(
+        session=session,
+        srm_id=srm_id,
+        batch_id=batch_id,
+        lot_id=lot_id,
+        srm_query=srm_query,
+    ).one()
 
 
 def get_srms(
     *,
     session: Session,
-    srm_id: int | None,
+    srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
+    srm_query: Sequence[basemodels.SRMDataQuery | str] | None = None,
 ) -> Sequence[models.SRMData]:
     """Get multiple srm"""
-
-    query = select(models.SRMData)
-
-    if srm_id is not None:
-        query = query.where(models.SRMData.srm_id == srm_id)
-    if batch_id is not None:
-        query = query.where(models.SRMData.batch_id == batch_id)
-    if lot_id is not None:
-        query = query.where(models.SRMData.lot_id == lot_id)
-
-    return session.exec(query).all()
+    return _get_srm_result(
+        session=session,
+        srm_id=srm_id,
+        batch_id=batch_id,
+        lot_id=lot_id,
+        srm_query=srm_query,
+    ).all()
 
 
 def get_rcert(
@@ -83,10 +150,15 @@ def get_rcert(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
+    srm_query: basemodels.SRMDataQuery | str | None = None,
 ) -> models.RCertData:
 
     return get_srm(
-        session=session, srm_id=srm_id, batch_id=batch_id, lot_id=lot_id
+        session=session,
+        srm_id=srm_id,
+        batch_id=batch_id,
+        lot_id=lot_id,
+        srm_query=srm_query,
     ).rcert
 
 
@@ -96,12 +168,17 @@ def get_rcerts(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
+    srm_query: Sequence[basemodels.SRMDataQuery | str] | None = None,
 ) -> Sequence[models.RCertData]:
 
     return [
         _.rcert
         for _ in get_srms(
-            session=session, srm_id=srm_id, batch_id=batch_id, lot_id=lot_id
+            session=session,
+            srm_id=srm_id,
+            batch_id=batch_id,
+            lot_id=lot_id,
+            srm_query=srm_query,
         )
     ]
 

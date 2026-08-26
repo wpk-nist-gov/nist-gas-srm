@@ -27,6 +27,12 @@ EXCEL_FILENAME_PATTERN = re.compile(
     flags=re.IGNORECASE,
 )
 
+SRM_PATTERN = re.compile(
+    r"(?P<srm_id>\d+)(?P<batch_id>\w+)?(:?-(?P<lot_id>\w*))?",
+    flags=re.IGNORECASE,
+)
+
+
 strip_trailing_numbers = partial(re.compile(r"\.[1-9]+").sub, "")
 
 

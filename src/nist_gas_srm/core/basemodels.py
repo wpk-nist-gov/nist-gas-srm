@@ -3,12 +3,13 @@
 
 from datetime import UTC, datetime
 from operator import methodcaller
-from typing import Annotated, TypeAlias, cast, override
+from typing import Annotated, Any, Self, TypeAlias, cast, override
 
 import pandas as pd
 from pydantic import AliasGenerator, BeforeValidator
 from pydantic.alias_generators import to_pascal as to_pascal_base
 from sqlalchemy import Column, DateTime
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlmodel import (
     VARCHAR,
     Field,
@@ -25,7 +26,7 @@ from nist_gas_srm.core.validate import (
 )
 
 from .excel_interface import SheetNames, SQLDataFrameInterface
-from .utils import maybe_dropna, skipper, validate_no_null
+from .utils import SRM_PATTERN, maybe_dropna, skipper, validate_no_null
 
 to_pascal = AliasGenerator(
     validation_alias=to_pascal_base,
@@ -58,7 +59,10 @@ class _SampleIDAndNumberUpdate(SQLModel):
 
 class SRMDataForeignKey(SQLModel):
     srmdata_id: int | None = Field(
-        default=None, foreign_key="srmdata.id", ondelete="CASCADE"
+        default=None,
+        foreign_key="srmdata.id",
+        ondelete="CASCADE",
+        validation_alias="SRMDataID",
     )
 
 
@@ -74,19 +78,21 @@ class SRMDataBase(SQLModel):
         UniqueConstraint("srm_id", "batch_id", "lot_id", name="unique_user_product"),
     )
 
+    model_config = SQLModelConfig(ignored_types=(hybrid_property,))
+
     name: str = Field(sa_column=Column("name", VARCHAR))
     srm_id: int = Field(index=True)
-    batch_id: Annotated[
-        str | None, BeforeValidator(validate_optional_str_to_lower)
-    ]  # = Field(default=None, index=True)
-    lot_id: Annotated[
-        str, BeforeValidator(validate_str_to_lower)
-    ]  # = Field(index=True)
+    batch_id: Annotated[str | None, BeforeValidator(validate_optional_str_to_lower)]
+    lot_id: Annotated[str, BeforeValidator(validate_str_to_lower)]
 
     timestamp: Annotated[datetime, BeforeValidator(validate_timestamp)] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False),
         default_factory=lambda: datetime.now(UTC),
     )
+
+    @hybrid_property
+    def srm_string_id(self) -> str:
+        return f"{self.srm_id}{self.batch_id or ''}{'-' + self.lot_id if self.lot_id else ''}"
 
 
 class SRMDataPublic(SRMDataBase, _IDPrimaryKeyPublic):
@@ -100,6 +106,29 @@ class SRMDataCreate(SRMDataBase):
 class SRMDataUpdate(SQLModel):
     name: str | None = None
     timestamp: datetime | None = None
+
+
+class SRMDataQuery(SQLModel):
+    srm_id: int | None = None
+    batch_id: Annotated[str | None, BeforeValidator(validate_optional_str_to_lower)] = (
+        None
+    )
+    lot_id: Annotated[str | None, BeforeValidator(validate_optional_str_to_lower)] = (
+        None
+    )
+
+    @classmethod
+    def from_string(cls, string: str) -> Self:
+        if (m := SRM_PATTERN.match(string)) is not None:
+            return cls.model_validate({
+                k: v for k, v in m.groupdict().items() if v is not None
+            })
+        return cls()
+
+    @classmethod
+    def from_params_exclude_none(cls, **kwargs: Any) -> Self:
+        kwargs = {k: v for k, v in kwargs.items() if v is not None}
+        return cls.model_validate(kwargs)
 
 
 # * Tables --------------------------------------------------------------------

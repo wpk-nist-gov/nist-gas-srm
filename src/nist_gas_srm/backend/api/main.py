@@ -1,11 +1,10 @@
-# ruff:file-ignore[commented-out-code]
 from collections.abc import AsyncGenerator, Generator, Sequence
 from contextlib import asynccontextmanager
 from io import BytesIO
 from pathlib import Path
 from typing import Annotated, Any
 
-from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import AfterValidator, ValidationError
 from sqlmodel import Session
@@ -63,6 +62,8 @@ def welcome() -> dict[str, str]:
     return {"detail": "Welcome to NIST Gas SRM database"}
 
 
+@app.get("/srmrcert/complete", response_model=basemodels.SRMRCertPublicComplete)
+@app.get("/srm/complete", response_model=basemodels.SRMDataPublicComplete)
 @app.get("/srm", response_model=basemodels.SRMDataPublic)
 def read_srm(
     *,
@@ -70,6 +71,7 @@ def read_srm(
     srm_id: int | None = None,
     batch_id: _OptStrAsLower = None,
     lot_id: _OptStrAsLower = None,
+    srm: str | None = None,
 ) -> models.SRMData:
     """Get list of srms"""
 
@@ -78,9 +80,12 @@ def read_srm(
         srm_id=srm_id,
         batch_id=batch_id,
         lot_id=lot_id,
+        srm_query=srm,
     )
 
 
+@app.get("/srmrcerts/complete", response_model=list[basemodels.SRMRCertPublicComplete])
+@app.get("/srms/complete", response_model=list[basemodels.SRMDataPublicComplete])
 @app.get("/srms", response_model=list[basemodels.SRMDataPublic])
 def read_srms(
     *,
@@ -88,49 +93,20 @@ def read_srms(
     srm_id: int | None = None,
     batch_id: _OptStrAsLower = None,
     lot_id: _OptStrAsLower = None,
+    srm: Annotated[list[str] | None, Query()] = None,
 ) -> Sequence[models.SRMData]:
     """Get list of srms"""
-    return crud.get_srms(
-        session=session,
-        srm_id=srm_id,
-        batch_id=batch_id,
-        lot_id=lot_id,
-    )
-
-
-@app.get("/srm/complete", response_model=basemodels.SRMDataPublicComplete)
-def read_srm_complete(
-    *,
-    session: SessionDepends,
-    srm_id: int | None = None,
-    batch_id: _OptStrAsLower = None,
-    lot_id: _OptStrAsLower = None,
-) -> models.SRMData:
-    return crud.get_srm(
-        session=session,
-        srm_id=srm_id,
-        batch_id=batch_id,
-        lot_id=lot_id,
-    )
-
-
-@app.get("/srms/complete", response_model=list[basemodels.SRMDataPublicComplete])
-def read_srms_complete(
-    *,
-    session: SessionDepends,
-    srm_id: int | None = None,
-    batch_id: _OptStrAsLower = None,
-    lot_id: _OptStrAsLower = None,
-) -> Sequence[models.SRMData]:
 
     return crud.get_srms(
         session=session,
         srm_id=srm_id,
         batch_id=batch_id,
         lot_id=lot_id,
+        srm_query=srm,
     )
 
 
+@app.get("/rcert/complete", response_model=basemodels.RCertPublicComplete)
 @app.get("/rcert", response_model=basemodels.RCertPublic)
 def read_rcert(
     *,
@@ -149,76 +125,9 @@ def read_rcert(
     )
 
 
+@app.get("/rcerts/complete", response_model=list[basemodels.RCertPublicComplete])
 @app.get("/rcerts", response_model=list[basemodels.RCertPublic])
 def read_rcerts(
-    *,
-    session: SessionDepends,
-    srm_id: int | None = None,
-    batch_id: _OptStrAsLower = None,
-    lot_id: _OptStrAsLower = None,
-) -> Sequence[models.RCertData]:
-    """Get list of srms"""
-
-    return crud.get_rcerts(
-        session=session,
-        srm_id=srm_id,
-        batch_id=batch_id,
-        lot_id=lot_id,
-    )
-
-
-@app.get("/srmrcert/complete", response_model=basemodels.SRMRCertPublicComplete)
-def read_srmrcert_complete(
-    *,
-    session: SessionDepends,
-    srm_id: int | None = None,
-    batch_id: _OptStrAsLower = None,
-    lot_id: _OptStrAsLower = None,
-) -> models.SRMData:
-    return crud.get_srm(
-        session=session,
-        srm_id=srm_id,
-        batch_id=batch_id,
-        lot_id=lot_id,
-    )
-
-
-@app.get("/srmrcerts/complete", response_model=list[basemodels.SRMRCertPublicComplete])
-def read_srmrcerts_complete(
-    *,
-    session: SessionDepends,
-    srm_id: int | None = None,
-    batch_id: _OptStrAsLower = None,
-    lot_id: _OptStrAsLower = None,
-) -> Sequence[models.SRMData]:
-    return crud.get_srms(
-        session=session,
-        srm_id=srm_id,
-        batch_id=batch_id,
-        lot_id=lot_id,
-    )
-
-
-@app.get("/rcert/complete", response_model=basemodels.RCertPublicComplete)
-def read_rcert_complete(
-    *,
-    session: SessionDepends,
-    srm_id: int | None = None,
-    batch_id: _OptStrAsLower = None,
-    lot_id: _OptStrAsLower = None,
-) -> models.RCertData:
-    """Get list of srms"""
-
-    return crud.get_rcert(
-        session=session,
-        srm_id=srm_id,
-        batch_id=batch_id,
-        lot_id=lot_id,
-    )
-
-
-@app.get("/rcerts/complete", response_model=list[basemodels.RCertPublicComplete])
-def read_rcerts_complete(
     *,
     session: SessionDepends,
     srm_id: int | None = None,
@@ -290,7 +199,7 @@ async def create_upload_file(
     srmdata_in: Annotated[
         str, Form()
     ] = '{"name": "string", "srm_id": 0, "batch_id": null, "lot_id": "string", "timestamp": null}',
-    file: Annotated[UploadFile, File()],
+    uploadfile: Annotated[UploadFile, File()],
 ) -> Any:  # models.SRMData:
 
     try:
@@ -305,13 +214,14 @@ async def create_upload_file(
         lot_id=srmdata_create.lot_id,
     )
 
-    if file.filename is None or not file.filename.endswith(".xls"):
+    if uploadfile.filename is None or not uploadfile.filename.endswith(".xls"):
         raise HTTPException(
-            status_code=400, detail="Invalid file type. Please upload an Excel file."
+            status_code=400,
+            detail="Invalid uploadfile type. Please upload an Excel uploadfile.",
         )
 
-    # 2. Read the file contents into memory
-    contents = await file.read()
+    # 2. Read the uploadfile contents into memory
+    contents = await uploadfile.read()
 
     try:
         # 3. Load the byte stream into a Pandas DataFrame
@@ -325,7 +235,7 @@ async def create_upload_file(
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Error processing Excel file: {e!s}",
+            detail=f"Error processing Excel uploadfile: {e!s}",
         ) from e
 
 
@@ -352,37 +262,3 @@ async def download_excel() -> FileResponse:
     return FileResponse(
         path=file_path, filename=display_filename, media_type=excel_media_type
     )
-
-
-# @app.get("/standards/{srm_id}", response_model=list[StandardsDataPublic])
-# def read_srm_standards(
-#     *,
-#     session: SessionDepends,
-#     srm_id: int,
-#     batch_id: _OptStrAsLower = None,
-#     lot_id: _OptStrAsLower = None,
-# ) -> list[StandardsData]:
-
-#     query = select(models.SRMData).where(models.SRMData.srm_id == srm_id)
-
-#     if batch_id:
-#         query = query.where(models.SRMData.batch_id == batch_id)
-#     if lot_id:
-#         query = query.where(models.SRMData.lot_id == lot_id)
-
-#     return session.exec(query).one().standards
-
-
-# @app.get("/ratios/{srm_id}", response_model=RatioDataPublic)
-# def read_ratios(
-#         srm_id: int,
-#         batch_id: _OptStrAsLower = None,
-#         lot_id: _OptStrAsLower = None,
-# ) -> Sequence[RatioData]:
-#     with Session(engine) as session:
-#         pass
-
-
-# @app.get(f"/srm/{srm_id}")
-# def read_ratio_data() -> None:
-#     pass
