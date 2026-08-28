@@ -27,7 +27,8 @@ from nist_gas_srm.core.validate import (
 )
 
 from .excel_interface import SheetNames, SQLDataFrameInterface
-from .utils import SRM_PATTERN, maybe_dropna, skipper, validate_no_null
+from .excel_utils import maybe_dropna, skipper, validate_no_null
+from .utils import SRM_PATTERN
 
 # Utilities -------------------------------------------------------------------
 to_pascal = AliasGenerator(

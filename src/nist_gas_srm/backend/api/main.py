@@ -11,7 +11,8 @@ from sqlmodel import Session
 
 from nist_gas_srm.backend import crud, models
 from nist_gas_srm.backend.core.db import engine, init_db
-from nist_gas_srm.core import basemodels, utils
+from nist_gas_srm.core import basemodels
+from nist_gas_srm.core.excel_utils import as_excelfile
 from nist_gas_srm.core.validate import validate_optional_str_to_lower
 
 _OptStrAsLower = Annotated[str | None, AfterValidator(validate_optional_str_to_lower)]
@@ -225,7 +226,7 @@ async def create_upload_file(
 
     try:
         # 3. Load the byte stream into a Pandas DataFrame
-        with utils.as_excelfile(BytesIO(contents)) as excelfile:
+        with as_excelfile(BytesIO(contents)) as excelfile:
             return crud.add_srm_from_excel_obj(
                 session=session,
                 srmdata_create=srmdata_create,

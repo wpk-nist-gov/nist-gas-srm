@@ -299,7 +299,11 @@ testpaths = [
     "tests",
 ]
 # options
-filterwarnings = [ "error" ]
+filterwarnings = [
+    "error",
+    "ignore: Cannot parse header or footer so it will be ignored:UserWarning",
+    "ignore: Print area cannot be set to Defined name:UserWarning",
+]
 log_cli_level = "INFO"
 log_level = "INFO"
 minversion = "8"

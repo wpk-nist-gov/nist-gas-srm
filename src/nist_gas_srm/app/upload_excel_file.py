@@ -141,7 +141,7 @@ if upload_file is not None:
 
 def _get_metadata_from_filename() -> None:
     if upload_file is not None:
-        from nist_gas_srm.core.utils import parse_excel_filename_to_metadata
+        from nist_gas_srm.core.excel_utils import parse_excel_filename_to_metadata
 
         new = pd.DataFrame([parse_excel_filename_to_metadata(upload_file.name)]).astype({
             "srm_id": int

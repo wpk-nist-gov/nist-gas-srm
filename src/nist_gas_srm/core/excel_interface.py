@@ -13,7 +13,7 @@ from typing import Any, ClassVar, Self, cast, get_args, get_origin
 import pandas as pd
 from sqlmodel import SQLModel
 
-from .utils import (
+from .excel_utils import (
     get_frame,
     get_frame_with_len_check,
     optional_dataframe_func_wrapper,
