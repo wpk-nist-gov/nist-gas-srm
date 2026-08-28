@@ -1,4 +1,4 @@
-auto_update:
+update:
   cooldown_days: 7
 ci:
   autoupdate_commit_msg: "chore(deps): update pre-commit hooks"
@@ -20,7 +20,7 @@ repos:
 
   # * sync dependencies
   - repo: https://github.com/wpk-nist-gov/sync-pre-commit-hooks
-    rev: v0.8.1
+    rev: v0.10.0
     hooks:
       - id: forbidden-files
       - id: sync-pre-commit-deps
@@ -60,23 +60,23 @@ repos:
     rev: v0.9.3
     hooks:
       - id: taplo-format
-        # exclude: (^|/)pyproject\.toml$
+        exclude: (^|/)pyproject\.toml$
       - id: taplo-lint
         args: ["--no-schema"]
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: v2.26.0
+    rev: v2.28.0
     hooks:
       - id: pyproject-fmt
   # ** validate (schema-store)
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2026.07.28
+    rev: 2026.08.15
     hooks:
       - id: validate-pyproject
         name: validate-pyproject-schema-store
         stages: [manual]
   # ** repo review
   - repo: https://github.com/scientific-python/cookie
-    rev: 2026.06.18
+    rev: 2026.08.14
     hooks:
       - id: sp-repo-review
         stages: [manual]
@@ -102,18 +102,24 @@ repos:
 
   # Just
   - repo: https://github.com/wpk-nist-gov/just-pre-commit
-    rev: v1.57.0
+    rev: v1.58.0
     hooks:
       - id: justfile-format
 
   # * Linting
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.0
+    rev: v0.16.4
     hooks:
       - id: ruff-check
         alias: ruff
         args: [--fix, --show-fixes]
         types_or: &ruff_types [python, pyi, jupyter, markdown]
+      - id: ruff-check
+        alias: ruff-check-config
+        name: ruff check config
+        args: [--fix, --show-fixes]
+        types_or: [file]
+        files: ^pyproject\.toml$|^\.?ruff\.toml$
       - id: ruff-format
         alias: ruff
         types_or: *ruff_types
@@ -121,7 +127,7 @@ repos:
   # * Spelling
   # ** typos
   - repo: https://github.com/adhtruong/mirrors-typos
-    rev: v1.48.0
+    rev: v1.49.0
     hooks:
       - id: typos
         exclude_types: [jupyter]
@@ -130,7 +136,7 @@ repos:
   # * Dependencies
   # ** pyproject2conda
   - repo: https://github.com/usnistgov/pyproject2conda
-    rev: v0.23.1
+    rev: v0.23.2
     hooks:
       - id: pyproject2conda-project
         alias: requirements
@@ -138,7 +144,7 @@ repos:
           - "--custom-command=prek run pyproject2conda-project --all-files"
   # ** uv
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.12.0
+    rev: 0.12.5
     hooks:
       - id: uv-lock
         alias: requirements
@@ -151,7 +157,7 @@ repos:
 
   # * Commit message
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v4.17.0
+    rev: v4.18.0
     hooks:
       - id: commitizen
         stages: [commit-msg]
@@ -172,7 +178,7 @@ repos:
 
   # * Actions
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.37.4
+    rev: 0.38.0
     hooks:
       - id: check-github-workflows
         alias: actions
@@ -199,7 +205,7 @@ repos:
         priority: 0
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
     # Zizmor version.
-    rev: v1.28.0
+    rev: v1.29.0
     hooks:
       # Run the linter.
       - id: zizmor

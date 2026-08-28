@@ -1,16 +1,20 @@
 #!/usr/bin/env -S uv run --script
+# pylint: disable=wrong-import-position,empty-comment
 
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
-#     "nox>=2026.7.11",
+#     "nox>=2026.8.17",
 # ]
+#
+# [tool.ty]
+# # ty can be flaky on tools imports
+# analysis.allowed-unresolved-imports = ["tools.*"]
 # ///
 
 """Config file for nox."""
 # pyright: reportUnusedCallResult=false
-# pylint: disable=wrong-import-position
-# ruff:file-ignore[complex-structure]
+# ruff:file-ignore[complex-structure,function-call-in-dataclass-default-argument]
 
 # * Imports ----------------------------------------------------------------------------
 from __future__ import annotations

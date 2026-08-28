@@ -3,7 +3,7 @@
 [build-system]
 build-backend = "uv_build"
 requires = [
-    "uv-build>=0.12.0,<0.13.0",
+    "uv-build>=0.12.5,<0.13.0",
 ]
 
 [project]
@@ -85,7 +85,7 @@ docs = [
     "sphinx-copybutton",
 ]
 # other groups
-basedpyright = [ "basedpyright>=1.39.9" ]
+basedpyright = [ "basedpyright>=1.39.10" ]
 docs-live = [
     "sphinx-autobuild",
     { include-group = "docs" },
@@ -96,9 +96,9 @@ docs-spelling = [
     { include-group = "docs" },
 ]
 ipython = [ "ipython" ]
-mypy = [ "mypy[faster-cache]>=2.3.0" ]
+mypy = [ "mypy[faster-cache]>=2.3.1" ]
 notebook = [ "ipykernel", "nbclient" ]
-nox = [ "nox>=2026.7.11" ]
+nox = [ "nox>=2026.8.17" ]
 pylint = [ "pylint" ]
 pytest = [ "pytest" ]
 pytest-accept = [ "pytest-accept" ]
@@ -117,7 +117,10 @@ required-version = ">=0.11.8"
 default-groups = [ "dev" ]
 fork-strategy = "requires-python"
 exclude-newer = "7 days"
+# Needed until prek>=0.5.0 is 7 days old
+exclude-newer-package = { prek = "0 days" }
 managed = true
+build-backend.source-exclude = [ ".*cache" ]
 build-backend.source-include = [ "tests/**" ]
 pip.annotation-style = "line"
 pip.generate-hashes = true
@@ -135,6 +138,82 @@ nox.requires-python = ">=3.14"
 [tool.uv.sources]
 # pandas-stubs = { git = "https://github.com/pandas-dev/pandas-stubs", branch = "main" }
 streamlit-pydantic = { git = "https://github.com/lukasmasuch/streamlit-pydantic", branch = "main" }
+
+# * ruff -----------------------------------------------------------------------
+[tool.ruff]
+extend-include = [
+    "*.ipynb",
+]
+extend-exclude = [
+    ".numba_cache",
+    ".venv",
+    "dist-conda",
+]
+fix = true
+# unsafe-fixes = true
+
+[tool.ruff.format]
+docstring-code-format = true
+preview = true  # needed for markdown support
+
+[tool.ruff.lint]
+preview = true
+select = [
+    "ALL",
+]
+# fixable/unfixable
+fixable = [ "ALL" ]
+unfixable = [
+    "ERA",
+    "non-augmented-assignment",
+    "T",
+]
+# ignores
+ignore = [
+    "any-type",                             # - Any ok sometimes
+    "COM",                                  # - flake8-commas, formatter should take care of this?
+    "CPY",                                  # - Don't require copyright
+    "undocumented-magic-method",            # - Missing magic method docstring
+    "undocumented-public-init",             # - Missing docstring in __init__
+    "incorrect-blank-line-before-class",    # - 1 blank line required before class docstring
+    "missing-blank-line-after-summary",     # - blank line after summary
+    "multi-line-summary-first-line",        # - Multi-line docstring summary should start at the first line
+    "missing-trailing-period",              # - First line should end with a period
+    "non-imperative-mood",                  # - First line of docstring should be in imperative mood: "{first_line}"
+    "docstring-missing-returns",            # - Missing return from documentation
+    "docstring-missing-exception",          # - Missing raises from documentation
+    "line-too-long",                        # - line too long - let formatter fix this
+    "lambda-assignment",                    # - do not assign a lambda expression, use a def
+    "FBT",                                  # - bools are ok
+    "import-outside-top-level",             # - import should be at top level (leads to issues with imports in func?)
+    "suspicious-subprocess-import",         # - Want to use subprocess sometimes
+    "subprocess-without-shell-equals-true", # - subprocess-without-shell-equals-true
+    "start-process-with-partial-path",      # - start-process-with-partial-path
+    "relative-imports",                     # - Allow relative imports
+]
+isort.known-first-party = [
+    "nist_gas_srm",
+]
+isort.combine-as-imports = true
+pydocstyle.convention = "numpy"
+pylint.max-args = 15
+pylint.max-positional-args = 15
+pylint.max-public-methods = 30
+ruff.strictly-empty-init-modules = false
+flake8-type-checking.runtime-evaluated-base-classes = [
+    "pydantic.BaseModel",
+    "sqlmodel.SQLModel",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"src/**" = [
+    "PD",
+    "D",
+]
+"tests/**" = [
+    "D",      # - Don't need to document tests
+    "assert", # - Assert is fine with tests
+]
 
 # * Checks ---------------------------------------------------------------------
 [tool.repo-review]
@@ -163,6 +242,10 @@ expand_tables = [
     "tool.pyproject2conda",
     "tool.pyright.executionEnvironments",
     "tool.pytest",
+    "tool.ruff.format",
+    "tool.ruff.lint",
+    "tool.ruff.lint.per-file-ignores",
+    "tool.ty.overrides",
     "tool.typos",
     "tool.uv.dependency-groups",
     "tool.uv.exclude-newer-package",
@@ -310,10 +393,10 @@ minversion = "8"
 strict_xfail = "true"
 
 [tool.coverage]
-run.branch = true
 run.source = [
     "nist_gas_srm",
 ]
+run.branch = true
 paths.source = [
     "src/",
     # needed for testing source if not editable install
@@ -321,16 +404,16 @@ paths.source = [
     "*/.nox/**/site-packages",
     "*/src",
 ]
-report.exclude_also = [
-    "@overload",
-    "if TYPE_CHECKING:",
-]
 report.include = [
     "src/*",
 ]
 report.omit = [
     "*/_typing.py",
     "*/vendored/*",
+]
+report.exclude_also = [
+    "@overload",
+    "if TYPE_CHECKING:",
 ]
 report.show_missing = true
 
@@ -355,15 +438,15 @@ pip-deps = [
     # these used solely for specking tools to be run via uvx ...
     "conda-lock>=4.0.2",
     "copier-template-extensions>=0.3.3",
-    "copier>=9.17.0",
+    "copier>=9.17.2",
     "grayskull>=3.1.1",
     "nbqa>=1.9.1",
-    "prek>=0.4.11",
-    "pyrefly>=1.1.1",
+    "prek>=0.5.0",
+    "pyrefly>=1.2.0",
     "pyright>=1.1.411",
     "rooster>=0.1.1",
     "twine>=7.0.0",
-    "ty>=0.0.65",
+    "ty>=0.0.73",
 ]
 groups = [
     "basedpyright",
