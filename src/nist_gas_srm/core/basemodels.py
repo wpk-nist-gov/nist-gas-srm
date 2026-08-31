@@ -23,12 +23,13 @@ from sqlmodel._compat import SQLModelConfig  # ruff:ignore[import-private-name]
 from nist_gas_srm.core.typing_compat import override
 from nist_gas_srm.core.validate import (
     validate_nan_to_none,
+    validate_no_null,
     validate_test_out,
     validate_timestamp,
 )
 
 from .excel_interface import SheetNames, SQLDataFrameInterface
-from .excel_utils import maybe_dropna, skipper, validate_no_null
+from .excel_utils import maybe_dropna, skipper
 from .utils import SRM_PATTERN
 
 # Utilities -------------------------------------------------------------------

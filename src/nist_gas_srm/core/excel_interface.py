@@ -330,6 +330,6 @@ def model_to_dict_of_dataframes(
                     cast("list[SQLDataFrameInterface]", value)
                 )
 
-        elif isinstance(value, SQLModel) and (v := model_to_dict_of_dataframes(value)):  # pylint: disable=confusing-consecutive-elif
+        elif isinstance(value, SQLModel) and (v := model_to_dict_of_dataframes(value)):
             out[name] = v
     return out
