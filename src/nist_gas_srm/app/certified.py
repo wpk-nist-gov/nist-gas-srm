@@ -28,7 +28,7 @@ if (excelfile := st.session_state.get("srm_file")) is not None:
         )
 
         with tab:
-            st.dataframe(data_, width="content", hide_index=True)
+            st.dataframe(data_, width="content", hide_index=True)  # pyright: ignore[reportUnknownMemberType]
 
         if name == "cylinder_results" and data_ is not None:
             # plot of Cylinder results

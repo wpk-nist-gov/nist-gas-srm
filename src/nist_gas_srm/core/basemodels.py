@@ -7,7 +7,7 @@ from operator import methodcaller
 from typing import Annotated, Any, Literal, Self, TypeAlias, cast, override
 
 import pandas as pd
-from pydantic import AliasGenerator, BeforeValidator, PlainSerializer
+from pydantic import AliasGenerator, BeforeValidator, PlainSerializer, StringConstraints
 from pydantic.alias_generators import to_pascal as to_pascal_base
 from sqlalchemy import Column, DateTime
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -21,8 +21,6 @@ from sqlmodel._compat import SQLModelConfig  # ruff:ignore[import-private-name]
 
 from nist_gas_srm.core.validate import (
     validate_nan_to_none,
-    validate_optional_str_to_lower,
-    validate_str_to_lower,
     validate_test_out,
     validate_timestamp,
 )
@@ -53,6 +51,10 @@ TestOutOptionalAnn = Annotated[
     BeforeValidator(validate_test_out),
     PlainSerializer(_serialize_test_out),
     Field(validation_alias="Test"),
+]
+LowerString = Annotated[str, StringConstraints(min_length=1, to_lower=True)]
+OptionalLowerString = Annotated[
+    str | None, StringConstraints(min_length=1, to_lower=True)
 ]
 
 
@@ -104,8 +106,8 @@ class SRMDataBase(SQLModel):
 
     name: str = Field(sa_column=Column("name", VARCHAR))
     srm_id: int = Field(index=True)
-    batch_id: Annotated[str | None, BeforeValidator(validate_optional_str_to_lower)]
-    lot_id: Annotated[str, BeforeValidator(validate_str_to_lower)]
+    batch_id: OptionalLowerString
+    lot_id: LowerString
 
     timestamp: Annotated[datetime, BeforeValidator(validate_timestamp)] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False),
@@ -132,12 +134,8 @@ class SRMDataUpdate(SQLModel):
 
 class SRMDataQuery(SQLModel):
     srm_id: int | None = None
-    batch_id: Annotated[str | None, BeforeValidator(validate_optional_str_to_lower)] = (
-        None
-    )
-    lot_id: Annotated[str | None, BeforeValidator(validate_optional_str_to_lower)] = (
-        None
-    )
+    batch_id: OptionalLowerString = None
+    lot_id: OptionalLowerString = None
 
     @classmethod
     def from_string(cls, string: str) -> Self:

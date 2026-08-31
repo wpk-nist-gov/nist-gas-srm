@@ -28,9 +28,13 @@ with st.form("entry_form", clear_on_submit=False):
     PARAMS = {
         "name": st.text_input("Name", placeholder="A descriptive name"),
         "srm_id": st.number_input(
-            "ID", placeholder="2627", min_value=0, max_value=10000000
+            "ID",
+            placeholder="2627",
+            min_value=1,
+            max_value=10000000,
+            value=None,
         ),
-        "batch_id": st.text_input("Batch", placeholder="a"),
+        "batch_id": st.text_input("Batch", placeholder="a", value=None),
         "lot_id": st.text_input("Lot", placeholder="XXX"),
         "timestamp": st.datetime_input("timestamp"),
     }
@@ -41,11 +45,13 @@ with st.form("entry_form", clear_on_submit=False):
 
 # # Display
 if submitted:
-    st.session_state.srm_data = SRMDataCreate.model_validate({
-        short_name: value for short_name, value in PARAMS.items() if value
-    })
+    st.write(f"params={PARAMS}")
+    # st.session_state.srm_data = SRMDataCreate.model_validate({
+    #     short_name: value for short_name, value in PARAMS.items() if value is not None
+    # })  # ruff: ignore[commented-out-code]
+    st.session_state.srm_data = SRMDataCreate.model_validate(PARAMS)
 
 
 st.write("### Submitted metadata")
 if (srm_data := st.session_state.srm_data) is not None:
-    st.dataframe(pd.DataFrame([srm_data.model_dump()]), use_container_width=True)
+    _ = st.dataframe(pd.DataFrame([srm_data.model_dump()]), width="stretch")  # pyright: ignore[reportUnknownMemberType]

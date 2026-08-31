@@ -6,16 +6,13 @@ from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
-from pydantic import AfterValidator, ValidationError
+from pydantic import ValidationError
 from sqlmodel import Session
 
 from nist_gas_srm.backend import crud, models
 from nist_gas_srm.backend.core.db import engine, init_db
 from nist_gas_srm.core import basemodels
 from nist_gas_srm.core.excel_utils import as_excelfile
-from nist_gas_srm.core.validate import validate_optional_str_to_lower
-
-_OptStrAsLower = Annotated[str | None, AfterValidator(validate_optional_str_to_lower)]
 
 
 @asynccontextmanager
@@ -43,8 +40,8 @@ SessionDepends = Annotated[Session, Depends(get_session)]
 def _raise_if_srms_exist(
     session: Session,
     srm_id: int | None = None,
-    batch_id: _OptStrAsLower = None,
-    lot_id: _OptStrAsLower = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
 ) -> None:
     if crud.get_srms(
         session=session,
@@ -70,8 +67,8 @@ def read_srm(
     *,
     session: SessionDepends,
     srm_id: int | None = None,
-    batch_id: _OptStrAsLower = None,
-    lot_id: _OptStrAsLower = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
     srm: str | None = None,
 ) -> models.SRMData:
     """Get list of srms"""
@@ -92,8 +89,8 @@ def read_srms(
     *,
     session: SessionDepends,
     srm_id: int | None = None,
-    batch_id: _OptStrAsLower = None,
-    lot_id: _OptStrAsLower = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
     srm: Annotated[list[str] | None, Query()] = None,
 ) -> Sequence[models.SRMData]:
     """Get list of srms"""
@@ -113,8 +110,8 @@ def read_rcert(
     *,
     session: SessionDepends,
     srm_id: int | None = None,
-    batch_id: _OptStrAsLower = None,
-    lot_id: _OptStrAsLower = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
 ) -> models.RCertData:
     """Get list of srms"""
 
@@ -132,8 +129,8 @@ def read_rcerts(
     *,
     session: SessionDepends,
     srm_id: int | None = None,
-    batch_id: _OptStrAsLower = None,
-    lot_id: _OptStrAsLower = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
 ) -> Sequence[models.RCertData]:
     """Get list of srms"""
 
@@ -153,8 +150,8 @@ def read_rcerts_cylinder_results(
     *,
     session: SessionDepends,
     srm_id: int | None = None,
-    batch_id: _OptStrAsLower = None,
-    lot_id: _OptStrAsLower = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
 ) -> Sequence[models.RCertCylinderResults]:
     """Get list of srms"""
 
