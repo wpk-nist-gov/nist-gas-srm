@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   docs:
-    if: false # skip until ready to deploy
+    if: github.event_name == 'barblah' # dummy to skip for now
     permissions:
       contents: write
     uses: ./.github/workflows/docs.yml
