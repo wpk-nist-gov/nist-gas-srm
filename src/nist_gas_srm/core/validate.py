@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from math import isnan
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, TypeVar
+
+    T = TypeVar("T")
 
 
 def validate_nan_to_none(x: Any) -> Any:
@@ -51,4 +53,14 @@ def validate_test_out(x: Any) -> Any:  # ruff: ignore[too-many-return-statements
     except TypeError:
         pass
 
+    return x
+
+
+def validate_no_null(x: T) -> T:
+    import numpy as np
+    import pandas as pd
+
+    if np.any(pd.isnull(cast("np.ndarray[Any, Any]", x))):
+        msg = "Null values found"
+        raise ValueError(msg)
     return x

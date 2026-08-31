@@ -5,16 +5,14 @@ from contextlib import contextmanager
 from functools import partial
 from typing import TYPE_CHECKING, cast
 
-import numpy as np
 import pandas as pd
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Container, Generator
     from io import BytesIO
     from pathlib import Path
-    from typing import Any, TypeVar
+    from typing import Any
 
-    T = TypeVar("T")
 
 EXCEL_FILENAME_PATTERN = re.compile(
     r"srm(?P<srm_id>\d+)(?P<batch_id>\w*)_Series(?P<lot_id>\w*)_(.*).xls",
@@ -41,7 +39,7 @@ def skipper(
 
 def maybe_dropna(df: pd.DataFrame | None, **kwargs: Any) -> pd.DataFrame | None:
     if df is not None:
-        return cast("pd.DataFrame | None", df.dropna(**kwargs))
+        return cast("pd.DataFrame", df.dropna(**kwargs))
     return df
 
 
@@ -51,13 +49,6 @@ def get_frame(
     **kwargs: Any,
 ) -> pd.DataFrame:
     return pd.read_excel(io, sheet_name=sheet_name, **kwargs).dropna(how="all")  # pyright: ignore[reportUnknownMemberType]
-
-
-def validate_no_null(x: T) -> T:
-    if np.any(pd.isnull(cast("np.ndarray[Any, Any]", x))):
-        msg = "Null values found"
-        raise ValueError(msg)
-    return x
 
 
 def get_value_from_worksheet(
@@ -70,6 +61,15 @@ def get_value_from_worksheet(
     engine = cast("str | None", getattr(xls, "engine", None))
     if engine == "xlrd":
         return book.sheet_by_name(sheet_name).cell_value(rowx=rowx, colx=colx)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+
+    if engine == "openpyxl":
+        return cast(
+            "int",
+            book
+            .get_sheet_by_name(sheet_name)
+            .cell(row=rowx + 1, column=colx + 1)
+            .value,
+        )  # pyright: ignore[reportUnknownMemberType]
 
     if engine == "calamine":
         return book.get_sheet_by_name(sheet_name).to_python(skip_empty_area=False)[  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
