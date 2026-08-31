@@ -6,12 +6,13 @@ import uuid
 from datetime import UTC, datetime
 from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, cast, override
+from typing import TYPE_CHECKING, cast
 
 import pandas as pd
 import streamlit as st
 
 from nist_gas_srm.core import basemodels, excel_interface
+from nist_gas_srm.core.typing_compat import override
 
 if TYPE_CHECKING:
     from collections.abc import Iterable

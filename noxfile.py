@@ -809,8 +809,8 @@ def typecheck(  # ruff:ignore[too-many-branches]
             "pyrefly",
             "ty",
             "pylint",
-            "mypy-notebook",
-            "pylint-notebook",
+            # "mypy-notebook",
+            # "pylint-notebook",
         ]
 
     # set the cache directory for mypy

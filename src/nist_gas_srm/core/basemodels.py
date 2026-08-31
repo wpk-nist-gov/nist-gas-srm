@@ -4,7 +4,7 @@
 
 from datetime import UTC, datetime
 from operator import methodcaller
-from typing import Annotated, Any, Literal, Self, TypeAlias, cast, override
+from typing import Annotated, Any, Literal, Self, TypeAlias, cast
 
 import pandas as pd
 from pydantic import AliasGenerator, BeforeValidator, PlainSerializer, StringConstraints
@@ -19,6 +19,7 @@ from sqlmodel import (
 )
 from sqlmodel._compat import SQLModelConfig  # ruff:ignore[import-private-name]
 
+from nist_gas_srm.core.typing_compat import override
 from nist_gas_srm.core.validate import (
     validate_nan_to_none,
     validate_test_out,

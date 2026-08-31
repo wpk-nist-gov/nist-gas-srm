@@ -21,6 +21,7 @@ concurrency:
 
 jobs:
   docs:
+    if: false # skip until ready to deploy
     permissions:
       contents: write
     uses: ./.github/workflows/docs.yml
@@ -101,8 +102,9 @@ jobs:
   publish-testpypi:
     name: Publish package to testpypi
     if:
-      (github.event_name == 'release' && github.event.action == 'published') ||
-      (github.event_name == 'workflow_dispatch' && inputs.deploy)
+      false && (github.event_name == 'release' && github.event.action ==
+      'published') || (github.event_name == 'workflow_dispatch' &&
+      inputs.deploy)
     needs:
       - dist
       - smoke-test
@@ -125,8 +127,9 @@ jobs:
   publish-pypi:
     name: Publish package to pypi
     if:
-      (github.event_name == 'release' && github.event.action == 'published') ||
-      (github.event_name == 'workflow_dispatch' && inputs.deploy)
+      false && (github.event_name == 'release' && github.event.action ==
+      'published') || (github.event_name == 'workflow_dispatch' &&
+      inputs.deploy)
     needs:
       - dist
       - smoke-test
