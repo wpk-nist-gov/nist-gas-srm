@@ -12,6 +12,7 @@ $ nox -s docs -- -d symlink
 
 example-usage
 
-usage/demo
 
 ```
+
+<!-- usage/demo -->

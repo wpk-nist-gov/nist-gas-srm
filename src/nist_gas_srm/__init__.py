@@ -3,10 +3,9 @@ Top level API (:mod:`nist_gas_srm`)
 ======================================================
 """
 
-from importlib.metadata import PackageNotFoundError
-from importlib.metadata import version as _version
+from importlib.metadata import PackageNotFoundError, version as _version
 
-try:  # noqa: RUF067
+try:  # ruff:ignore[non-empty-init-module]
     __version__ = _version("nist-gas-srm")
 except PackageNotFoundError:  # pragma: no cover
     __version__ = "999"

@@ -92,9 +92,9 @@ lint-upgrade: (pre-commit "autoupdate") lint-sync-deps
 # sync dependencies (used primarily with lint-upgrade)
 [group("lint")]
 lint-sync-deps:
-    [[ -f requirements/pre-commit-additional-dependencies.txt ]] && uv run --no-project --script tools/requirements_lock.py --upgrade requirements/pre-commit-additional-dependencies.txt || true
-    just pre-commit run -v sync-pre-commit-deps -a || true
-    just pre-commit run -v sync-uv-build-deps -a || true
+    [[ -f requirements/pre-commit-additional-dependencies.txt ]] && uv run tools/uv_locker.py --upgrade requirements/pre-commit-additional-dependencies.txt || true
+    just lint -v sync-pre-commit-deps || true
+    just lint -v sync-uv-build-deps || true
 
 # * User setup -----------------------------------------------------------------
 
@@ -143,8 +143,8 @@ version: version-scm version-import
 # * Requirements/Environment files ---------------------------------------------
 
 _requirements *options:
-    just pre-commit run pyproject2conda-project --all-files --verbose || true
-    uv run --no-project tools/requirements_lock.py --all-files {{ options }}
+    just lint pyproject2conda-project --verbose || true
+    uv run tools/uv_locker.py --all-files {{ options }}
 
 # Rebuild requirements, lock requirements, and run uv sync.  Pass --upgrade/-U to upgrade
 [group("requirements")]
@@ -162,6 +162,14 @@ requirements *options: (_requirements "--sync-or-lock" options)
 [group("requirements")]
 pyproject-upgrade-min-versions:
     uvx --from "uv-upx>=0.4.3" uv-upx upgrade run --no-sync
+
+# Sync min versions in pyproject.toml with using tools/sync_uvx_tool_min_version.py
+sync-pyproject-min-versions: && lock
+    # sync with pyprojects
+    just lint sync-pyproject-min-versions -v || true
+
+# Update/Upgrade all dependencies
+update-deps: (lock "--upgrade") sync-pyproject-min-versions lint-upgrade
 
 # * Typecheck ---------------------------------------------------------------------
 
@@ -199,15 +207,25 @@ basedpyright-verifytypes:
 [group("typecheck")]
 ty *options: (_typecheck "-cty" options)
 
+# Run ty with `--add-ignore` option to add ty: ignore statements
+[group("typecheck")]
+ty-add-ignores *options: (_typecheck "-c'ty check --add-ignore'" options)
+
+# Run ty with `--fix` option to fix errors
+[group("typecheck")]
+ty-fix *options: (_typecheck "-c'ty check --fix'" options)
+
 # Run pyrefly (Note: in alpha)
 [group("typecheck")]
 pyrefly *options: (_typecheck "-cpyrefly" options)
 
+# Run pyrefly suppress
 [group("typecheck")]
-pyrefly-suppress-errors *options: (_typecheck "-c'pyrefly check --suppress-errors'")
+pyrefly-suppress *options: (_typecheck "-c'pyrefly suppress --comment-location=same-line'" options)
 
+# Run pyrefly suppress --remove-unused
 [group("typecheck")]
-pyrefly-remove-unused-ignores *options: (_typecheck "-c'pyrefly check --remove-unused-ignores'")
+pyrefly-remove-unused *options: (_typecheck "-c'pyrefly suppress --remove-unused'" options)
 
 # Run pylint (with optional args)
 [group("lint")]
@@ -355,3 +373,24 @@ copier-update *options="":
     copier update --trust -A \
     -r main \
     {{ options }}
+
+# * runners
+[group("run")]
+run-api-dev *options:
+    {{ UVRUN }} fastapi dev {{ options }}
+
+[group("run")]
+run-streamlit-dev *options:
+    {{ UVRUN }} streamlit run src/nist_gas_srm/app/multipage_app.py {{ options }}
+
+# [group("run")]
+# run-sqlmodel-dev *options="--help":
+#     {{ UVRUN }} -m nist_gas_srm.backend.models {{ options }}
+
+[group("run")]
+run-initial-data:
+    {{ UVRUN }} -m nist_gas_srm.backend.initial_data
+
+[group("run")]
+run-initial-data-from-files *options="--help":
+    {{ UVRUN }} -m nist_gas_srm.backend.initial_data_from_files {{ options }}

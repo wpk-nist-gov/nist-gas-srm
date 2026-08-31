@@ -1,7 +1,9 @@
+#:tombi schema.strict = false
+
 [build-system]
 build-backend = "uv_build"
 requires = [
-    "uv-build>=0.11.8,<0.12.0",
+    "uv-build>=0.12.5,<0.13.0",
 ]
 
 [project]
@@ -31,11 +33,20 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
+    "fastapi[standard]>=0.136.3",
     "openpyxl>=3.1.5",
     "pandas>=2.3.3",
+    "plotly-express>=0.4.1",
+    "pydantic-settings>=2.14.2",
     "python-calamine>=0.6.2",
     "sqlmodel>=0.0.38",
+    "statsmodels>=0.14.6",
+    "streamlit>=1.60.0",
+    "streamlit-pydantic>=0.6.0",
+    "typing-extensions; python_version<'3.12'",
     "xlrd>=2.0.2",
+    "xlutils>=2.0.0",
+    "xlwt>=1.3.0",
 ]
 
 [project.urls]
@@ -60,6 +71,7 @@ test = [
 ]
 type = [
     "pandas-stubs",
+    "plotly-stubs",
     { include-group = "nox" },
     { include-group = "pylint" },
     { include-group = "pytest" },
@@ -74,8 +86,7 @@ docs = [
     "sphinx-copybutton",
 ]
 # other groups
-basedpyright = [ "basedpyright>=1.39.3" ]
-cog = [ "cogapp" ]
+basedpyright = [ "basedpyright>=1.39.10" ]
 docs-live = [
     "sphinx-autobuild",
     { include-group = "docs" },
@@ -86,9 +97,9 @@ docs-spelling = [
     { include-group = "docs" },
 ]
 ipython = [ "ipython" ]
-mypy = [ "mypy[faster-cache]>=1.20.2" ]
+mypy = [ "mypy[faster-cache]>=2.3.1" ]
 notebook = [ "ipykernel", "nbclient" ]
-nox = [ "nox>=2026.4.10" ]
+nox = [ "nox>=2026.8.17" ]
 pylint = [ "pylint" ]
 pytest = [ "pytest" ]
 pytest-accept = [ "pytest-accept" ]
@@ -107,15 +118,15 @@ required-version = ">=0.11.8"
 default-groups = [ "dev" ]
 fork-strategy = "requires-python"
 exclude-newer = "7 days"
+# Needed until prek>=0.5.0 is 7 days old
+exclude-newer-package = { prek = "0 days" }
 managed = true
+build-backend.source-exclude = [ ".*cache" ]
 build-backend.source-include = [ "tests/**" ]
 pip.annotation-style = "line"
 pip.generate-hashes = true
 
-# [tool.uv.sources]
-# pandas-stubs = { git = "https://github.com/pandas-dev/pandas-stubs", branch="main"}
 [tool.uv.dependency-groups]
-cog.requires-python = ">=3.14"
 dev.requires-python = ">=3.14"
 docs-live.requires-python = ">=3.14"
 docs-spelling.requires-python = ">=3.14"
@@ -124,6 +135,86 @@ ipython.requires-python = ">=3.14"
 mypy.requires-python = ">=3.14"
 notebook.requires-python = ">=3.14"
 nox.requires-python = ">=3.14"
+
+[tool.uv.sources]
+# pandas-stubs = { git = "https://github.com/pandas-dev/pandas-stubs", branch = "main" }
+streamlit-pydantic = { git = "https://github.com/lukasmasuch/streamlit-pydantic", branch = "main" }
+
+# * ruff -----------------------------------------------------------------------
+[tool.ruff]
+extend-include = [
+    "*.ipynb",
+]
+extend-exclude = [
+    ".numba_cache",
+    ".venv",
+    "dist-conda",
+]
+fix = true
+# unsafe-fixes = true
+
+[tool.ruff.format]
+docstring-code-format = true
+preview = true  # needed for markdown support
+
+[tool.ruff.lint]
+preview = true
+select = [
+    "ALL",
+]
+# fixable/unfixable
+fixable = [ "ALL" ]
+unfixable = [
+    "ERA",
+    "non-augmented-assignment",
+    "T",
+]
+# ignores
+ignore = [
+    "any-type",                             # - Any ok sometimes
+    "COM",                                  # - flake8-commas, formatter should take care of this?
+    "CPY",                                  # - Don't require copyright
+    "undocumented-magic-method",            # - Missing magic method docstring
+    "undocumented-public-init",             # - Missing docstring in __init__
+    "incorrect-blank-line-before-class",    # - 1 blank line required before class docstring
+    "missing-blank-line-after-summary",     # - blank line after summary
+    "multi-line-summary-first-line",        # - Multi-line docstring summary should start at the first line
+    "missing-trailing-period",              # - First line should end with a period
+    "non-imperative-mood",                  # - First line of docstring should be in imperative mood: "{first_line}"
+    "docstring-missing-returns",            # - Missing return from documentation
+    "docstring-missing-exception",          # - Missing raises from documentation
+    "line-too-long",                        # - line too long - let formatter fix this
+    "lambda-assignment",                    # - do not assign a lambda expression, use a def
+    "FBT",                                  # - bools are ok
+    "import-outside-top-level",             # - import should be at top level (leads to issues with imports in func?)
+    "suspicious-subprocess-import",         # - Want to use subprocess sometimes
+    "subprocess-without-shell-equals-true", # - subprocess-without-shell-equals-true
+    "start-process-with-partial-path",      # - start-process-with-partial-path
+    "relative-imports",                     # - Allow relative imports
+]
+isort.known-first-party = [
+    "nist_gas_srm",
+]
+isort.combine-as-imports = true
+pydocstyle.convention = "numpy"
+pylint.max-args = 15
+pylint.max-positional-args = 15
+pylint.max-public-methods = 30
+ruff.strictly-empty-init-modules = false
+flake8-type-checking.runtime-evaluated-base-classes = [
+    "pydantic.BaseModel",
+    "sqlmodel.SQLModel",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"src/**" = [
+    "PD",
+    "D",
+]
+"tests/**" = [
+    "D",      # - Don't need to document tests
+    "assert", # - Assert is fine with tests
+]
 
 # * Checks ---------------------------------------------------------------------
 [tool.repo-review]
@@ -140,6 +231,8 @@ src_dir = [ "src" ]
 toplevel = [ "nist_gas_srm" ]
 
 [tool.pyproject-fmt]
+indent = 4
+keep_full_version = true
 # max_supported_python = "3.13"
 expand_tables = [
     "project.entry-points",
@@ -150,11 +243,15 @@ expand_tables = [
     "tool.pyproject2conda",
     "tool.pyright.executionEnvironments",
     "tool.pytest",
+    "tool.ruff.format",
+    "tool.ruff.lint",
+    "tool.ruff.lint.per-file-ignores",
+    "tool.ty.overrides",
     "tool.typos",
     "tool.uv.dependency-groups",
+    "tool.uv.exclude-newer-package",
+    "tool.uv.sources",
 ]
-indent = 4
-keep_full_version = true
 
 [tool.typos.default]
 # nbqa generated
@@ -170,45 +267,54 @@ check-file = false
 # * typecheck ---------------------------------------------------------------------
 [tool.mypy]
 files = [
+    "noxfile.py",
     "src",
     "tests",
-    # tools
-    "noxfile.py",
     "tools",
 ]
-strict = true
 # options
 check_untyped_defs = true
+warn_unused_ignores = true
+warn_return_any = true
+warn_unreachable = true
 enable_error_code = [
     "ignore-without-code",
     "redundant-expr",
     "truthy-bool",
 ]
-warn_return_any = true
-warn_unreachable = true
+strict = true
 warn_unused_configs = true
-warn_unused_ignores = true
 
-# [[tool.mypy.overrides]]
-# ignore_missing_imports = true
-# module = [  ]
-#
-# [[tool.mypy.overrides]]
-# ignore_errors = true
-# module = [  ]
-#
+## [[tool.mypy.overrides]]
+## module = [ "module.submodule.*" ]
+## ignore_missing_imports = true
+## ignore_errors = true
 [tool.pyrefly]
 enabled-ignores = [ "pyrefly" ]
 project-includes = [
+    "examples/usage/*.ipynb",
+    "noxfile.py",
     "src",
     "tests",
-    # tools
-    "noxfile.py",
     "tools",
 ]
 search-path = [ "." ]
 
 [tool.pyright]
+typeCheckingMode = "strict"
+# strict = [
+#     "noxfile.py",
+#     "src",
+#     "tests",
+#     "tools/*.py",
+# ]
+include = [
+    # "examples/usage/*.ipynb",
+    "noxfile.py",
+    "src",
+    "tests",
+    "tools",
+]
 exclude = [
     "**/.mypy_cache",
     "**/.numba_cache",
@@ -217,30 +323,17 @@ exclude = [
     ".tox/**",
     ".venv/**",
 ]
-include = [
-    "src",
-    "tests",
-    # tools
-    "noxfile.py",
-    "tools",
-]
-typeCheckingMode = "strict"
-# typeCheckingMode= "standard"
-# strict = [
-#     "src",
-#     "tests",
-#     "noxfile.py",
-#     "tools/*.py",
-# ]
-# options
-# reportMissingSuperCall = true
-deprecateTypingAliases = true
-enableReachabilityAnalysis = false
 enableTypeIgnoreComments = false
+deprecateTypingAliases = true
 reportCallInDefaultInitializer = true
 reportImplicitOverride = true
+reportImplicitStringConcatenation = false
 reportImportCycles = true
+# options
+# reportMissingSuperCall = true
 reportOverlappingOverload = true
+reportPrivateImportUsage = false
+reportPrivateUsage = false
 reportPropertyTypeMismatch = true
 reportUninitializedInstanceVariable = true
 reportUnnecessaryTypeIgnoreComment = true
@@ -248,12 +341,9 @@ reportUnreachable = "warning"
 reportUntypedClassDecorator = true
 reportUntypedFunctionDecorator = true
 reportUnusedCallResult = true
-# type-checkers should type-check; linters should lint
-reportImplicitStringConcatenation = false
-reportPrivateImportUsage = false
-reportPrivateUsage = false
 reportUnusedImport = false
 reportUnusedVariable = false
+enableReachabilityAnalysis = false
 
 [[tool.pyright.executionEnvironments]]
 root = "tests"
@@ -262,16 +352,19 @@ root = "tests"
 # reportMissingImports = false
 reportUnusedCallResult = false
 
+[[tool.pyright.executionEnvironments]]
+root = "src/nist_gas_srm/app"
+reportUnusedCallResult = false
+
 [tool.ty]
-# Disable support for `type: ignore` comments
-analysis.respect-type-ignore-comments = false
 src.include = [
+    "examples/usage/*.ipynb",
+    "noxfile.py",
     "src",
     "tests",
-    # tools
-    "noxfile.py",
     "tools",
 ]
+analysis.respect-type-ignore-comments = false
 
 # * Testing --------------------------------------------------------------------
 [tool.pytest.ini_options]
@@ -290,27 +383,27 @@ testpaths = [
     "tests",
 ]
 # options
-filterwarnings = [ "error" ]
+filterwarnings = [
+    "error",
+    "ignore: Cannot parse header or footer so it will be ignored:UserWarning",
+    "ignore: Print area cannot be set to Defined name:UserWarning",
+]
 log_cli_level = "INFO"
 log_level = "INFO"
 minversion = "8"
 strict_xfail = "true"
 
 [tool.coverage]
-run.branch = true
 run.source = [
     "nist_gas_srm",
 ]
+run.branch = true
 paths.source = [
     "src/",
     # needed for testing source if not editable install
     ".nox/**/site-packages/",
     "*/.nox/**/site-packages",
     "*/src",
-]
-report.exclude_also = [
-    "@overload",
-    "if TYPE_CHECKING:",
 ]
 report.include = [
     "src/*",
@@ -319,7 +412,14 @@ report.omit = [
     "*/_typing.py",
     "*/vendored/*",
 ]
+report.exclude_also = [
+    "@overload",
+    "if TYPE_CHECKING:",
+]
 report.show_missing = true
+
+[tool.commitizen]
+use_shortcuts = true
 
 # * Dependency creation --------------------------------------------------------
 [tool.pyproject2conda]
@@ -329,29 +429,28 @@ name = "py{py}-{env}"
 python = "default"
 channels = "conda-forge"
 style = "yaml"
-deps = "pip"
+conda-deps = "pip"
 
 [tool.pyproject2conda.dependencies]
 pytest-accept = { pip = true }
 
 [tool.pyproject2conda.envs.uvx-tools]
-reqs = [
+pip-deps = [
     # these used solely for specking tools to be run via uvx ...
-    "conda-lock>=4.0.0",
+    "conda-lock>=4.0.2",
     "copier-template-extensions>=0.3.3",
-    "copier>=9.14.3",
-    "grayskull>=3.1.0",
+    "copier>=9.17.2",
+    "grayskull>=3.1.1",
     "nbqa>=1.9.1",
-    "prek>=0.3.11",
-    "pyrefly>=0.62.0",
-    "pyright>=1.1.409",
+    "prek>=0.5.0",
+    "pyrefly>=1.2.0",
+    "pyright>=1.1.411",
     "rooster>=0.1.1",
-    "twine>=6.2.0",
-    "ty>=0.0.32",
+    "twine>=7.0.0",
+    "ty>=0.0.73",
 ]
 groups = [
     "basedpyright",
-    "cog",
     "mypy",
     "nox",
     "typecheck-runner",
@@ -359,10 +458,26 @@ groups = [
 skip-package = true
 style = "requirements"
 
-# * Other tools ----------------------------------------------------------------
-[tool.commitizen]
-use_shortcuts = true
+[tool.uv-locker]
+pip-compile-config-file = "requirements/uv.toml"
+scripts = [
+    "noxfile.py",
+    "tools/check_dist_version.py",
+    "tools/clean_kernelspec.py",
+    "tools/cog_runner.py",
+]
 
+[[tool.uv-locker.requirements]]
+path = "requirements/uvx-tools.txt"
+output-file = "requirements/lock/uvx-tools.txt"
+python = "min"
+options = [
+    "--no-deps",
+    "--no-strip-extras",
+    "--universal",
+]
+
+# * Other tools ----------------------------------------------------------------
 [tool.rooster]
 changelog_contributors = true
 major-labels = [ "breaking" ]
@@ -381,3 +496,6 @@ section-labels.Documentation = [ "documentation" ]
 section-labels.Enhancements = [ "enhancement" ]
 section-labels.Internal = [ "internal" ]
 section-labels."Other changes" = [ "__unknown__" ]
+
+[tool.fastapi]
+entrypoint = "nist_gas_srm.backend.main:app"
