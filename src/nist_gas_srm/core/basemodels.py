@@ -1,5 +1,6 @@
 """Basic model"""
 # ruff:file-ignore[commented-out-code,missing-todo-link,line-contains-todo]
+# pylint: disable=abstract-method
 
 from datetime import UTC, datetime
 from operator import methodcaller
@@ -725,9 +726,8 @@ class RCertCorrelationCoefficientsCreate(
             usecols="G:J",
             skiprows=skipper(lower=52, upper=56),
         )
-        out = maybe_dropna(out, how="all")
 
-        if out is not None:
+        if (out := maybe_dropna(out, how="all")) is not None:
             out = out.assign(order=range(len(out)))
 
         return maybe_dropna(out, how="all", axis=1)

@@ -224,7 +224,7 @@ async def create_upload_file(
     # 2. Read the uploadfile contents into memory
     contents = await uploadfile.read()
 
-    try:
+    try:  # pylint: disable=too-many-try-statements
         # 3. Load the byte stream into a Pandas DataFrame
         with as_excelfile(BytesIO(contents)) as excelfile:
             return crud.add_srm_from_excel_obj(

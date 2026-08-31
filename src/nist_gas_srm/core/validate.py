@@ -55,7 +55,7 @@ def validate_test_out(x: Any) -> Any:  # ruff: ignore[too-many-return-statements
     if isinstance(x, bool):
         return x
 
-    try:
+    try:  # pylint: disable=too-many-try-statements)
         if isnan(x):
             return False
     except TypeError:

@@ -65,7 +65,7 @@ class EditableTableSRM(EditableTableBase):
     ) -> pd.DataFrame | None:
         return super().editable_table_widget(
             excel_interface.excel_to_dataframe_by_name(
-                self.attr, excelfile, model=basemodels.SRMRCertCreateComplete
+                self.attr, obj, model=basemodels.SRMRCertCreateComplete
             ),
             **kwargs,
         )

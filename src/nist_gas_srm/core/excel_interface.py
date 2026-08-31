@@ -223,7 +223,7 @@ def json_to_dict_of_dataframes(
                         ).rename(columns=inner_model.dbnames_to_colnames())
                 elif name in data:
                     out[name] = inner_model.dicts_to_dataframe(data[name])
-        elif issubclass(annotation, SQLModel):
+        elif issubclass(annotation, SQLModel):  # pylint: disable=confusing-consecutive-elif
             # Recursive
             inner_model = annotation
             if v := json_to_dict_of_dataframes(
@@ -249,7 +249,7 @@ def _model_caller(
             inner_model = _annotation_to_model(annotation, name)
             if issubclass(inner_model, SQLDataFrameInterface):
                 out[name] = caller(inner_model)
-        elif issubclass(annotation, SQLModel):
+        elif issubclass(annotation, SQLModel):  # pylint: disable=confusing-consecutive-elif
             # Recursive
             inner_model = annotation
             if v := _model_caller(caller, inner_model):
@@ -330,6 +330,6 @@ def model_to_dict_of_dataframes(
                     cast("list[SQLDataFrameInterface]", value)
                 )
 
-        elif isinstance(value, SQLModel) and (v := model_to_dict_of_dataframes(value)):
+        elif isinstance(value, SQLModel) and (v := model_to_dict_of_dataframes(value)):  # pylint: disable=confusing-consecutive-elif
             out[name] = v
     return out

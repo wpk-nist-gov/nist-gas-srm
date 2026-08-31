@@ -48,8 +48,7 @@ class _FixMixin(SQLModel):
     @classmethod
     def convert_relationships(cls, model: Any) -> Any:
         for rel_name, rel_info in cls.__sqlmodel_relationships__.items():
-            attr = getattr(model, rel_name, None)
-            if attr is None:
+            if (attr := getattr(model, rel_name, None)) is None:
                 continue
 
             # use sqlmodel internal function to get class
@@ -59,11 +58,11 @@ class _FixMixin(SQLModel):
             )
 
             # might be type or string depending on how it was declared
-            rel_class: Any
-            if isinstance(rel_class_name, type):
-                rel_class = rel_class_name
-            else:
-                rel_class = globals()[rel_class_name]
+            rel_class: Any = (
+                rel_class_name
+                if isinstance(rel_class_name, type)
+                else globals()[rel_class_name]
+            )
 
             # convert attribute(s) with their model's validator
             items: Any
@@ -258,7 +257,7 @@ RCertSubTable: TypeAlias = (
 # * name/getter/cls triples
 SRMDATA_NAME_CALLER_CLS = [
     (name, methodcaller(name if attr is None else attr), cls)
-    for name, attr, cls in [
+    for name, attr, cls in (
         ("ratios", "ratio_data", RatioData),
         ("vendords", "vendor_data", VendorData),
         ("standards", "standards_data", StandardsData),
@@ -270,13 +269,13 @@ SRMDATA_NAME_CALLER_CLS = [
         ),
         ("past_lot_standards", None, PastLotStandardsData),
         ("additional_lot_standards", None, AdditionalLotStandardsData),
-    ]
+    )
 ]
 
 
 RCERTDATA_NAME_CALLER_CLS = [
     (name, methodcaller(name if attr is None else attr), cls)
-    for name, attr, cls in [
+    for name, attr, cls in (
         ("srm_values", None, RCertSRMValues),
         ("standards_values", None, RCertStandardsValues),
         ("additional_lot_standards", None, RCertAdditionalLotStandards),
@@ -288,7 +287,7 @@ RCERTDATA_NAME_CALLER_CLS = [
             RCertCorrelationCoefficients,
         ),
         ("outliers", None, RCertOutliers),
-    ]
+    )
 ]
 
 
