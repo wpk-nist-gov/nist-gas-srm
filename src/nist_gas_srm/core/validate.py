@@ -22,16 +22,6 @@ def validate_nan_to_none(x: Any) -> Any:
     return x
 
 
-def validate_str_to_lower(x: str) -> str:
-    return x.lower()
-
-
-def validate_optional_str_to_lower(x: str | None) -> str | None:
-    if x is None:
-        return x
-    return validate_str_to_lower(x)
-
-
 def validate_timestamp(x: str | None) -> str:
     if x is None:
         from datetime import UTC, datetime

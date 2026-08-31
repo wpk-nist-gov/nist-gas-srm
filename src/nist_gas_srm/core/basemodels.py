@@ -2,6 +2,7 @@
 # ruff:file-ignore[commented-out-code,missing-todo-link,line-contains-todo]
 # pylint: disable=abstract-method
 
+import uuid
 from datetime import UTC, datetime
 from operator import methodcaller
 from typing import Annotated, Any, Literal, Self, TypeAlias, cast
@@ -61,11 +62,11 @@ OptionalLowerString = Annotated[
 
 # * Common --------------------------------------------------------------------
 class IDPrimaryKey(SQLModel):
-    id: int | None = Field(default=None, primary_key=True)
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
 
 
 class _IDPrimaryKeyPublic(SQLModel):
-    id: int
+    id: uuid.UUID
 
 
 class _SampleIDAndNumber(SQLModel):
@@ -83,16 +84,18 @@ class _SampleIDAndNumberUpdate(SQLModel):
 
 
 class SRMDataForeignKey(SQLModel):
-    srmdata_id: int | None = Field(
-        default=None,
+    srmdata_id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
         foreign_key="srmdata.id",
+        nullable=False,
         ondelete="CASCADE",
         validation_alias="SRMDataID",
     )
 
 
 class _SRMDataForeignKeyUpdate(SQLModel):
-    srmdata_id: int | None = None
+    pass
+    # srmdata_id: uuid.UUID
 
 
 # * Top level data (per worksheet) --------------------------------------------
@@ -445,13 +448,17 @@ class RatioAnalysisFixedEffectsDataUpdate(_SRMDataForeignKeyUpdate):
 
 # * RCertification -----------------------------------------------------------
 class RCertForeignKey(SQLModel):
-    rcert_id: int | None = Field(
-        default=None, foreign_key="rcertdata.id", ondelete="CASCADE"
+    rcert_id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        nullable=False,
+        foreign_key="rcertdata.id",
+        ondelete="CASCADE",
     )
 
 
 class _RCertForeignKeyUpdate(SQLModel):
-    rcert_id: int | None = None
+    # rcert_id: uuid.UUID
+    pass
 
 
 # ** RCert
@@ -895,36 +902,3 @@ RCertSubTableCreate: TypeAlias = (
     | RCertCorrelationCoefficientsCreate
     | RCertOutliersCreate
 )
-
-
-# class RCertificationDataBase(SRMDataForeignKey):
-
-#     timestamp: datetime = Field
-#     srm_value: float
-#     srm_uncertainty: float
-#     srm_cl_95: float
-#     srm_rel_uncert: float
-#     srm_effective_k: float
-#     ls_value: float
-#     ls_uncertainty: float
-#     ls_cl_95: float
-#     ls_rel_uncert: float
-
-
-# class _CertifiedDataForeignKey(SQLModel):
-#     certified_id: int | None = Field(
-#         default=None, foreign_key="certifieddata.id", ondelete="CASCADE",
-#     )
-
-
-# class _CertifiedDataForeignKeyUpdate(SQLModel):
-#     certified_id: int | None = None
-
-
-# class _CertifiedDataBase(_CertifiedDataForeignKey):
-#     value: float
-#     uncertainty: float
-#     confidence_level_95: float
-
-#     # relative_uncertainty <- confidence_level_95 / value
-#     # effective k <- confidence_level_95 / uncertainty
