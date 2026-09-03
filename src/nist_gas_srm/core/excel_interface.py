@@ -11,12 +11,14 @@ from types import UnionType
 from typing import Any, ClassVar, Self, cast, get_args, get_origin
 
 import pandas as pd
+from openpyxl.workbook.workbook import Workbook
 from sqlmodel import SQLModel
 
 from .excel_utils import (
     get_frame,
     get_frame_with_len_check,
     optional_dataframe_func_wrapper,
+    simple_write_to_excel,
     strip_trailing_numbers as func_strip_trailing_numbers,
 )
 
@@ -114,8 +116,10 @@ class SQLDataFrameInterface(SQLModel):
         raise NotImplementedError
 
     @classmethod
-    def dataframe_to_excel(cls, obj: pd.DataFrame, excelfile: pd.ExcelFile) -> None:
-        raise NotImplementedError
+    def dataframe_to_excel(cls, obj: pd.DataFrame, workbook: Workbook) -> None:
+        """Simplest case"""
+        worksheet = workbook[cls.sheet_name]
+        return simple_write_to_excel(obj, worksheet=worksheet)
 
     @classmethod
     def dataframe_to_dicts(cls, obj: pd.DataFrame | None) -> list[dict[Hashable, Any]]:

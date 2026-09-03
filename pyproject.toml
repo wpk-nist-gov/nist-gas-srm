@@ -55,6 +55,7 @@ Homepage = "https://github.com/wpk-nist-gov/nist-gas-srm"
 
 [dependency-groups]
 dev = [
+    "matplotlib",
     { include-group = "mypy" },
     { include-group = "notebook" },
     { include-group = "nox" },
@@ -72,6 +73,7 @@ test = [
 type = [
     "pandas-stubs",
     "plotly-stubs",
+    "types-openpyxl",
     { include-group = "nox" },
     { include-group = "pylint" },
     { include-group = "pytest" },

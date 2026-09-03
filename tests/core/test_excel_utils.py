@@ -82,11 +82,9 @@ def test_get_frame(
     example_excelfile_path: Path, example_excelfile: pd.ExcelFile
 ) -> None:
     a = mod.get_frame(example_excelfile, sheet_name="Ratio Data", usecols="A:I")
-    b = pd.read_excel(
+    b = pd.read_excel(  # pyright: ignore[reportUnknownMemberType]
         example_excelfile_path, sheet_name="Ratio Data", usecols="A:I"
-    ).dropna(  # pyright: ignore[reportUnknownMemberType]
-        how="all"
-    )
+    ).dropna(how="all")
     pd.testing.assert_frame_equal(a, b)
 
 

@@ -8,6 +8,7 @@ from operator import methodcaller
 from typing import Annotated, Any, Literal, Self, TypeAlias, cast
 
 import pandas as pd
+from openpyxl import Workbook
 from pydantic import AliasGenerator, BeforeValidator, PlainSerializer, StringConstraints
 from pydantic.alias_generators import to_pascal as to_pascal_base
 from sqlalchemy import Column, DateTime
@@ -29,7 +30,11 @@ from nist_gas_srm.core.validate import (
 )
 
 from .excel_interface import SheetNames, SQLDataFrameInterface
-from .excel_utils import maybe_dropna, skipper
+from .excel_utils import (
+    maybe_dropna,
+    simple_write_to_excel,
+    skipper,
+)
 from .utils import SRM_PATTERN
 
 # Utilities -------------------------------------------------------------------
@@ -312,6 +317,18 @@ class PastLotStandardsDataCreate(PastLotStandardsDataBase, SQLDataFrameInterface
             skiprows=1,
         )
 
+    @override
+    @classmethod
+    def dataframe_to_excel(cls, obj: pd.DataFrame, workbook: Workbook) -> None:
+        """Simplest case"""
+        simple_write_to_excel(
+            obj,
+            worksheet=workbook[cls.sheet_name],
+            start=(3, 1),
+            fill_from=(3, 1),
+            header=False,
+        )
+
 
 class PastLotStandardsDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpdate):
     name: str | None = None
@@ -351,6 +368,18 @@ class AdditionalLotStandardsDataCreate(
             strip_trailing_numbers=True,
             usecols="H:J",
             skiprows=1,
+        )
+
+    @override
+    @classmethod
+    def dataframe_to_excel(cls, obj: pd.DataFrame, workbook: Workbook) -> None:
+        """Simplest case"""
+        simple_write_to_excel(
+            obj,
+            worksheet=workbook[cls.sheet_name],
+            start=(3, "H"),
+            fill_from=(3, "H"),
+            header=False,
         )
 
 
@@ -399,6 +428,33 @@ class RatioAnalysisRandomEffectsDataCreate(
             strip_trailing_numbers=True,
         )
 
+    @override
+    @classmethod
+    def dataframe_to_excel(cls, obj: pd.DataFrame, workbook: Workbook) -> None:
+        """Simplest case"""
+        if obj.empty:
+            return
+        start_row = 3
+        simple_write_to_excel(
+            obj,
+            worksheet=workbook[cls.sheet_name],
+            start=(start_row, "X"),
+            fill_from=None,
+            header=False,
+            columns=["X", "Y", "AA", "AC"],
+        )
+
+        # # insert formulas
+        # column_variance = validate_column("Z")
+        # column_relative = validate_column("AB")
+        # norm = f"SUM($Z${start_row}:$Z${start_row + len(obj) - 1})"
+        # for row in range(start_row, len(obj) + start_row):
+        #     cell = worksheet.cell(row=row, column=column_variance)
+        #     cell.value = f"=AA{row}^2"
+
+        #     cell = worksheet.cell(row=row, column=column_relative)
+        #     cell.value = f"=Z{row} / {norm}"
+
 
 class RatioAnalysisRandomEffectsDataUpdate(_SRMDataForeignKeyUpdate):
     groups: str | None
@@ -438,6 +494,18 @@ class RatioAnalysisFixedEffectsDataCreate(
             usecols="AD:AF",
             skiprows=1,
             strip_trailing_numbers=True,
+        )
+
+    @override
+    @classmethod
+    def dataframe_to_excel(cls, obj: pd.DataFrame, workbook: Workbook) -> None:
+        """Simplest case"""
+        simple_write_to_excel(
+            obj,
+            worksheet=workbook[cls.sheet_name],
+            start=(3, "AD"),
+            fill_from=None,
+            header=False,
         )
 
 
@@ -529,6 +597,23 @@ class RCertSRMValuesCreate(RCertSRMValuesBase, SQLDataFrameInterface):
         )
         return new.rename_axis(columns=None, index=None)
 
+    @override
+    @classmethod
+    def dataframe_to_excel(cls, obj: pd.DataFrame, workbook: Workbook) -> None:
+        """Simplest case"""
+        if obj.empty:
+            return
+        keys = [k for k in cls.colnames_to_dbnames() if k != "rcert_id"]
+        df = obj[keys].T.reset_index()
+        simple_write_to_excel(
+            df,
+            worksheet=workbook[cls.sheet_name],
+            start=(48, "A"),
+            fill_from=(48, "A"),
+            header=False,
+            rows=[48, 49, 50, 53, 54, 55, 56],
+        )
+
 
 class RCertSRMValuesUpdate(_RCertForeignKeyUpdate):
     value: float | None = None
@@ -581,6 +666,18 @@ class RCertStandardsValuesCreate(RCertStandardsValuesBase, SQLDataFrameInterface
 
         return out
 
+    @override
+    @classmethod
+    def dataframe_to_excel(cls, obj: pd.DataFrame, workbook: Workbook) -> None:
+        """Simplest case"""
+        simple_write_to_excel(
+            obj,
+            worksheet=workbook[cls.sheet_name],
+            start=(60, "A"),
+            fill_from=(60, "B"),
+            header=False,
+        )
+
 
 class RCertStandardsValuesUpdate(_RCertForeignKeyUpdate):
     value: float | None = None
@@ -620,6 +717,18 @@ class RCertAdditionalLotStandardsCreate(
             excelfile, usecols="A:E", skiprows=skipper(lower=71, upper=75)
         )
 
+    @override
+    @classmethod
+    def dataframe_to_excel(cls, obj: pd.DataFrame, workbook: Workbook) -> None:
+        """Simplest case"""
+        simple_write_to_excel(
+            obj,
+            worksheet=workbook[cls.sheet_name],
+            start=(73, "A"),
+            fill_from=(73, "B"),
+            header=False,
+        )
+
 
 class RCertAdditionalLotStandardsUpdate(_RCertForeignKeyUpdate):
     name: str | None = None
@@ -655,6 +764,18 @@ class RCertCylinderResultsCreate(RCertCylinderResultsBase, SQLDataFrameInterface
             usecols="M:P",
             skiprows=46,
             strip_trailing_numbers=True,
+        )
+
+    @override
+    @classmethod
+    def dataframe_to_excel(cls, obj: pd.DataFrame, workbook: Workbook) -> None:
+        """Simplest case"""
+        simple_write_to_excel(
+            obj,
+            worksheet=workbook[cls.sheet_name],
+            start=(48, "M"),
+            fill_from=(47, "M"),
+            header=False,
         )
 
 
@@ -699,6 +820,18 @@ class RCertAnalysisFunctionCoefficientsCreate(
         if out is not None:
             out = out.assign(order=range(len(out)))
         return out
+
+    @override
+    @classmethod
+    def dataframe_to_excel(cls, obj: pd.DataFrame, workbook: Workbook) -> None:
+        """Simplest case"""
+        simple_write_to_excel(
+            obj.drop("order", axis=1),
+            worksheet=workbook[cls.sheet_name],
+            start=(48, "G"),
+            fill_from=(48, "G"),
+            header=False,
+        )
 
 
 class RCertAnalysisFunctionCoefficientsUpdate(_RCertForeignKeyUpdate):
@@ -752,6 +885,19 @@ class RCertCorrelationCoefficientsCreate(
             var_name="order_other",
         )
 
+    @override
+    @classmethod
+    def dataframe_to_excel(cls, obj: pd.DataFrame, workbook: Workbook) -> None:
+        """Simplest case"""
+        df = pd.pivot(obj, index="order", columns="order_other")
+        simple_write_to_excel(
+            df,
+            worksheet=workbook[cls.sheet_name],
+            start=(54, "G"),
+            fill_from=(54, "G"),
+            header=False,
+        )
+
 
 class RCertCorrelationCoefficientsUpdate(_RCertForeignKeyUpdate):
     order: int | None = None
@@ -787,6 +933,18 @@ class RCertOutliersCreate(RCertOutliersBase, SQLDataFrameInterface):
             excelfile,
             usecols="A:D",
             skiprows=78,
+        )
+
+    @override
+    @classmethod
+    def dataframe_to_excel(cls, obj: pd.DataFrame, workbook: Workbook) -> None:
+        """Simplest case"""
+        simple_write_to_excel(
+            obj,
+            worksheet=workbook[cls.sheet_name],
+            start=(80, "A"),
+            fill_from=(80, "A"),
+            header=False,
         )
 
 
