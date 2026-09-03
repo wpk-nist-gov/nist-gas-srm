@@ -6,12 +6,20 @@ from functools import partial
 from typing import TYPE_CHECKING, cast
 
 import pandas as pd
+from openpyxl.utils import column_index_from_string
+from openpyxl.utils.dataframe import (
+    dataframe_to_rows,  # pyright: ignore[reportUnknownVariableType]
+)
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Container, Generator
+    from collections.abc import Callable, Container, Generator, Sequence
     from io import BytesIO
     from pathlib import Path
     from typing import Any
+
+    from openpyxl.cell.cell import Cell, MergedCell
+    from openpyxl.styles.fills import PatternFill
+    from openpyxl.worksheet.worksheet import Worksheet
 
 
 EXCEL_FILENAME_PATTERN = re.compile(
@@ -55,7 +63,7 @@ def get_value_from_worksheet(
     xls: pd.ExcelFile, sheet_name: str, rowx: int, colx: int | str
 ) -> Any:
     if isinstance(colx, str):
-        colx = ord(colx.lower()) - ord("a")
+        colx = column_index_from_string(colx) - 1
 
     book: Any = xls.book  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
     engine = cast("str | None", getattr(xls, "engine", None))
@@ -65,11 +73,11 @@ def get_value_from_worksheet(
     if engine == "openpyxl":
         return cast(
             "int",
-            book
+            book  # pyright: ignore[reportUnknownMemberType]
             .get_sheet_by_name(sheet_name)
             .cell(row=rowx + 1, column=colx + 1)
             .value,
-        )  # pyright: ignore[reportUnknownMemberType]
+        )
 
     if engine == "calamine":
         return book.get_sheet_by_name(sheet_name).to_python(skip_empty_area=False)[  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
@@ -149,3 +157,63 @@ def optional_dataframe_func_wrapper(
         )
         return None if df.empty else df
     return None
+
+
+# * openpyxl
+def get_fill_from_cell(cell: Cell | MergedCell) -> PatternFill:
+    from copy import copy
+
+    return cast("PatternFill", copy(cell.fill))
+
+
+def validate_column(col: int | str) -> int:
+    if isinstance(col, str):
+        return column_index_from_string(col)
+    return col
+
+
+def _validate_start(start: tuple[int, int | str]) -> tuple[int, int]:
+    row, col = start
+    if isinstance(col, str):
+        col = column_index_from_string(col)
+    return (row, validate_column(col))
+
+
+def simple_write_to_excel(
+    obj: pd.DataFrame,
+    worksheet: Worksheet,
+    index: bool = False,
+    header: bool = True,
+    start: tuple[int, int | str] = (1, 1),
+    fill_from: tuple[int, int | str] | None = (2, 1),
+    rows: Sequence[int] | None = None,
+    columns: Sequence[int | str] | None = None,
+) -> None:
+    if obj.empty:
+        return
+
+    start = _validate_start(start)
+    fill = (
+        get_fill_from_cell(worksheet.cell(*_validate_start(fill_from)))
+        if fill_from is not None
+        else None
+    )
+
+    row_start, col_start = start
+
+    columns_strict: Sequence[int] = (
+        range(col_start, obj.shape[1] + col_start)
+        if columns is None
+        else [validate_column(col) for col in columns]
+    )
+    if rows is None:
+        rows = range(row_start, obj.shape[0] + row_start + int(header))
+
+    for r_idx, row in zip(
+        rows, dataframe_to_rows(obj, index=index, header=header), strict=True
+    ):
+        for c_idx, value in zip(columns_strict, row, strict=True):
+            target_cell = cast("Cell", worksheet.cell(row=r_idx, column=c_idx))
+            target_cell.value = value
+            if fill is not None:
+                target_cell.fill = fill
