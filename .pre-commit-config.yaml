@@ -64,11 +64,7 @@ repos:
       - id: taplo-lint
         args: ["--no-schema"]
   - repo: https://github.com/tox-dev/pyproject-fmt
-<<<<<<< before updating
-    rev: v2.28.1
-=======
     rev: v2.29.3
->>>>>>> after updating
     hooks:
       - id: pyproject-fmt
   # ** validate (schema-store)
@@ -148,11 +144,7 @@ repos:
           - "--custom-command=prek run pyproject2conda-project --all-files"
   # ** uv
   - repo: https://github.com/astral-sh/uv-pre-commit
-<<<<<<< before updating
-    rev: 0.12.7
-=======
     rev: 0.12.8
->>>>>>> after updating
     hooks:
       - id: uv-lock
         alias: requirements
@@ -237,7 +229,6 @@ repos:
   #         - "--extra-keys"
   #         - "metadata.kernelspec metadata.kernel_spec"
 
-<<<<<<< before updating
   # - repo: https://github.com/nbQA-dev/nbQA
   #   rev: 1.9.1
   #   hooks:
@@ -264,34 +255,6 @@ repos:
   #         - --write-changes
   #         - --nbqa-shell
   #         - --nbqa-md
-=======
-  - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.9.1
-    hooks:
-      # ** typos
-      - id: nbqa
-        name: nbqa-typos
-        alias: typos
-        additional_dependencies: &typos-deps
-          - typos==1.50.0
-        args:
-          - typos
-          - --force-exclude
-          - --no-check-filenames
-          - --write-changes
-          - --nbqa-shell
-      - id: nbqa
-        name: nbqa-typos-markdown
-        alias: typos
-        additional_dependencies: *typos-deps
-        args:
-          - typos
-          - --force-exclude
-          - --no-check-filenames
-          - --write-changes
-          - --nbqa-shell
-          - --nbqa-md
->>>>>>> after updating
 
   # # ** symlink in notebooks from example/usage to docs/example/usage
   # - repo: local
