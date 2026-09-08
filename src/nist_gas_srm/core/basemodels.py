@@ -24,7 +24,6 @@ from sqlmodel._compat import SQLModelConfig  # ruff:ignore[import-private-name]
 from nist_gas_srm.core.typing_compat import override
 from nist_gas_srm.core.validate import (
     validate_nan_to_none,
-    validate_no_null,
     validate_test_out,
     validate_timestamp,
 )
@@ -176,8 +175,6 @@ class RatioDataBase(_SampleIDAndNumber, SRMDataForeignKey):
     break_set: int
     day: int
     port: int
-    value_g: float
-    test_out: TestOutAnn
 
 
 class RatioDataPublic(RatioDataBase, _IDPrimaryKeyPublic):
@@ -191,15 +188,12 @@ class RatioDataCreate(RatioDataBase, SQLDataFrameInterface):
     @override
     @classmethod
     def excel_to_dataframe(cls, excelfile: pd.ExcelFile) -> pd.DataFrame | None:
-        out = cls._get_frame_with_len_check(
+        return cls._get_frame_with_len_check(
             excelfile,
-            usecols="A:I",
+            usecols="A:G",
             rowx=16,
             colx="L",
         )
-
-        _ = validate_no_null(out.drop(columns="Test"))
-        return out
 
 
 class RatioDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpdate):
@@ -212,8 +206,6 @@ class RatioDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpdate):
     break_set: int | None = None
     day: int | None = None
     port: int | None = None
-    value_g: float | None = None
-    test_out: TestOutOptionalAnn = None
 
 
 # ** Vendor Data --------------------------------------------------------------
@@ -277,6 +269,91 @@ class StandardsDataCreate(StandardsDataBase, SQLDataFrameInterface):
             usecols="A:E",
             rowx=1,
             colx="H",
+        )
+
+    @override
+    @classmethod
+    def dataframe_to_excel(cls, obj: pd.DataFrame, workbook: Workbook) -> None:
+        super().dataframe_to_excel(obj, workbook)
+        cls.dataframe_to_excel_std_analysis(obj, workbook)
+
+    @classmethod
+    def dataframe_to_excel_std_analysis(
+        cls,
+        obj: pd.DataFrame,
+        workbook: Workbook,
+        sheet_name: str = "Std Analysis",
+        alpha: float = 0.05,
+    ) -> None:
+        import statsmodels.formula.api as smf  # pyright: ignore[reportMissingTypeStubs]
+        from statsmodels.stats.api import (
+            anova_lm,  # pyright: ignore[reportMissingTypeStubs]
+        )
+
+        model = smf.ols(formula="SRatio ~ SConc", data=obj)  # pyright: ignore[reportUnknownMemberType]
+        res = model.fit()  # pyright: ignore[reportUnknownMemberType]
+
+        regression_table = pd.DataFrame.from_dict(
+            {
+                "Multiple R": res.rsquared**0.5,
+                "R square": res.rsquared,
+                "Adjusted R square": res.rsquared_adj,
+                "Standard Error": res.scale**0.5,
+                "Observations": res.nobs,
+            },
+            orient="index",
+            columns=["values"],
+        )
+
+        worksheet = workbook[sheet_name]
+
+        simple_write_to_excel(
+            regression_table,
+            worksheet=worksheet,
+            start=(13, "B"),
+            fill_from=None,
+            header=False,
+        )
+
+        # anova
+        anova_table = cast("pd.DataFrame", anova_lm(res, typ=1))
+        simple_write_to_excel(
+            anova_table,
+            worksheet=worksheet,
+            start=(21, "B"),
+            fill_from=None,
+            header=False,
+        )
+
+        # coefficients
+        coefficients_table = pd.DataFrame({
+            "Coefficients": res.params,
+            "Standard Error": res.base,
+            "t Stat": res.tvalues,
+            "P-value": res.pvalues,
+        })
+
+        coefficients_table[["Lower", "Upper"]] = res.conf_int(alpha)
+        simple_write_to_excel(
+            coefficients_table,
+            worksheet=worksheet,
+            start=(26, "B"),
+            fill_from=None,
+            header=False,
+        )
+
+        # residuals
+        residuals_table = pd.DataFrame({
+            "Observation": range(1, len(obj) + 1),
+            "Predicted Y": res.fittedvalues,
+            "Residuals": res.resid,
+        })
+        simple_write_to_excel(
+            residuals_table,
+            worksheet=worksheet,
+            start=(34, "A"),
+            fill_from=None,
+            header=False,
         )
 
 
@@ -776,6 +853,7 @@ class RCertCylinderResultsCreate(RCertCylinderResultsBase, SQLDataFrameInterface
             start=(48, "M"),
             fill_from=(47, "M"),
             header=False,
+            extra_fill_columns=["Q", "R", "S", "T", "U"],
         )
 
 

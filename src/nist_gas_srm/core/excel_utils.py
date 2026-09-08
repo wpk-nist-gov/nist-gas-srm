@@ -188,6 +188,7 @@ def simple_write_to_excel(
     fill_from: tuple[int, int | str] | None = (2, 1),
     rows: Sequence[int] | None = None,
     columns: Sequence[int | str] | None = None,
+    extra_fill_columns: Sequence[int | str] | None = None,
 ) -> None:
     if obj.empty:
         return
@@ -206,6 +207,9 @@ def simple_write_to_excel(
         if columns is None
         else [validate_column(col) for col in columns]
     )
+    if extra_fill_columns is not None:
+        extra_fill_columns = [validate_column(col) for col in extra_fill_columns]
+
     if rows is None:
         rows = range(row_start, obj.shape[0] + row_start + int(header))
 
@@ -216,4 +220,9 @@ def simple_write_to_excel(
             target_cell = cast("Cell", worksheet.cell(row=r_idx, column=c_idx))
             target_cell.value = value
             if fill is not None:
+                target_cell.fill = fill
+
+        if extra_fill_columns and fill is not None:
+            for c_idx in extra_fill_columns:
+                target_cell = cast("Cell", worksheet.cell(row=r_idx, column=c_idx))
                 target_cell.fill = fill
