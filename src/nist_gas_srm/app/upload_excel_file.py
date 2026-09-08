@@ -37,7 +37,7 @@ class EditableTableBase:
             **kwargs,
             key=self.key,
         )
-        return self.table
+        return self.table  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
 
     @property
     def key(self) -> str:
