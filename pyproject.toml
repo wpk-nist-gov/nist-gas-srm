@@ -263,6 +263,7 @@ extend-ignore-re = [ "# %%NBQA-.*" ]
 
 [tool.typos.default.extend-identifiers]
 CPY = "CPY"
+bse = "bse"
 
 [tool.typos.type.jupyter]
 # only check file name for notebooks.  Use nbaq for contents.
