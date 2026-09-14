@@ -227,6 +227,7 @@ def json_to_dict_of_dataframes(
                         ).rename(columns=inner_model.dbnames_to_colnames())
                 elif name in data:
                     out[name] = inner_model.dicts_to_dataframe(data[name])
+
         elif issubclass(annotation, SQLModel):  # pylint: disable=confusing-consecutive-elif
             # Recursive
             inner_model = annotation
@@ -294,11 +295,46 @@ def excel_to_json(
     )
 
 
+def dict_of_dataframes_to_workbook(
+    data: dict[str, Any],
+    workbook: Workbook,
+    model: type[SQLModel],
+) -> None:
+
+    for name, field in model.model_fields.items():
+        annotation: Any = field.annotation
+        if annotation is None or isinstance(annotation, UnionType):
+            pass
+        elif get_origin(annotation) is list:
+            # list
+            inner_model = _annotation_to_model(annotation, name)
+            if issubclass(inner_model, SQLDataFrameInterface):
+                inner_model.dataframe_to_excel(data[name], workbook)
+        elif issubclass(annotation, SQLModel):  # pylint: disable=confusing-consecutive-elif
+            # Recursive
+            inner_model = annotation
+            dict_of_dataframes_to_workbook(data[name], workbook, inner_model)
+
+
 def excel_to_dataframe_by_name(
     name: str,
     excelfile: pd.ExcelFile,
     model: type[SQLModel],
 ) -> pd.DataFrame | None:
+    """
+    Extract dataframe from excelfile by name
+
+    Parameters
+    ----------
+    name : str
+        Name of dataframe to extract.
+    excelfile : pd.ExcelFile,
+    model : SQLModel
+
+    Returns
+    pd.DataFrame, optional
+        DataFrame.
+    """
 
     annotation: Any
     if name.startswith("rcert."):

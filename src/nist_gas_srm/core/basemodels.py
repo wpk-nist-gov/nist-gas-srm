@@ -328,7 +328,7 @@ class StandardsDataCreate(StandardsDataBase, SQLDataFrameInterface):
         # coefficients
         coefficients_table = pd.DataFrame({
             "Coefficients": res.params,
-            "Standard Error": res.base,
+            "Standard Error": res.bse,
             "t Stat": res.tvalues,
             "P-value": res.pvalues,
         })
@@ -1084,11 +1084,6 @@ class SRMDataCreateComplete(SRMDataCreate):
 class SRMRCertCreateComplete(SRMDataCreateComplete):
     rcert: RCertCreateComplete
 
-
-# create_map = {
-#     "ratios": RatioDataCreate,
-
-# }
 
 # * name/getter/cls triples
 SRMDATA_NAME_CALLER_MAPPING = {
