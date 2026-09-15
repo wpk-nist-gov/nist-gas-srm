@@ -10,3 +10,7 @@
 
 - [ ] Multiple select
 - [ ] Visualization
+
+## Authentication
+
+- [ ] Okta authentication
