@@ -746,7 +746,7 @@ class RCertCorrelationCoefficientsCreate(
             return df
 
         return pd.melt(
-            df.rename(columns=lambda x: x if x == "order" else int(x[1:])),  # pyrefly: ignore [implicit-any-lambda]
+            df.rename(columns=lambda x: x if x == "order" else int(x[1:])),
             id_vars="order",
             var_name="order_other",
         )
