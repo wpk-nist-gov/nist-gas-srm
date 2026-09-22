@@ -1,10 +1,21 @@
+import logging
 from collections.abc import AsyncGenerator, Generator, Sequence
 from contextlib import asynccontextmanager
 from io import BytesIO
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Annotated, Any
 
-from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, UploadFile
+from fastapi import (
+    BackgroundTasks,
+    Depends,
+    FastAPI,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    UploadFile,
+)
 from fastapi.responses import FileResponse
 from pydantic import ValidationError
 from sqlmodel import Session
@@ -12,7 +23,15 @@ from sqlmodel import Session
 from nist_gas_srm.backend import crud, models
 from nist_gas_srm.backend.core.db import engine, init_db
 from nist_gas_srm.core import basemodels
+from nist_gas_srm.core.excel_interface import (
+    dict_of_dataframes_to_workbook,
+    model_to_dict_of_dataframes,
+)
 from nist_gas_srm.core.excel_utils import as_excelfile
+
+FORMAT = "[%(name)s - %(levelname)s] %(message)s"
+logging.basicConfig(level=logging.INFO, format=FORMAT)
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -112,6 +131,7 @@ def read_rcert(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
+    srm: str | None = None,
 ) -> models.RCertData:
     """Get list of srms"""
 
@@ -120,6 +140,7 @@ def read_rcert(
         srm_id=srm_id,
         batch_id=batch_id,
         lot_id=lot_id,
+        srm_query=srm,
     )
 
 
@@ -131,6 +152,7 @@ def read_rcerts(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
+    srm: Annotated[list[str] | None, Query()] = None,
 ) -> Sequence[models.RCertData]:
     """Get list of srms"""
 
@@ -139,6 +161,7 @@ def read_rcerts(
         srm_id=srm_id,
         batch_id=batch_id,
         lot_id=lot_id,
+        srm_query=srm,
     )
 
 
@@ -237,26 +260,68 @@ async def create_upload_file(
         ) from e
 
 
+def remove_file(path: Path) -> None:
+    """Deletes the temporary file after the response is sent."""
+    path.unlink()
+    logger.info("delete path %s", path)
+
+
 # Just for demo purposes
 @app.get("/download-excel")
-async def download_excel() -> FileResponse:
-    # Path to the file stored on your server
-    file_path = (
-        Path(__file__).parent
-        / "../../../../tmp/data/SRM2627a_SeriesI_CAG+CEC_CEC-RV6.4.xls"
+async def download_excel(
+    background_tasks: BackgroundTasks,
+    *,
+    session: SessionDepends,
+    srm_id: int | None = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
+    srm: str | None = None,
+) -> FileResponse:
+
+    srmdata = basemodels.SRMRCertCreateComplete.model_validate(
+        crud.get_srm(
+            session=session,
+            srm_id=srm_id,
+            batch_id=batch_id,
+            lot_id=lot_id,
+            srm_query=srm,
+        )
     )
 
-    if not file_path.exists():
-        raise HTTPException(status_code=400, detail="Error generating excel file")
+    # convert to dict of dataframes
+    data = model_to_dict_of_dataframes(srmdata, drop_dbnames=["srmdata_id", "rcert_id"])
 
-    # Explicitly set the custom name the user sees when saving
-    display_filename = "monthly_report.xlsx"
-
-    # Official MIME type for modern .xlsx Excel files
-    excel_media_type = (
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    # filename
+    filename = (
+        f"SRM{srmdata.srm_id}{srmdata.batch_id or ''}-{srmdata.lot_id}".upper()
+        + ".xlsx"
     )
 
-    return FileResponse(
-        path=file_path, filename=display_filename, media_type=excel_media_type
-    )
+    # convert to excel file
+    from nist_gas_srm.core.excel_template import template_xlsx
+    from nist_gas_srm.core.excel_utils import xlsx_manager
+
+    with TemporaryDirectory(delete=False) as d:
+        file_path = Path(d) / filename
+
+        with xlsx_manager(template_xlsx) as workbook:
+            dict_of_dataframes_to_workbook(
+                data, workbook, model=basemodels.SRMRCertCreateComplete
+            )
+
+        workbook.save(file_path)
+
+        if not file_path.exists():
+            raise HTTPException(status_code=400, detail="Error generating excel file")
+
+        logger.info("file path %s", file_path)
+        background_tasks.add_task(remove_file, file_path)
+
+        # Official MIME type for modern .xlsx Excel files
+        excel_media_type = (
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+        return FileResponse(
+            path=file_path, filename=filename, media_type=excel_media_type
+        )

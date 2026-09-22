@@ -31,6 +31,7 @@ class SheetNames(StrEnum):
     standards = "Standards Data"
     lot_standards = "Past LS"
     ratio_analysis = "Ratio Analysis"
+    standard_analysis = "Std Analysis"
     rcert = "RCertification"
 
 
@@ -143,17 +144,35 @@ class SQLDataFrameInterface(SQLModel):
         return cls.dataframe_to_models(cls.excel_to_dataframe(excelfile))
 
     @classmethod
-    def dicts_to_dataframe(cls, data: list[dict[Hashable, Any]]) -> pd.DataFrame | None:
+    def dicts_to_dataframe(
+        cls,
+        data: list[dict[str, Any]],
+        drop_colnames: list[str] | None = None,
+        drop_dbnames: list[str] | None = None,
+    ) -> pd.DataFrame | None:
         if not data:
             return None
-        return pd.DataFrame(data).rename(columns=cls.dbnames_to_colnames())
+        out = pd.DataFrame(data)
+        if drop_dbnames:
+            out = out.drop(drop_dbnames, axis=1, errors="ignore")
+        out = out.rename(columns=cls.dbnames_to_colnames())
+        if drop_colnames:
+            return out.drop(drop_colnames, axis=1, errors="ignore")
+        return out
 
     @classmethod
-    def models_to_dataframe(cls, models: list[Self]) -> pd.DataFrame | None:
+    def models_to_dataframe(
+        cls,
+        models: list[Self],
+        drop_colnames: list[str] | None = None,
+        drop_dbnames: list[str] | None = None,
+    ) -> pd.DataFrame | None:
         if not models:
             return None
-        return pd.DataFrame([m.model_dump() for m in models]).rename(
-            columns=cls.dbnames_to_colnames()
+        return cls.dicts_to_dataframe(
+            [m.model_dump() for m in models],
+            drop_colnames=drop_colnames,
+            drop_dbnames=drop_dbnames,
         )
 
 
@@ -308,8 +327,11 @@ def dict_of_dataframes_to_workbook(
         elif get_origin(annotation) is list:
             # list
             inner_model = _annotation_to_model(annotation, name)
-            if issubclass(inner_model, SQLDataFrameInterface):
-                inner_model.dataframe_to_excel(data[name], workbook)
+            if (
+                issubclass(inner_model, SQLDataFrameInterface)
+                and (df := data.get(name)) is not None
+            ):
+                inner_model.dataframe_to_excel(df, workbook)
         elif issubclass(annotation, SQLModel):  # pylint: disable=confusing-consecutive-elif
             # Recursive
             inner_model = annotation
@@ -361,15 +383,19 @@ def excel_to_dataframe_by_name(
 
 def model_to_dict_of_dataframes(
     obj: SQLModel,
+    **kwargs: Any,
 ) -> dict[str, Any]:
     out: dict[str, Any] = {}
     for name, value in obj:
         if isinstance(value, list):
             if value and isinstance(v0 := value[0], SQLDataFrameInterface):  # pyright: ignore[reportUnknownVariableType]
                 out[name] = v0.models_to_dataframe(
-                    cast("list[SQLDataFrameInterface]", value)
+                    cast("list[SQLDataFrameInterface]", value),
+                    **kwargs,
                 )
 
-        elif isinstance(value, SQLModel) and (v := model_to_dict_of_dataframes(value)):
+        elif isinstance(value, SQLModel) and (
+            v := model_to_dict_of_dataframes(value, **kwargs)
+        ):
             out[name] = v
     return out

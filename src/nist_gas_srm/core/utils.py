@@ -18,6 +18,8 @@ SRM_PATTERN = re.compile(
     flags=re.IGNORECASE,
 )
 
+JSON_PATTERN = re.compile(r".*\{.*\}.*", flags=re.DOTALL)
+
 
 def flatten_dict(
     d: MutableMapping[str, Any], parent_key: str = "", sep: str = "."
