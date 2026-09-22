@@ -34,7 +34,7 @@ from .excel_utils import (
     simple_write_to_excel,
     skipper,
 )
-from .utils import SRM_PATTERN
+from .utils import JSON_PATTERN, SRM_PATTERN
 
 # Utilities -------------------------------------------------------------------
 to_pascal = AliasGenerator(
@@ -148,6 +148,20 @@ class SRMDataQuery(SQLModel):
 
     @classmethod
     def from_string(cls, string: str) -> Self:
+        """
+        Match patterns like:
+
+        "{srm_id}{batch_id}-{lot_id}" with batch/lot optional
+
+        or
+
+        '{"srm_id": ...., "batch_id": ..., "lot_id": ...}'
+
+        """
+
+        if (m := JSON_PATTERN.match(string)) is not None:
+            return cls.model_validate_json(string)
+
         if (m := SRM_PATTERN.match(string)) is not None:
             return cls.model_validate({
                 k: v for k, v in m.groupdict().items() if v is not None
@@ -286,8 +300,8 @@ class StandardsDataCreate(StandardsDataBase, SQLDataFrameInterface):
         alpha: float = 0.05,
     ) -> None:
         import statsmodels.formula.api as smf  # pyright: ignore[reportMissingTypeStubs]
-        from statsmodels.stats.api import (
-            anova_lm,  # pyright: ignore[reportMissingTypeStubs]
+        from statsmodels.stats.api import (  # pyright: ignore[reportMissingTypeStubs]
+            anova_lm,  # pyright: ignore[reportUnknownVariableType]
         )
 
         model = smf.ols(formula="SRatio ~ SConc", data=obj)  # pyright: ignore[reportUnknownMemberType]
@@ -590,6 +604,34 @@ class RatioAnalysisFixedEffectsDataUpdate(_SRMDataForeignKeyUpdate):
     estimate: float | None
     stderr: float | None
     t_value: float | None
+
+
+# * StandardAnalysis ----------------------------------------------------------
+# class StandardAnalysis(SRMDataForeignKey):
+#     pass
+
+
+# class StandardAnalysisGenLineBase(SRMDataForeignKey):
+#     model_config = SQLModelConfig(
+#         alias_generator=to_pascal,
+#         populate_by_name=True,
+#     )
+
+#     x_solution: float
+#     y_solution: float
+#     y_eval: float
+#     y_eval_error: float
+
+# class StandardAnalysisGenLinePublic(
+#         StandardAnalysisGenLineBase, _IDPrimaryKeyPublic,
+# ):
+#     pass
+
+# class StandardAnalysisGenLineCreate(
+#         StandardAnalysisGenLineBase, SQLDataFrameInterface
+# ):
+#     dataframe_name = "standard_analysis_gen_line"
+#     sheet_name = SheetNames.standard_analysis
 
 
 # * RCertification -----------------------------------------------------------

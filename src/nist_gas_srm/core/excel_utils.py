@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
     from openpyxl.cell.cell import Cell, MergedCell
     from openpyxl.styles.fills import PatternFill
+    from openpyxl.workbook.workbook import Workbook
     from openpyxl.worksheet.worksheet import Worksheet
 
 
@@ -207,8 +208,11 @@ def simple_write_to_excel(
         if columns is None
         else [validate_column(col) for col in columns]
     )
-    if extra_fill_columns is not None:
-        extra_fill_columns = [validate_column(col) for col in extra_fill_columns]
+    extra_fill_columns_: list[int] = (
+        [validate_column(col) for col in extra_fill_columns]
+        if extra_fill_columns
+        else []
+    )
 
     if rows is None:
         rows = range(row_start, obj.shape[0] + row_start + int(header))
@@ -223,6 +227,19 @@ def simple_write_to_excel(
                 target_cell.fill = fill
 
         if extra_fill_columns and fill is not None:
-            for c_idx in extra_fill_columns:
+            for c_idx in extra_fill_columns_:
                 target_cell = cast("Cell", worksheet.cell(row=r_idx, column=c_idx))
                 target_cell.fill = fill
+
+
+@contextmanager
+def xlsx_manager(
+    path: Path, rich_text: bool = True, **kwargs: Any
+) -> Generator[Workbook]:
+    import openpyxl
+
+    workbook = openpyxl.load_workbook(path, rich_text=rich_text, **kwargs)
+    try:
+        yield workbook
+    finally:
+        workbook.close()
