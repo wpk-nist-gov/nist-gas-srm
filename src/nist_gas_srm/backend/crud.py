@@ -189,7 +189,7 @@ def add_srm_item(
     *,
     session: Session,
     srm: models.SRMData,
-    obj: models.srm.SRMSubTable,
+    obj: models.measurements.MeasurementsSubTable,
 ) -> None:
     """Add raw data item (row)."""
     obj.srmdata = srm
@@ -213,9 +213,9 @@ def create_srm_item(
     *,
     session: Session,
     srmdata_id: int,
-    item_in: basemodels.srm.SRMSubTableCreate,
-    cls: type[models.srm.SRMSubTable],
-) -> models.srm.SRMSubTable:
+    item_in: basemodels.measurements.MeasurementsSubTableCreate,
+    cls: type[models.measurements.MeasurementsSubTable],
+) -> models.measurements.MeasurementsSubTable:
 
     db_item = cls.model_validate(item_in, update={"srmdata_id": srmdata_id})
     session.add(db_item)
@@ -274,11 +274,11 @@ def add_srm_from_excel_obj(
 
     data = excel_interface.excel_to_json(
         excelfile,
-        model=basemodels.complete.CompleteCreate,
+        model=basemodels.srm.CompleteCreate,
     )
     data.update(srmdata_create.model_dump())
 
-    srmdata_in = basemodels.complete.CompleteCreate.model_validate(data)
+    srmdata_in = basemodels.srm.CompleteCreate.model_validate(data)
     return add_srm_from_create(session=session, srmdata_in=srmdata_in)
 
 
