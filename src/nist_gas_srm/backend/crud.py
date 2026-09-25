@@ -272,11 +272,11 @@ def add_srm_from_excel_obj(
 
     data = excel_interface.excel_to_json(
         excelfile,
-        model=basemodels.srm.CompleteCreate,
+        model=basemodels.srm.SRMCompleteCreate,
     )
     data.update(srmdata_create.model_dump())
 
-    srmdata_in = basemodels.srm.CompleteCreate.model_validate(data)
+    srmdata_in = basemodels.srm.SRMCompleteCreate.model_validate(data)
     return add_srm_from_create(session=session, srmdata_in=srmdata_in)
 
 

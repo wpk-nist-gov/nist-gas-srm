@@ -78,7 +78,7 @@ class StandardAnalysisUpdate(SRMForeignKeyUpdate):
 
 
 # ** Subtables
-class ParamsBase(StandardAnalysisForeignKey):
+class StandardAnalysisParamsBase(StandardAnalysisForeignKey):
     model_config = SQLModelConfig(populate_by_name=True)
     degree: int | None
 
@@ -93,11 +93,11 @@ class ParamsBase(StandardAnalysisForeignKey):
     montecarlo_intercept_uncert: float | None
 
 
-class ParamsPublic(ParamsBase, IDPrimaryKeyPublic):
+class StandardAnalysisParamsPublic(StandardAnalysisParamsBase, IDPrimaryKeyPublic):
     pass
 
 
-class ParamsCreate(ParamsBase, SQLDataFrameInterface):
+class StandardAnalysisParamsCreate(StandardAnalysisParamsBase, SQLDataFrameInterface):
     dataframe_name = "standard_analysis.params"
     sheet_name = SheetNames.standard_analysis
 
@@ -146,12 +146,12 @@ class ParamsCreate(ParamsBase, SQLDataFrameInterface):
                 target_cell.value = data[key]
 
 
-class ParamsUpdate(_StandardAnalysisForeignKeyUpdate):
+class StandardAnalysisParamsUpdate(_StandardAnalysisForeignKeyUpdate):
     pass
 
 
-# ** GenLineParams subtable of StandardAnalysis
-class GenLineParamsBase(StandardAnalysisForeignKey):
+# ** StandardAnalysisGenLineParams subtable of StandardAnalysis
+class StandardAnalysisGenLineParamsBase(StandardAnalysisForeignKey):
     model_config = SQLModelConfig(
         alias_generator=to_pascal,
         populate_by_name=True,
@@ -162,14 +162,16 @@ class GenLineParamsBase(StandardAnalysisForeignKey):
     stderr: float
 
 
-class GenLineParamsPublic(
-    GenLineParamsBase,
+class StandardAnalysisGenLineParamsPublic(
+    StandardAnalysisGenLineParamsBase,
     IDPrimaryKeyPublic,
 ):
     pass
 
 
-class GenLineParamsCreate(GenLineParamsBase, SQLDataFrameInterface):
+class StandardAnalysisGenLineParamsCreate(
+    StandardAnalysisGenLineParamsBase, SQLDataFrameInterface
+):
     dataframe_name = "standard_analysis.genline_params"
     sheet_name = SheetNames.standard_analysis
 
@@ -221,14 +223,14 @@ class GenLineParamsCreate(GenLineParamsBase, SQLDataFrameInterface):
         cell.fill = fill
 
 
-class GenLineParamsUpdate(_StandardAnalysisForeignKeyUpdate):
+class StandardAnalysisGenLineParamsUpdate(_StandardAnalysisForeignKeyUpdate):
     name: str | None = None
     value: float | None = None
     stderr: float | None = None
 
 
-# ** GenLineSolution subtable of StandardAnalysis
-class GenLineSolutionBase(StandardAnalysisForeignKey):
+# ** StandardAnalysisGenLineSolution subtable of StandardAnalysis
+class StandardAnalysisGenLineSolutionBase(StandardAnalysisForeignKey):
     model_config = SQLModelConfig(
         alias_generator=to_pascal,
         populate_by_name=True,
@@ -238,14 +240,16 @@ class GenLineSolutionBase(StandardAnalysisForeignKey):
     y_solution: float = Field(validation_alias="Y-Solution")
 
 
-class GenLineSolutionPublic(
-    GenLineSolutionBase,
+class StandardAnalysisGenLineSolutionPublic(
+    StandardAnalysisGenLineSolutionBase,
     IDPrimaryKeyPublic,
 ):
     pass
 
 
-class GenLineSolutionCreate(GenLineSolutionBase, SQLDataFrameInterface):
+class StandardAnalysisGenLineSolutionCreate(
+    StandardAnalysisGenLineSolutionBase, SQLDataFrameInterface
+):
     dataframe_name = "standard_analysis.genline_solution"
     sheet_name = SheetNames.standard_analysis
 
@@ -304,14 +308,14 @@ class GenLineSolutionCreate(GenLineSolutionBase, SQLDataFrameInterface):
         )
 
 
-class GenLineSolutionUpdate(_StandardAnalysisForeignKeyUpdate):
+class StandardAnalysisGenLineSolutionUpdate(_StandardAnalysisForeignKeyUpdate):
     x_solution: float | None = None
     y_solution: float | None = None
 
 
-# ** GenLine Eval Base
+# ** StandardAnalysisGenLine Eval Base
 # NOTE: I'd really rather calculate this...
-class GenLineEvalBase(StandardAnalysisForeignKey):
+class StandardAnalysisGenLineEvalBase(StandardAnalysisForeignKey):
     model_config = SQLModelConfig(
         alias_generator=to_pascal,
         populate_by_name=True,
@@ -321,14 +325,16 @@ class GenLineEvalBase(StandardAnalysisForeignKey):
     y_eval_uncert: float = Field(validation_alias="uYeval")
 
 
-class GenLineEvalPublic(
-    GenLineEvalBase,
+class StandardAnalysisGenLineEvalPublic(
+    StandardAnalysisGenLineEvalBase,
     IDPrimaryKeyPublic,
 ):
     pass
 
 
-class GenLineEvalCreate(GenLineEvalBase, SQLDataFrameInterface):
+class StandardAnalysisGenLineEvalCreate(
+    StandardAnalysisGenLineEvalBase, SQLDataFrameInterface
+):
     dataframe_name = "standard_analysis.genline_eval"
     sheet_name = SheetNames.standard_analysis
 
@@ -379,7 +385,7 @@ class GenLineEvalCreate(GenLineEvalBase, SQLDataFrameInterface):
             get_cell = partial(worksheet.cell, column=22)
 
             if get_cell(row=start).value != "X-Solution":
-                msg = "Must write GenLineSolution before GenLineEval"
+                msg = "Must write StandardAnalysisGenLineSolution before StandardAnalysisGenLineEval"
                 raise ValueError(msg)
 
             for row in range(start + 1, start + 30):
@@ -412,26 +418,29 @@ class GenLineEvalCreate(GenLineEvalBase, SQLDataFrameInterface):
             cell.value = f"={target_col}{new_start + 1}"
 
 
-class GenLineEvalUpdate(_StandardAnalysisForeignKeyUpdate):
+class StandardAnalysisGenLineEvalUpdate(_StandardAnalysisForeignKeyUpdate):
     y_eval: float | None = None
     y_eval_uncert: float | None = None
 
 
 StandardAnalysisSubTableCreateType: TypeAlias = (
-    ParamsCreate | GenLineParamsCreate | GenLineSolutionCreate | GenLineEvalCreate
+    StandardAnalysisParamsCreate
+    | StandardAnalysisGenLineParamsCreate
+    | StandardAnalysisGenLineSolutionCreate
+    | StandardAnalysisGenLineEvalCreate
 )
 
 
 # * Complete
-class CompletePublic(StandardAnalysisPublic):
-    params: list[ParamsPublic] = []
-    genline_params: list[GenLineParamsPublic] = []
-    genline_solution: list[GenLineSolutionPublic] = []
-    genline_eval: list[GenLineEvalPublic] = []
+class StandardAnalysisCompletePublic(StandardAnalysisPublic):
+    params: list[StandardAnalysisParamsPublic] = []
+    genline_params: list[StandardAnalysisGenLineParamsPublic] = []
+    genline_solution: list[StandardAnalysisGenLineSolutionPublic] = []
+    genline_eval: list[StandardAnalysisGenLineEvalPublic] = []
 
 
-class CompleteCreate(StandardAnalysisCreate):
-    params: list[ParamsCreate] = []
-    genline_params: list[GenLineParamsCreate] = []
-    genline_solution: list[GenLineSolutionCreate] = []
-    genline_eval: list[GenLineEvalCreate] = []
+class StandardAnalysisCompleteCreate(StandardAnalysisCreate):
+    params: list[StandardAnalysisParamsCreate] = []
+    genline_params: list[StandardAnalysisGenLineParamsCreate] = []
+    genline_solution: list[StandardAnalysisGenLineSolutionCreate] = []
+    genline_eval: list[StandardAnalysisGenLineEvalCreate] = []

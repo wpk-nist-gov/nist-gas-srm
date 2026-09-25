@@ -33,42 +33,44 @@ class RCertTable(rcertmodels.RCertBase, IDPrimaryKey, FixMixin, table=True):
 
     srm_table: Optional["SRMTable"] = Relationship(back_populates="rcert")  # pyright: ignore[reportDeprecated]
 
-    srm_values: list["SRMValues"] = Relationship(
+    srm_values: list["RCertSRMValues"] = Relationship(
         back_populates="rcert_table", cascade_delete=True
     )
-    standards_values: list["StandardsValues"] = Relationship(
+    standards_values: list["RCertStandardsValues"] = Relationship(
         back_populates="rcert_table", cascade_delete=True
     )
-    additional_lot_standards: list["AdditionalLotStandardsCert"] = Relationship(
+    additional_lot_standards: list["RCertAdditionalLotStandards"] = Relationship(
         back_populates="rcert_table", cascade_delete=True
     )
-    cylinder_results: list["CylinderResults"] = Relationship(
+    cylinder_results: list["RCertCylinderResults"] = Relationship(
         back_populates="rcert_table", cascade_delete=True
     )
-    analysis_function_coefficients: list["AnalysisFunctionCoefficients"] = Relationship(
+    analysis_function_coefficients: list["RCertAnalysisFunctionCoefficients"] = (
+        Relationship(back_populates="rcert_table", cascade_delete=True)
+    )
+    correlation_coefficients: list["RCertCorrelationCoefficients"] = Relationship(
         back_populates="rcert_table", cascade_delete=True
     )
-    correlation_coefficients: list["CorrelationCoefficients"] = Relationship(
-        back_populates="rcert_table", cascade_delete=True
-    )
-    outliers: list["Outliers"] = Relationship(
+    outliers: list["RCertOutliers"] = Relationship(
         back_populates="rcert_table", cascade_delete=True
     )
 
 
-class SRMValues(rcertmodels.SRMValuesBase, IDPrimaryKey, table=True):
+class RCertSRMValues(rcertmodels.RCertSRMValuesBase, IDPrimaryKey, table=True):
     __tablename__ = cast("declared_attr[str]", "rcert_srm_values")
 
     rcert_table: RCertTable | None = Relationship(back_populates="srm_values")
 
 
-class StandardsValues(rcertmodels.StandardsValuesBase, IDPrimaryKey, table=True):
+class RCertStandardsValues(
+    rcertmodels.RCertStandardsValuesBase, IDPrimaryKey, table=True
+):
     __tablename__ = cast("declared_attr[str]", "rcert_standards_values")
     rcert_table: RCertTable | None = Relationship(back_populates="standards_values")
 
 
-class AdditionalLotStandardsCert(
-    rcertmodels.AdditionalLotStandardsCertBase, IDPrimaryKey, table=True
+class RCertAdditionalLotStandards(
+    rcertmodels.RCertAdditionalLotStandardsBase, IDPrimaryKey, table=True
 ):
     __tablename__ = cast("declared_attr[str]", "rcert_additional_lot_standards")
 
@@ -77,13 +79,15 @@ class AdditionalLotStandardsCert(
     )
 
 
-class CylinderResults(rcertmodels.CylinderResultsBase, IDPrimaryKey, table=True):
+class RCertCylinderResults(
+    rcertmodels.RCertCylinderResultsBase, IDPrimaryKey, table=True
+):
     __tablename__ = cast("declared_attr[str]", "rcert_cylinder_results")
     rcert_table: RCertTable | None = Relationship(back_populates="cylinder_results")
 
 
-class AnalysisFunctionCoefficients(
-    rcertmodels.AnalysisFunctionCoefficientsBase, IDPrimaryKey, table=True
+class RCertAnalysisFunctionCoefficients(
+    rcertmodels.RCertAnalysisFunctionCoefficientsBase, IDPrimaryKey, table=True
 ):
     __tablename__ = cast("declared_attr[str]", "rcert_analysis_function_coefficients")
     rcert_table: RCertTable | None = Relationship(
@@ -91,8 +95,8 @@ class AnalysisFunctionCoefficients(
     )
 
 
-class CorrelationCoefficients(
-    rcertmodels.CorrelationCoefficientsBase, IDPrimaryKey, table=True
+class RCertCorrelationCoefficients(
+    rcertmodels.RCertCorrelationCoefficientsBase, IDPrimaryKey, table=True
 ):
     __tablename__ = cast("declared_attr[str]", "rcert_correlation_coefficients")
     rcert_table: RCertTable | None = Relationship(
@@ -100,17 +104,17 @@ class CorrelationCoefficients(
     )
 
 
-class Outliers(rcertmodels.OutliersBase, IDPrimaryKey, table=True):
+class RCertOutliers(rcertmodels.RCertOutliersBase, IDPrimaryKey, table=True):
     __tablename__ = cast("declared_attr[str]", "rcert_outliers")
     rcert_table: RCertTable | None = Relationship(back_populates="outliers")
 
 
 RCertSubTableType: TypeAlias = (
-    SRMValues
-    | StandardsValues
-    | AdditionalLotStandardsCert
-    | CylinderResults
-    | AnalysisFunctionCoefficients
-    | CorrelationCoefficients
-    | Outliers
+    RCertSRMValues
+    | RCertStandardsValues
+    | RCertAdditionalLotStandards
+    | RCertCylinderResults
+    | RCertAnalysisFunctionCoefficients
+    | RCertCorrelationCoefficients
+    | RCertOutliers
 )
