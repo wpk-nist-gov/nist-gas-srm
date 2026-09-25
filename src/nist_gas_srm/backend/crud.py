@@ -13,7 +13,7 @@ from . import models
 
 
 def create_srm(
-    *, session: Session, srmdata_create: basemodels.SRMDataCreate
+    *, session: Session, srmdata_create: basemodels.srm.SRMDataCreate
 ) -> models.SRMData:
     obj = models.SRMData.model_validate(srmdata_create)
     session.add(obj)
@@ -26,7 +26,7 @@ def update_srm(
     *,
     session: Session,
     db_srmdata: models.SRMData,
-    srmdata_in: basemodels.SRMDataUpdate,
+    srmdata_in: basemodels.srm.SRMDataUpdate,
 ) -> models.SRMData:
     srmdata_data = srmdata_in.model_dump(exclude_unset=True)
 
@@ -38,22 +38,22 @@ def update_srm(
 
 
 def _validate_srm_query(
-    srm_query: basemodels.SRMDataQuery | str,
-) -> basemodels.SRMDataQuery:
-    if isinstance(srm_query, basemodels.SRMDataQuery):
+    srm_query: basemodels.srm.SRMDataQuery | str,
+) -> basemodels.srm.SRMDataQuery:
+    if isinstance(srm_query, basemodels.srm.SRMDataQuery):
         return srm_query
-    return basemodels.SRMDataQuery.from_string(srm_query)
+    return basemodels.srm.SRMDataQuery.from_string(srm_query)
 
 
 def _validate_srm_queries(
-    srm_queries: Iterable[basemodels.SRMDataQuery | str],
-) -> list[basemodels.SRMDataQuery]:
+    srm_queries: Iterable[basemodels.srm.SRMDataQuery | str],
+) -> list[basemodels.srm.SRMDataQuery]:
 
     return [_validate_srm_query(s) for s in srm_queries]
 
 
 def _get_sql_and_from_model(
-    query: basemodels.SRMDataQuery,
+    query: basemodels.srm.SRMDataQuery,
     model: type[SQLModel] = models.SRMData,
 ) -> ColumnElement[bool]:
     return sql_and_(
@@ -65,13 +65,15 @@ def _get_sql_and_from_model(
 
 
 def _get_where_from_srm_query(
-    srm_query: str | basemodels.SRMDataQuery | Iterable[basemodels.SRMDataQuery | str],
+    srm_query: str
+    | basemodels.srm.SRMDataQuery
+    | Iterable[basemodels.srm.SRMDataQuery | str],
 ) -> ColumnElement[bool]:
 
     if isinstance(srm_query, str):
-        srm_query = basemodels.SRMDataQuery.from_string(srm_query)
+        srm_query = basemodels.srm.SRMDataQuery.from_string(srm_query)
 
-    if isinstance(srm_query, basemodels.SRMDataQuery):
+    if isinstance(srm_query, basemodels.srm.SRMDataQuery):
         where_ = _get_sql_and_from_model(srm_query)
 
     else:
@@ -87,8 +89,8 @@ def _get_srm_result(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: str
-    | basemodels.SRMDataQuery
-    | Sequence[basemodels.SRMDataQuery | str]
+    | basemodels.srm.SRMDataQuery
+    | Sequence[basemodels.srm.SRMDataQuery | str]
     | None = None,
 ) -> ScalarResult[models.SRMData]:
 
@@ -97,7 +99,7 @@ def _get_srm_result(
         where_ = _get_where_from_srm_query(srm_query)
         query = query.where(where_)
         return session.exec(query)
-    srm_query = basemodels.SRMDataQuery.from_params_exclude_none(
+    srm_query = basemodels.srm.SRMDataQuery.from_params_exclude_none(
         srm_id=srm_id, batch_id=batch_id, lot_id=lot_id
     )
     if srm_query.model_dump(exclude_unset=True):
@@ -113,7 +115,7 @@ def get_srm(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: basemodels.SRMDataQuery | str | None = None,
+    srm_query: basemodels.srm.SRMDataQuery | str | None = None,
 ) -> models.SRMData:
     """Get single srm"""
 
@@ -132,7 +134,7 @@ def get_srms(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: Sequence[basemodels.SRMDataQuery | str] | None = None,
+    srm_query: Sequence[basemodels.srm.SRMDataQuery | str] | None = None,
 ) -> Sequence[models.SRMData]:
     """Get multiple srm"""
     return _get_srm_result(
@@ -150,7 +152,7 @@ def get_rcert(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: basemodels.SRMDataQuery | str | None = None,
+    srm_query: basemodels.srm.SRMDataQuery | str | None = None,
 ) -> models.RCertData:
 
     return get_srm(
@@ -168,7 +170,7 @@ def get_rcerts(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: Sequence[basemodels.SRMDataQuery | str] | None = None,
+    srm_query: Sequence[basemodels.srm.SRMDataQuery | str] | None = None,
 ) -> Sequence[models.RCertData]:
 
     return [
@@ -211,7 +213,7 @@ def create_srm_item(
     *,
     session: Session,
     srmdata_id: int,
-    item_in: basemodels.SRMSubTableCreate,
+    item_in: basemodels.srm.SRMSubTableCreate,
     cls: type[models.SRMSubTable],
 ) -> models.SRMSubTable:
 
@@ -226,7 +228,7 @@ def create_rcert_item(
     *,
     session: Session,
     rcert_id: int,
-    item_in: basemodels.RCertSubTableCreate,
+    item_in: basemodels.rcert.RCertSubTableCreate,
     cls: type[models.RCertSubTable],
 ) -> models.RCertSubTable:
     db_item = cls.model_validate(item_in, update={"rcert_id": rcert_id})
@@ -240,7 +242,7 @@ def create_rcert_item(
 # def add_srm_from_excel_obj(
 #     *,
 #     session: Session,
-#     srmdata_create: basemodels.SRMDataCreate,
+#     srmdata_create: basemodels.srm.SRMDataCreate,
 #     srmxls: read_excel.SRMExcelFile,
 # ) -> models.SRMData:
 
@@ -266,23 +268,24 @@ def create_rcert_item(
 def add_srm_from_excel_obj(
     *,
     session: Session,
-    srmdata_create: basemodels.SRMDataCreate,
+    srmdata_create: basemodels.srm.SRMDataCreate,
     excelfile: pd.ExcelFile,
 ) -> models.SRMData:
 
     data = excel_interface.excel_to_json(
-        excelfile, model=basemodels.SRMRCertCreateComplete
+        excelfile,
+        model=basemodels.complete.CompleteCreate,
     )
     data.update(srmdata_create.model_dump())
 
-    srmdata_in = basemodels.SRMRCertCreateComplete.model_validate(data)
+    srmdata_in = basemodels.complete.CompleteCreate.model_validate(data)
     return add_srm_from_create(session=session, srmdata_in=srmdata_in)
 
 
 def add_srm_from_create(
     *,
     session: Session,
-    srmdata_in: basemodels.SRMDataCreate,
+    srmdata_in: basemodels.srm.SRMDataCreate,
 ) -> models.SRMData:
 
     # NOTE: this only works with the _FixMixin in models.py

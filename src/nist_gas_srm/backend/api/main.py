@@ -79,9 +79,9 @@ def welcome() -> dict[str, str]:
     return {"detail": "Welcome to NIST Gas SRM database"}
 
 
-@app.get("/srmrcert/complete", response_model=basemodels.SRMRCertPublicComplete)
-@app.get("/srm/complete", response_model=basemodels.SRMDataPublicComplete)
-@app.get("/srm", response_model=basemodels.SRMDataPublic)
+@app.get("/srmrcert/complete", response_model=basemodels.complete.CompletePublic)
+@app.get("/srm/complete", response_model=basemodels.srm.CompletePublic)
+@app.get("/srm", response_model=basemodels.srm.SRMDataPublic)
 def read_srm(
     *,
     session: SessionDepends,
@@ -101,9 +101,9 @@ def read_srm(
     )
 
 
-@app.get("/srmrcerts/complete", response_model=list[basemodels.SRMRCertPublicComplete])
-@app.get("/srms/complete", response_model=list[basemodels.SRMDataPublicComplete])
-@app.get("/srms", response_model=list[basemodels.SRMDataPublic])
+@app.get("/srmrcerts/complete", response_model=list[basemodels.complete.CompletePublic])
+@app.get("/srms/complete", response_model=list[basemodels.srm.CompletePublic])
+@app.get("/srms", response_model=list[basemodels.srm.SRMDataPublic])
 def read_srms(
     *,
     session: SessionDepends,
@@ -123,8 +123,8 @@ def read_srms(
     )
 
 
-@app.get("/rcert/complete", response_model=basemodels.RCertPublicComplete)
-@app.get("/rcert", response_model=basemodels.RCertPublic)
+@app.get("/rcert/complete", response_model=basemodels.rcert.CompletePublic)
+@app.get("/rcert", response_model=basemodels.rcert.RCertPublic)
 def read_rcert(
     *,
     session: SessionDepends,
@@ -144,8 +144,8 @@ def read_rcert(
     )
 
 
-@app.get("/rcerts/complete", response_model=list[basemodels.RCertPublicComplete])
-@app.get("/rcerts", response_model=list[basemodels.RCertPublic])
+@app.get("/rcerts/complete", response_model=list[basemodels.rcert.CompletePublic])
+@app.get("/rcerts", response_model=list[basemodels.rcert.RCertPublic])
 def read_rcerts(
     *,
     session: SessionDepends,
@@ -167,7 +167,7 @@ def read_rcerts(
 
 @app.get(
     "/rcert/cylinder-results",
-    response_model=list[basemodels.RCertCylinderResultsPublic],
+    response_model=list[basemodels.rcert.CylinderResultsPublic],
 )
 def read_rcerts_cylinder_results(
     *,
@@ -186,34 +186,34 @@ def read_rcerts_cylinder_results(
     ).cylinder_results
 
 
-@app.post("/srm", response_model=basemodels.SRMDataPublic)
+@app.post("/srm", response_model=basemodels.srm.SRMDataPublic)
 def create_srm(
     *,
     session: SessionDepends,
-    srmdata_in: basemodels.SRMDataCreate,
+    srmdata_in: basemodels.srm.SRMDataCreate,
 ) -> models.SRMData:
     return crud.add_srm_from_create(session=session, srmdata_in=srmdata_in)
 
 
-@app.post("/srm/complete", response_model=basemodels.SRMDataPublic)
+@app.post("/srm/complete", response_model=basemodels.srm.SRMDataPublic)
 def create_srm_complete(
     *,
     session: SessionDepends,
-    srmdata_in: basemodels.SRMDataCreateComplete,
+    srmdata_in: basemodels.srm.CompleteCreate,
 ) -> models.SRMData:
     return crud.add_srm_from_create(session=session, srmdata_in=srmdata_in)
 
 
-@app.post("/srmrcert/complete", response_model=basemodels.SRMDataPublic)
+@app.post("/srmrcert/complete", response_model=basemodels.srm.SRMDataPublic)
 def create_srmrcert_complete(
     *,
     session: SessionDepends,
-    srmdata_in: basemodels.SRMRCertCreateComplete,
+    srmdata_in: basemodels.complete.CompleteCreate,
 ) -> models.SRMData:
     return crud.add_srm_from_create(session=session, srmdata_in=srmdata_in)
 
 
-@app.post("/upload-excel", response_model=basemodels.SRMDataPublic)
+@app.post("/upload-excel", response_model=basemodels.srm.SRMDataPublic)
 async def create_upload_file(
     *,
     session: SessionDepends,
@@ -224,7 +224,7 @@ async def create_upload_file(
 ) -> Any:  # models.SRMData:
 
     try:
-        srmdata_create = basemodels.SRMDataCreate.model_validate_json(srmdata_in)
+        srmdata_create = basemodels.srm.SRMDataCreate.model_validate_json(srmdata_in)
     except ValidationError as e:
         raise HTTPException(status_code=422, detail=e.errors()) from e
 
@@ -278,7 +278,7 @@ async def download_excel(
     srm: str | None = None,
 ) -> FileResponse:
 
-    srmdata = basemodels.SRMRCertCreateComplete.model_validate(
+    srmdata = basemodels.complete.CompleteCreate.model_validate(
         crud.get_srm(
             session=session,
             srm_id=srm_id,
@@ -306,7 +306,9 @@ async def download_excel(
 
         with xlsx_manager(template_xlsx) as workbook:
             dict_of_dataframes_to_workbook(
-                data, workbook, model=basemodels.SRMRCertCreateComplete
+                data,
+                workbook,
+                model=basemodels.complete.CompleteCreate,
             )
 
         workbook.save(file_path)
