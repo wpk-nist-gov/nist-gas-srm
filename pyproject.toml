@@ -34,6 +34,7 @@ classifiers = [
 ]
 dependencies = [
     "fastapi[standard]>=0.136.3",
+    "odrpack>=0.6.1",
     "openpyxl>=3.1.5",
     "pandas>=2.3.3",
     "plotly-express>=0.4.1",
@@ -44,6 +45,7 @@ dependencies = [
     "streamlit>=1.60.0",
     "streamlit-pydantic>=0.6.0",
     "typing-extensions; python_version<'3.12'",
+    "uncertainties>=3.2.3",
     "xlrd>=2.0.2",
     "xlutils>=2.0.0",
     "xlwt>=1.3.0",
@@ -260,6 +262,7 @@ expand_tables = [
 [tool.typos.default]
 # nbqa generated
 extend-ignore-re = [ "# %%NBQA-.*" ]
+extend-ignore-identifiers-re = [ "NDArray.*" ]
 
 [tool.typos.default.extend-identifiers]
 CPY = "CPY"
