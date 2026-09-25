@@ -24,6 +24,6 @@ from nist_gas_srm.core import basemodels
 def test_srmdataquery_from_string(string: str, expected: dict[str, Any]) -> None:
 
     assert (
-        basemodels.srm.SRMDataQuery.from_string(string).model_dump(exclude_unset=True)
+        basemodels.srm.SRMQuery.from_string(string).model_dump(exclude_unset=True)
         == expected
     )

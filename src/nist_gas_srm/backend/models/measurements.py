@@ -13,7 +13,7 @@ from ._fixmixin import FixMixin
 if TYPE_CHECKING:
     from sqlalchemy.orm import declared_attr
 
-    from .srm import SRMData
+    from .srm import SRMTable
 
 
 FORMAT = "[%(name)s - %(levelname)s] %(message)s"
@@ -26,7 +26,7 @@ class Measurements(
 ):
     __tablename__ = cast("declared_attr[str]", "measurements")
 
-    srm_root: Optional["SRMData"] = Relationship(back_populates="measurements")  # pyright: ignore[reportDeprecated]
+    srm_table: Optional["SRMTable"] = Relationship(back_populates="measurements")  # pyright: ignore[reportDeprecated]
     ratios: list["RatioData"] = Relationship(
         back_populates="measurements", cascade_delete=True
     )
@@ -36,21 +36,19 @@ class Measurements(
     standards: list["StandardsData"] = Relationship(
         back_populates="measurements", cascade_delete=True
     )
-    past_lot_standards: list["PastLotStandardsData"] = Relationship(
+    past_lot_standards: list["PastLotStandards"] = Relationship(
         back_populates="measurements",
         cascade_delete=True,
     )
-    additional_lot_standards: list["AdditionalLotStandardsData"] = Relationship(
+    additional_lot_standards: list["AdditionalLotStandards"] = Relationship(
         back_populates="measurements",
         cascade_delete=True,
     )
-    ratio_analysis_random_effects: list["RatioAnalysisRandomEffectsData"] = (
-        Relationship(
-            back_populates="measurements",
-            cascade_delete=True,
-        )
+    ratio_analysis_random_effects: list["RatioAnalysisRandomEffects"] = Relationship(
+        back_populates="measurements",
+        cascade_delete=True,
     )
-    ratio_analysis_fixed_effects: list["RatioAnalysisFixedEffectsData"] = Relationship(
+    ratio_analysis_fixed_effects: list["RatioAnalysisFixedEffects"] = Relationship(
         back_populates="measurements",
         cascade_delete=True,
     )
@@ -65,8 +63,8 @@ class RatioData(basemodels.measurements.RatioDataBase, IDPrimaryKey, table=True)
     measurements: Measurements | None = Relationship(back_populates="ratios")
 
 
-class RatioAnalysisRandomEffectsData(
-    basemodels.measurements.RatioAnalysisRandomEffectsDataBase, IDPrimaryKey, table=True
+class RatioAnalysisRandomEffects(
+    basemodels.measurements.RatioAnalysisRandomEffectsBase, IDPrimaryKey, table=True
 ):
     __tablename__ = cast(
         "declared_attr[str]", "measurements_ratio_analysis_random_effects"
@@ -77,8 +75,8 @@ class RatioAnalysisRandomEffectsData(
     )
 
 
-class RatioAnalysisFixedEffectsData(
-    basemodels.measurements.RatioAnalysisFixedEffectsDataBase, IDPrimaryKey, table=True
+class RatioAnalysisFixedEffects(
+    basemodels.measurements.RatioAnalysisFixedEffectsBase, IDPrimaryKey, table=True
 ):
     __tablename__ = cast(
         "declared_attr[str]", "measurements_ratio_analysis_fixed_effects"
@@ -106,8 +104,8 @@ class StandardsData(
     measurements: Measurements | None = Relationship(back_populates="standards")
 
 
-class PastLotStandardsData(
-    basemodels.measurements.PastLotStandardsDataBase, IDPrimaryKey, table=True
+class PastLotStandards(
+    basemodels.measurements.PastLotStandardsBase, IDPrimaryKey, table=True
 ):
     """Past lot standards table"""
 
@@ -118,8 +116,8 @@ class PastLotStandardsData(
     )
 
 
-class AdditionalLotStandardsData(
-    basemodels.measurements.AdditionalLotStandardsDataBase, IDPrimaryKey, table=True
+class AdditionalLotStandards(
+    basemodels.measurements.AdditionalLotStandardsBase, IDPrimaryKey, table=True
 ):
     """Additional lot standards table"""
 
@@ -130,12 +128,12 @@ class AdditionalLotStandardsData(
     )
 
 
-MeasurementsSubTable: TypeAlias = (
+MeasurementsSubTableType: TypeAlias = (
     RatioData
     | VendorData
     | StandardsData
-    | RatioAnalysisRandomEffectsData
-    | RatioAnalysisFixedEffectsData
-    | PastLotStandardsData
-    | AdditionalLotStandardsData
+    | RatioAnalysisRandomEffects
+    | RatioAnalysisFixedEffects
+    | PastLotStandards
+    | AdditionalLotStandards
 )

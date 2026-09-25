@@ -1,6 +1,7 @@
 """standard analysis models"""
 # pylint: disable=abstract-method
 
+import uuid
 from functools import partial
 from typing import TYPE_CHECKING, Annotated, ClassVar, TypeAlias, cast
 
@@ -33,23 +34,34 @@ if TYPE_CHECKING:
 
 from .keys import (
     IDPrimaryKeyPublic,
-    SRMDataForeignKey,
-    SRMDataForeignKeyUpdate,
-    StandardAnalysisForeignKey,
+    SRMForeignKey,
+    SRMForeignKeyUpdate,
 )
 from .utils import (
     to_pascal,
 )
 
 
-# * StandardAnalysis ----------------------------------------------------------
-# * root table
+# * Keys ----------------------------------------------------------------------
+class StandardAnalysisForeignKey(SQLModel):
+    standard_analysis_id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        nullable=False,
+        foreign_key="standard_analysis_table.id",
+        ondelete="CASCADE",
+    )
+
+
 class _StandardAnalysisForeignKeyUpdate(SQLModel):
     pass
 
 
+# * StandardAnalysis ----------------------------------------------------------
+# * root table
+
+
 # NOTE(wpk): include SQLModel here to make linter happy
-class StandardAnalysisBase(SRMDataForeignKey, SQLModel):
+class StandardAnalysisBase(SRMForeignKey, SQLModel):
     """Points back to srmdata"""
 
 
@@ -61,7 +73,7 @@ class StandardAnalysisCreate(StandardAnalysisBase):
     pass
 
 
-class StandardAnalysisUpdate(SRMDataForeignKeyUpdate):
+class StandardAnalysisUpdate(SRMForeignKeyUpdate):
     pass
 
 
@@ -405,7 +417,7 @@ class GenLineEvalUpdate(_StandardAnalysisForeignKeyUpdate):
     y_eval_uncert: float | None = None
 
 
-StandardAnalysisSubTableCreate: TypeAlias = (
+StandardAnalysisSubTableCreateType: TypeAlias = (
     ParamsCreate | GenLineParamsCreate | GenLineSolutionCreate | GenLineEvalCreate
 )
 

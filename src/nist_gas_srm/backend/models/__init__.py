@@ -1,14 +1,14 @@
 from . import measurements, rcert, srm, standard_analysis
 from .measurements import Measurements
-from .rcert import RCertData
-from .srm import SRMData
-from .standard_analysis import StandardAnalysisData
+from .rcert import RCertTable
+from .srm import SRMTable
+from .standard_analysis import StandardAnalysisTable
 
 __all__ = [
     "Measurements",
-    "RCertData",
-    "SRMData",
-    "StandardAnalysisData",
+    "RCertTable",
+    "SRMTable",
+    "StandardAnalysisTable",
     "measurements",
     "rcert",
     "srm",
