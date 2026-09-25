@@ -384,6 +384,13 @@ root = "tests"
 reportUnusedCallResult = false
 
 [[tool.pyright.executionEnvironments]]
+root = "src/nist_gas_srm/backend/models"
+# reportArgumentType = false
+# reportCallIssue = false
+# reportMissingImports = false
+reportImportCycles = false
+
+[[tool.pyright.executionEnvironments]]
 root = "src/nist_gas_srm/app"
 reportUnusedCallResult = false
 

@@ -189,7 +189,7 @@ def add_srm_item(
     *,
     session: Session,
     srm: models.SRMData,
-    obj: models.SRMSubTable,
+    obj: models.srm.SRMSubTable,
 ) -> None:
     """Add raw data item (row)."""
     obj.srmdata = srm
@@ -201,7 +201,7 @@ def add_rcert_item(
     *,
     session: Session,
     srm: models.SRMData,
-    obj: models.RCertSubTable,
+    obj: models.rcert.RCertSubTable,
 ) -> None:
     """Add rcert item (row)."""
     obj.rcertdata = srm.rcert
@@ -214,8 +214,8 @@ def create_srm_item(
     session: Session,
     srmdata_id: int,
     item_in: basemodels.srm.SRMSubTableCreate,
-    cls: type[models.SRMSubTable],
-) -> models.SRMSubTable:
+    cls: type[models.srm.SRMSubTable],
+) -> models.srm.SRMSubTable:
 
     db_item = cls.model_validate(item_in, update={"srmdata_id": srmdata_id})
     session.add(db_item)
@@ -229,8 +229,8 @@ def create_rcert_item(
     session: Session,
     rcert_id: int,
     item_in: basemodels.rcert.RCertSubTableCreate,
-    cls: type[models.RCertSubTable],
-) -> models.RCertSubTable:
+    cls: type[models.rcert.RCertSubTable],
+) -> models.rcert.RCertSubTable:
     db_item = cls.model_validate(item_in, update={"rcert_id": rcert_id})
     session.add(db_item)
     session.refresh(db_item)

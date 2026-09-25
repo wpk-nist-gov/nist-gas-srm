@@ -175,7 +175,7 @@ def read_rcerts_cylinder_results(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-) -> Sequence[models.RCertCylinderResults]:
+) -> Sequence[models.rcert.CylinderResults]:
     """Get list of srms"""
 
     return crud.get_rcert(

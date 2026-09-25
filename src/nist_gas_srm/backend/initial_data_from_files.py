@@ -75,7 +75,7 @@ def delete_subtable(
 def add_srm_subtable_row(
     session: Session,
     srm: str | models.SRMData,
-    obj: models.SRMSubTable,
+    obj: models.srm.SRMSubTable,
 ) -> None:
     srm = get_srm_by_name(session, srm)
     obj.srmdata = srm
