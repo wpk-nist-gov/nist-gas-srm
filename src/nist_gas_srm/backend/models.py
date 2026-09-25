@@ -87,40 +87,42 @@ class _FixMixin(SQLModel):
 class SRMData(SRMDataBase, IDPrimaryKey, _FixMixin, table=True):
     """Metadata table"""
 
+    __tablename__ = cast("declared_attr[str]", "srm_root")
+
     model_config = SQLModelConfig(str_to_lower=True)
 
     ratios: list["RatioData"] = Relationship(
-        back_populates="srmdata", cascade_delete=True
+        back_populates="srm_root", cascade_delete=True
     )
     vendors: list["VendorData"] = Relationship(
-        back_populates="srmdata", cascade_delete=True
+        back_populates="srm_root", cascade_delete=True
     )
     standards: list["StandardsData"] = Relationship(
-        back_populates="srmdata", cascade_delete=True
+        back_populates="srm_root", cascade_delete=True
     )
     past_lot_standards: list["PastLotStandardsData"] = Relationship(
-        back_populates="srmdata",
+        back_populates="srm_root",
         cascade_delete=True,
     )
     additional_lot_standards: list["AdditionalLotStandardsData"] = Relationship(
-        back_populates="srmdata",
+        back_populates="srm_root",
         cascade_delete=True,
     )
     ratio_analysis_random_effects: list["RatioAnalysisRandomEffectsData"] = (
         Relationship(
-            back_populates="srmdata",
+            back_populates="srm_root",
             cascade_delete=True,
         )
     )
     ratio_analysis_fixed_effects: list["RatioAnalysisFixedEffectsData"] = Relationship(
-        back_populates="srmdata",
+        back_populates="srm_root",
         cascade_delete=True,
     )
 
-    rcert: "RCertData" = Relationship(back_populates="srmdata", cascade_delete=True)
+    rcert: "RCertData" = Relationship(back_populates="srm_root", cascade_delete=True)
 
     standard_analysis: "StandardAnalysisData" = Relationship(
-        back_populates="srmdata", cascade_delete=True
+        back_populates="srm_root", cascade_delete=True
     )
 
 
@@ -130,7 +132,7 @@ class RatioData(RatioDataBase, IDPrimaryKey, table=True):
 
     __tablename__ = cast("declared_attr[str]", "srm_ratios")
 
-    srmdata: SRMData | None = Relationship(back_populates="ratios")
+    srm_root: SRMData | None = Relationship(back_populates="ratios")
 
 
 class RatioAnalysisRandomEffectsData(
@@ -138,7 +140,7 @@ class RatioAnalysisRandomEffectsData(
 ):
     __tablename__ = cast("declared_attr[str]", "srm_ratio_analysis_random_effects")
 
-    srmdata: SRMData | None = Relationship(
+    srm_root: SRMData | None = Relationship(
         back_populates="ratio_analysis_random_effects"
     )
 
@@ -147,7 +149,7 @@ class RatioAnalysisFixedEffectsData(
     RatioAnalysisFixedEffectsDataBase, IDPrimaryKey, table=True
 ):
     __tablename__ = cast("declared_attr[str]", "srm_ratio_analysis_fixed_effects")
-    srmdata: SRMData | None = Relationship(
+    srm_root: SRMData | None = Relationship(
         back_populates="ratio_analysis_fixed_effects"
     )
 
@@ -157,7 +159,7 @@ class VendorData(VendorDataBase, IDPrimaryKey, table=True):
 
     __tablename__ = cast("declared_attr[str]", "srm_vendors")
 
-    srmdata: SRMData | None = Relationship(back_populates="vendors")
+    srm_root: SRMData | None = Relationship(back_populates="vendors")
 
 
 class StandardsData(StandardsDataBase, IDPrimaryKey, table=True):
@@ -165,7 +167,7 @@ class StandardsData(StandardsDataBase, IDPrimaryKey, table=True):
 
     __tablename__ = cast("declared_attr[str]", "srm_standards")
 
-    srmdata: SRMData | None = Relationship(back_populates="standards")
+    srm_root: SRMData | None = Relationship(back_populates="standards")
 
 
 class PastLotStandardsData(PastLotStandardsDataBase, IDPrimaryKey, table=True):
@@ -173,7 +175,7 @@ class PastLotStandardsData(PastLotStandardsDataBase, IDPrimaryKey, table=True):
 
     __tablename__ = cast("declared_attr[str]", "srm_past_lot_standards")
 
-    srmdata: SRMData | None = Relationship(back_populates="past_lot_standards")
+    srm_root: SRMData | None = Relationship(back_populates="past_lot_standards")
 
 
 class AdditionalLotStandardsData(
@@ -183,40 +185,40 @@ class AdditionalLotStandardsData(
 
     __tablename__ = cast("declared_attr[str]", "srm_additional_lot_standards")
 
-    srmdata: SRMData | None = Relationship(back_populates="additional_lot_standards")
+    srm_root: SRMData | None = Relationship(back_populates="additional_lot_standards")
 
 
 # * Standard analysis
 class StandardAnalysisData(StandardAnalysisBase, IDPrimaryKey, _FixMixin, table=True):
     """Standard analysis data"""
 
-    __tablename__ = cast("declared_attr[str]", "standard_analysis_data")
+    __tablename__ = cast("declared_attr[str]", "standard_analysis_root")
 
     model_config = SQLModelConfig(str_to_lower=True)
-    srmdata: SRMData | None = Relationship(back_populates="standard_analysis")
+    srm_root: SRMData | None = Relationship(back_populates="standard_analysis")
 
     params: list["StandardAnalysisParamsData"] = Relationship(
-        back_populates="standard_analysis_data",
+        back_populates="standard_analysis_root",
         cascade_delete=True,
     )
     genline_params: list["StandardAnalysisGenLineParamsData"] = Relationship(
-        back_populates="standard_analysis_data",
+        back_populates="standard_analysis_root",
         cascade_delete=True,
     )
     genline_solution: list["StandardAnalysisGenLineSolutionData"] = Relationship(
-        back_populates="standard_analysis_data",
+        back_populates="standard_analysis_root",
         cascade_delete=True,
     )
 
     genline_eval: list["StandardAnalysisGenLineEvalData"] = Relationship(
-        back_populates="standard_analysis_data",
+        back_populates="standard_analysis_root",
         cascade_delete=True,
     )
 
 
 class StandardAnalysisParamsData(StandardAnalysisParamsBase, IDPrimaryKey, table=True):
     __tablename__ = cast("declared_attr[str]", "standard_analysis_params")
-    standard_analysis_data: StandardAnalysisData | None = Relationship(
+    standard_analysis_root: StandardAnalysisData | None = Relationship(
         back_populates="params"
     )
 
@@ -225,7 +227,7 @@ class StandardAnalysisGenLineParamsData(
     StandardAnalysisGenLineParamsBase, IDPrimaryKey, table=True
 ):
     __tablename__ = cast("declared_attr[str]", "standard_analysis_genline_params")
-    standard_analysis_data: StandardAnalysisData | None = Relationship(
+    standard_analysis_root: StandardAnalysisData | None = Relationship(
         back_populates="genline_params"
     )
 
@@ -234,7 +236,7 @@ class StandardAnalysisGenLineSolutionData(
     StandardAnalysisGenLineSolutionBase, IDPrimaryKey, table=True
 ):
     __tablename__ = cast("declared_attr[str]", "standard_analysis_genline_solution")
-    standard_analysis_data: StandardAnalysisData | None = Relationship(
+    standard_analysis_root: StandardAnalysisData | None = Relationship(
         back_populates="genline_solution"
     )
 
@@ -243,7 +245,7 @@ class StandardAnalysisGenLineEvalData(
     StandardAnalysisGenLineEvalBase, IDPrimaryKey, table=True
 ):
     __tablename__ = cast("declared_attr[str]", "standard_analysis_genline_eval")
-    standard_analysis_data: StandardAnalysisData | None = Relationship(
+    standard_analysis_root: StandardAnalysisData | None = Relationship(
         back_populates="genline_eval"
     )
 
@@ -252,42 +254,44 @@ class StandardAnalysisGenLineEvalData(
 class RCertData(RCertBase, IDPrimaryKey, _FixMixin, table=True):
     """R Certified values"""
 
+    __tablename__ = cast("declared_attr[str]", "rcert_root")
+
     model_config = SQLModelConfig(str_to_lower=True)
 
-    srmdata: SRMData | None = Relationship(back_populates="rcert")
+    srm_root: SRMData | None = Relationship(back_populates="rcert")
 
     srm_values: list["RCertSRMValues"] = Relationship(
-        back_populates="rcertdata", cascade_delete=True
+        back_populates="rcert_root", cascade_delete=True
     )
     standards_values: list["RCertStandardsValues"] = Relationship(
-        back_populates="rcertdata", cascade_delete=True
+        back_populates="rcert_root", cascade_delete=True
     )
     additional_lot_standards: list["RCertAdditionalLotStandards"] = Relationship(
-        back_populates="rcertdata", cascade_delete=True
+        back_populates="rcert_root", cascade_delete=True
     )
     cylinder_results: list["RCertCylinderResults"] = Relationship(
-        back_populates="rcertdata", cascade_delete=True
+        back_populates="rcert_root", cascade_delete=True
     )
     analysis_function_coefficients: list["RCertAnalysisFunctionCoefficients"] = (
-        Relationship(back_populates="rcertdata", cascade_delete=True)
+        Relationship(back_populates="rcert_root", cascade_delete=True)
     )
     correlation_coefficients: list["RCertCorrelationCoefficients"] = Relationship(
-        back_populates="rcertdata", cascade_delete=True
+        back_populates="rcert_root", cascade_delete=True
     )
     outliers: list["RCertOutliers"] = Relationship(
-        back_populates="rcertdata", cascade_delete=True
+        back_populates="rcert_root", cascade_delete=True
     )
 
 
 class RCertSRMValues(RCertSRMValuesBase, IDPrimaryKey, table=True):
     __tablename__ = cast("declared_attr[str]", "rcert_srm_values")
 
-    rcertdata: RCertData | None = Relationship(back_populates="srm_values")
+    rcert_root: RCertData | None = Relationship(back_populates="srm_values")
 
 
 class RCertStandardsValues(RCertStandardsValuesBase, IDPrimaryKey, table=True):
     __tablename__ = cast("declared_attr[str]", "rcert_standards_values")
-    rcertdata: RCertData | None = Relationship(back_populates="standards_values")
+    rcert_root: RCertData | None = Relationship(back_populates="standards_values")
 
 
 class RCertAdditionalLotStandards(
@@ -295,21 +299,21 @@ class RCertAdditionalLotStandards(
 ):
     __tablename__ = cast("declared_attr[str]", "rcert_additional_lot_standards")
 
-    rcertdata: RCertData | None = Relationship(
+    rcert_root: RCertData | None = Relationship(
         back_populates="additional_lot_standards"
     )
 
 
 class RCertCylinderResults(RCertCylinderResultsBase, IDPrimaryKey, table=True):
     __tablename__ = cast("declared_attr[str]", "rcert_cylinder_results")
-    rcertdata: RCertData | None = Relationship(back_populates="cylinder_results")
+    rcert_root: RCertData | None = Relationship(back_populates="cylinder_results")
 
 
 class RCertAnalysisFunctionCoefficients(
     RCertAnalysisFunctionCoefficientsBase, IDPrimaryKey, table=True
 ):
     __tablename__ = cast("declared_attr[str]", "rcert_analysis_function_coefficients")
-    rcertdata: RCertData | None = Relationship(
+    rcert_root: RCertData | None = Relationship(
         back_populates="analysis_function_coefficients"
     )
 
@@ -318,14 +322,14 @@ class RCertCorrelationCoefficients(
     RCertCorrelationCoefficientsBase, IDPrimaryKey, table=True
 ):
     __tablename__ = cast("declared_attr[str]", "rcert_correlation_coefficients")
-    rcertdata: RCertData | None = Relationship(
+    rcert_root: RCertData | None = Relationship(
         back_populates="correlation_coefficients"
     )
 
 
 class RCertOutliers(RCertOutliersBase, IDPrimaryKey, table=True):
     __tablename__ = cast("declared_attr[str]", "rcert_outliers")
-    rcertdata: RCertData | None = Relationship(back_populates="outliers")
+    rcert_root: RCertData | None = Relationship(back_populates="outliers")
 
 
 # Useful type aliases
