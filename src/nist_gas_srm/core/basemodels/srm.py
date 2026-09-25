@@ -108,13 +108,13 @@ class SRMQuery(SQLModel):
         return cls.model_validate(kwargs)
 
 
-class CompletePublic(SRMPublic):
-    rcert: rcert.CompletePublic
-    measurements: measurements.CompletePublic
-    standard_analysis: stdanal.CompletePublic
+class SRMCompletePublic(SRMPublic):
+    rcert: rcert.RCertCompletePublic
+    measurements: measurements.MeasurementsCompletePublic
+    standard_analysis: stdanal.StandardAnalysisCompletePublic
 
 
-class CompleteCreate(SRMCreate):
-    rcert: rcert.CompleteCreate
-    measurements: measurements.CompleteCreate
-    standard_analysis: stdanal.CompleteCreate
+class SRMCompleteCreate(SRMCreate):
+    rcert: rcert.RCertCompleteCreate
+    measurements: measurements.MeasurementsCompleteCreate
+    standard_analysis: stdanal.StandardAnalysisCompleteCreate

@@ -72,7 +72,7 @@ class RCertUpdate(SRMForeignKeyUpdate):
 
 # ** SRMValues
 # Each of these point back to rcert
-class SRMValuesBase(RCertForeignKey):
+class RCertSRMValuesBase(RCertForeignKey):
     """RCert.srm_values"""
 
     model_config = SQLModelConfig(populate_by_name=True)
@@ -89,11 +89,11 @@ class SRMValuesBase(RCertForeignKey):
     ls_uncert_ci95: float = Field(validation_alias="LS 95 % C.L.")
 
 
-class SRMValuesPublic(SRMValuesBase, IDPrimaryKeyPublic):
+class RCertSRMValuesPublic(RCertSRMValuesBase, IDPrimaryKeyPublic):
     pass
 
 
-class SRMValuesCreate(SRMValuesBase, SQLDataFrameInterface):
+class RCertSRMValuesCreate(RCertSRMValuesBase, SQLDataFrameInterface):
     dataframe_name = "rcert.srm_values"
     sheet_name = SheetNames.rcert
 
@@ -138,7 +138,7 @@ class SRMValuesCreate(SRMValuesBase, SQLDataFrameInterface):
         )
 
 
-class SRMValuesUpdate(_RCertForeignKeyUpdate):
+class RCertSRMValuesUpdate(_RCertForeignKeyUpdate):
     value: float | None = None
     uncert: float | None = None
     uncert_ci95: float | None = None
@@ -150,7 +150,7 @@ class SRMValuesUpdate(_RCertForeignKeyUpdate):
 
 
 # ** Standard Values
-class StandardsValuesBase(RCertForeignKey):
+class RCertStandardsValuesBase(RCertForeignKey):
     """Rcert.standards_values"""
 
     model_config = SQLModelConfig(populate_by_name=True)
@@ -162,11 +162,11 @@ class StandardsValuesBase(RCertForeignKey):
     predicted_uncert: float = Field(validation_alias="Predicted Uncert (k=2)")
 
 
-class StandardsValuesPublic(StandardsValuesBase, IDPrimaryKeyPublic):
+class RCertStandardsValuesPublic(RCertStandardsValuesBase, IDPrimaryKeyPublic):
     pass
 
 
-class StandardsValuesCreate(StandardsValuesBase, SQLDataFrameInterface):
+class RCertStandardsValuesCreate(RCertStandardsValuesBase, SQLDataFrameInterface):
     dataframe_name = "rcert.standards_values"
     sheet_name = SheetNames.rcert
 
@@ -202,7 +202,7 @@ class StandardsValuesCreate(StandardsValuesBase, SQLDataFrameInterface):
         )
 
 
-class StandardsValuesUpdate(_RCertForeignKeyUpdate):
+class RCertStandardsValuesUpdate(_RCertForeignKeyUpdate):
     value: float | None = None
     uncert: float | None = None
     predicted: float | None = None
@@ -210,7 +210,7 @@ class StandardsValuesUpdate(_RCertForeignKeyUpdate):
 
 
 # ** Additional lot standards
-class AdditionalLotStandardsCertBase(RCertForeignKey):
+class RCertAdditionalLotStandardsBase(RCertForeignKey):
     model_config = SQLModelConfig(populate_by_name=True)
 
     name: str = Field(validation_alias="Additional LSs")
@@ -221,14 +221,14 @@ class AdditionalLotStandardsCertBase(RCertForeignKey):
     uncert_ci95: float = Field(validation_alias="95% CI")  # 95 % confidence interval
 
 
-class AdditionalLotStandardsCertPublic(
-    AdditionalLotStandardsCertBase, IDPrimaryKeyPublic
+class RCertAdditionalLotStandardsPublic(
+    RCertAdditionalLotStandardsBase, IDPrimaryKeyPublic
 ):
     pass
 
 
-class AdditionalLotStandardsCertCreate(
-    AdditionalLotStandardsCertBase, SQLDataFrameInterface
+class RCertAdditionalLotStandardsCreate(
+    RCertAdditionalLotStandardsBase, SQLDataFrameInterface
 ):
     dataframe_name = "rcert.additional_lot_standards"
     sheet_name = SheetNames.rcert
@@ -253,7 +253,7 @@ class AdditionalLotStandardsCertCreate(
         )
 
 
-class AdditionalLotStandardsCertUpdate(_RCertForeignKeyUpdate):
+class RCertAdditionalLotStandardsUpdate(_RCertForeignKeyUpdate):
     name: str | None = None
     number: int | None = None
     value: float | None = None
@@ -262,7 +262,7 @@ class AdditionalLotStandardsCertUpdate(_RCertForeignKeyUpdate):
 
 
 # ** Cylinder results
-class CylinderResultsBase(RCertForeignKey):
+class RCertCylinderResultsBase(RCertForeignKey):
     model_config = SQLModelConfig(alias_generator=to_pascal, populate_by_name=True)
 
     name: str = Field(validation_alias="Sample")
@@ -271,11 +271,11 @@ class CylinderResultsBase(RCertForeignKey):
     uncert_ci95: float = Field(validation_alias="95% CI")
 
 
-class CylinderResultsPublic(CylinderResultsBase, IDPrimaryKeyPublic):
+class RCertCylinderResultsPublic(RCertCylinderResultsBase, IDPrimaryKeyPublic):
     model_config = SQLModelConfig(populate_by_name=True)
 
 
-class CylinderResultsCreate(CylinderResultsBase, SQLDataFrameInterface):
+class RCertCylinderResultsCreate(RCertCylinderResultsBase, SQLDataFrameInterface):
     dataframe_name = "rcert.cylinder_results"
     sheet_name = SheetNames.rcert
 
@@ -303,7 +303,7 @@ class CylinderResultsCreate(CylinderResultsBase, SQLDataFrameInterface):
         )
 
 
-class CylinderResultsUpdate(_RCertForeignKeyUpdate):
+class RCertCylinderResultsUpdate(_RCertForeignKeyUpdate):
     name: str | None = None
     value: float | None = None
     uncert: float | None = None
@@ -311,20 +311,20 @@ class CylinderResultsUpdate(_RCertForeignKeyUpdate):
 
 
 # ** Analysis function coefficients
-class AnalysisFunctionCoefficientsBase(RCertForeignKey):
+class RCertAnalysisFunctionCoefficientsBase(RCertForeignKey):
     order: int
     value: float
     uncert: float
 
 
-class AnalysisFunctionCoefficientsPublic(
-    AnalysisFunctionCoefficientsBase, IDPrimaryKeyPublic
+class RCertAnalysisFunctionCoefficientsPublic(
+    RCertAnalysisFunctionCoefficientsBase, IDPrimaryKeyPublic
 ):
     pass
 
 
-class AnalysisFunctionCoefficientsCreate(
-    AnalysisFunctionCoefficientsBase, SQLDataFrameInterface
+class RCertAnalysisFunctionCoefficientsCreate(
+    RCertAnalysisFunctionCoefficientsBase, SQLDataFrameInterface
 ):
     dataframe_name = "rcert.analysis_function_coefficients"
     sheet_name = SheetNames.rcert
@@ -358,24 +358,28 @@ class AnalysisFunctionCoefficientsCreate(
         )
 
 
-class AnalysisFunctionCoefficientsUpdate(_RCertForeignKeyUpdate):
+class RCertAnalysisFunctionCoefficientsUpdate(_RCertForeignKeyUpdate):
     order: int | None = None
     value: float | None = None
     uncert: float | None = None
 
 
 # ** Correlation coefficients
-class CorrelationCoefficientsBase(RCertForeignKey):
+class RCertCorrelationCoefficientsBase(RCertForeignKey):
     order: int
     order_other: int
     value: float
 
 
-class CorrelationCoefficientsPublic(CorrelationCoefficientsBase, IDPrimaryKeyPublic):
+class RCertCorrelationCoefficientsPublic(
+    RCertCorrelationCoefficientsBase, IDPrimaryKeyPublic
+):
     pass
 
 
-class CorrelationCoefficientsCreate(CorrelationCoefficientsBase, SQLDataFrameInterface):
+class RCertCorrelationCoefficientsCreate(
+    RCertCorrelationCoefficientsBase, SQLDataFrameInterface
+):
     dataframe_name = "rcert.correlation_coefficients"
     sheet_name = SheetNames.rcert
 
@@ -419,14 +423,14 @@ class CorrelationCoefficientsCreate(CorrelationCoefficientsBase, SQLDataFrameInt
         )
 
 
-class CorrelationCoefficientsUpdate(_RCertForeignKeyUpdate):
+class RCertCorrelationCoefficientsUpdate(_RCertForeignKeyUpdate):
     order: int | None = None
     order_other: int | None = None
     value: float | None = None
 
 
 # ** outliers
-class OutliersBase(RCertForeignKey):
+class RCertOutliersBase(RCertForeignKey):
     model_config = SQLModelConfig(
         alias_generator=to_pascal,
         populate_by_name=True,
@@ -438,11 +442,11 @@ class OutliersBase(RCertForeignKey):
     value: float
 
 
-class OutliersPublic(OutliersBase, IDPrimaryKeyPublic):
+class RCertOutliersPublic(RCertOutliersBase, IDPrimaryKeyPublic):
     pass
 
 
-class OutliersCreate(OutliersBase, SQLDataFrameInterface):
+class RCertOutliersCreate(RCertOutliersBase, SQLDataFrameInterface):
     dataframe_name = "rcert.outliers"
     sheet_name = SheetNames.rcert
 
@@ -468,7 +472,7 @@ class OutliersCreate(OutliersBase, SQLDataFrameInterface):
         )
 
 
-class OutliersUpdate(_RCertForeignKeyUpdate):
+class RCertOutliersUpdate(_RCertForeignKeyUpdate):
     name: str | None = Field(validation_alias="Test", default=None)
     # TODO(wpk): make this a bool with where test == "OUT"
     test_out: TestOutOptionalAnn = None
@@ -477,32 +481,32 @@ class OutliersUpdate(_RCertForeignKeyUpdate):
 
 
 RCertSubTableCreateType: TypeAlias = (
-    SRMValuesCreate
-    | StandardsValuesCreate
-    | AdditionalLotStandardsCertCreate
-    | CylinderResultsCreate
-    | AnalysisFunctionCoefficientsCreate
-    | CorrelationCoefficientsCreate
-    | OutliersCreate
+    RCertSRMValuesCreate
+    | RCertStandardsValuesCreate
+    | RCertAdditionalLotStandardsCreate
+    | RCertCylinderResultsCreate
+    | RCertAnalysisFunctionCoefficientsCreate
+    | RCertCorrelationCoefficientsCreate
+    | RCertOutliersCreate
 )
 
 
 # * Complete ------------------------------------------------------------------
-class CompletePublic(RCertPublic):
-    srm_values: list[SRMValuesPublic] = []
-    standards_values: list[StandardsValuesPublic] = []
-    additional_lot_standards: list[AdditionalLotStandardsCertPublic] = []
-    cylinder_results: list[CylinderResultsPublic] = []
-    analysis_function_coefficients: list[AnalysisFunctionCoefficientsPublic] = []
-    correlation_coefficients: list[CorrelationCoefficientsPublic] = []
-    outliers: list[OutliersPublic] = []
+class RCertCompletePublic(RCertPublic):
+    srm_values: list[RCertSRMValuesPublic] = []
+    standards_values: list[RCertStandardsValuesPublic] = []
+    additional_lot_standards: list[RCertAdditionalLotStandardsPublic] = []
+    cylinder_results: list[RCertCylinderResultsPublic] = []
+    analysis_function_coefficients: list[RCertAnalysisFunctionCoefficientsPublic] = []
+    correlation_coefficients: list[RCertCorrelationCoefficientsPublic] = []
+    outliers: list[RCertOutliersPublic] = []
 
 
-class CompleteCreate(RCertCreate):
-    srm_values: list[SRMValuesCreate] = []
-    standards_values: list[StandardsValuesCreate] = []
-    additional_lot_standards: list[AdditionalLotStandardsCertCreate] = []
-    cylinder_results: list[CylinderResultsCreate] = []
-    analysis_function_coefficients: list[AnalysisFunctionCoefficientsCreate] = []
-    correlation_coefficients: list[CorrelationCoefficientsCreate] = []
-    outliers: list[OutliersCreate] = []
+class RCertCompleteCreate(RCertCreate):
+    srm_values: list[RCertSRMValuesCreate] = []
+    standards_values: list[RCertStandardsValuesCreate] = []
+    additional_lot_standards: list[RCertAdditionalLotStandardsCreate] = []
+    cylinder_results: list[RCertCylinderResultsCreate] = []
+    analysis_function_coefficients: list[RCertAnalysisFunctionCoefficientsCreate] = []
+    correlation_coefficients: list[RCertCorrelationCoefficientsCreate] = []
+    outliers: list[RCertOutliersCreate] = []

@@ -69,7 +69,7 @@ class EditableTableSRM(EditableTableBase):
             excel_interface.excel_to_dataframe_by_name(
                 self.attr,
                 obj,
-                model=basemodels.srm.CompleteCreate,
+                model=basemodels.srm.SRMCompleteCreate,
             ),
             **kwargs,
         )
@@ -98,9 +98,9 @@ TABLEGROUP_DBNAMES_TABLENAMES_MAPPING = {
     },
     "Standard Analysis": {
         "standard_analysis.params": "Parameters",
-        "standard_analysis.genline_params": "GenLine parameters",
-        "standard_analysis.genline_solution": "GenLine solution",
-        "standard_analysis.genline_eval": "GenLine evaluation",
+        "standard_analysis.genline_params": "StandardAnalysisGenLine parameters",
+        "standard_analysis.genline_solution": "StandardAnalysisGenLine solution",
+        "standard_analysis.genline_eval": "StandardAnalysisGenLine evaluation",
     },
     "RCertification": {
         "rcert.srm_values": "SRM values",
@@ -109,7 +109,7 @@ TABLEGROUP_DBNAMES_TABLENAMES_MAPPING = {
         "rcert.cylinder_results": "Cylinder results",
         "rcert.analysis_function_coefficients": "Analysis function coefficients",
         "rcert.correlation_coefficients": "Correlation coefficients",
-        "rcert.outliers": "Outliers",
+        "rcert.outliers": "RCertOutliers",
     },
 }
 

@@ -79,8 +79,8 @@ def welcome() -> dict[str, str]:
     return {"detail": "Welcome to NIST Gas SRM database"}
 
 
-@app.get("/srmrcert/complete", response_model=basemodels.srm.CompletePublic)
-@app.get("/srm/complete", response_model=basemodels.srm.CompletePublic)
+@app.get("/srmrcert/complete", response_model=basemodels.srm.SRMCompletePublic)
+@app.get("/srm/complete", response_model=basemodels.srm.SRMCompletePublic)
 @app.get("/srm", response_model=basemodels.srm.SRMPublic)
 def read_srm(
     *,
@@ -101,8 +101,8 @@ def read_srm(
     )
 
 
-@app.get("/srmrcerts/complete", response_model=list[basemodels.srm.CompletePublic])
-@app.get("/srms/complete", response_model=list[basemodels.srm.CompletePublic])
+@app.get("/srmrcerts/complete", response_model=list[basemodels.srm.SRMCompletePublic])
+@app.get("/srms/complete", response_model=list[basemodels.srm.SRMCompletePublic])
 @app.get("/srms", response_model=list[basemodels.srm.SRMPublic])
 def read_srms(
     *,
@@ -123,7 +123,7 @@ def read_srms(
     )
 
 
-@app.get("/rcert/complete", response_model=basemodels.rcert.CompletePublic)
+@app.get("/rcert/complete", response_model=basemodels.rcert.RCertCompletePublic)
 @app.get("/rcert", response_model=basemodels.rcert.RCertPublic)
 def read_rcert(
     *,
@@ -144,7 +144,7 @@ def read_rcert(
     )
 
 
-@app.get("/rcerts/complete", response_model=list[basemodels.rcert.CompletePublic])
+@app.get("/rcerts/complete", response_model=list[basemodels.rcert.RCertCompletePublic])
 @app.get("/rcerts", response_model=list[basemodels.rcert.RCertPublic])
 def read_rcerts(
     *,
@@ -167,7 +167,7 @@ def read_rcerts(
 
 @app.get(
     "/rcert/cylinder-results",
-    response_model=list[basemodels.rcert.CylinderResultsPublic],
+    response_model=list[basemodels.rcert.RCertCylinderResultsPublic],
 )
 def read_rcerts_cylinder_results(
     *,
@@ -175,7 +175,7 @@ def read_rcerts_cylinder_results(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-) -> Sequence[models.rcert.CylinderResults]:
+) -> Sequence[models.rcert.RCertCylinderResults]:
     """Get list of srms"""
 
     return crud.get_rcert(
@@ -199,7 +199,7 @@ def create_srm(
 def create_srm_complete(
     *,
     session: SessionDepends,
-    srmdata_in: basemodels.srm.CompleteCreate,
+    srmdata_in: basemodels.srm.SRMCompleteCreate,
 ) -> models.SRMTable:
     return crud.add_srm_from_create(session=session, srmdata_in=srmdata_in)
 
@@ -208,7 +208,7 @@ def create_srm_complete(
 def create_srmrcert_complete(
     *,
     session: SessionDepends,
-    srmdata_in: basemodels.srm.CompleteCreate,
+    srmdata_in: basemodels.srm.SRMCompleteCreate,
 ) -> models.SRMTable:
     return crud.add_srm_from_create(session=session, srmdata_in=srmdata_in)
 
@@ -278,7 +278,7 @@ async def download_excel(
     srm: str | None = None,
 ) -> FileResponse:
 
-    srmdata = basemodels.srm.CompleteCreate.model_validate(
+    srmdata = basemodels.srm.SRMCompleteCreate.model_validate(
         crud.get_srm(
             session=session,
             srm_id=srm_id,
@@ -308,7 +308,7 @@ async def download_excel(
             dict_of_dataframes_to_workbook(
                 data,
                 workbook,
-                model=basemodels.srm.CompleteCreate,
+                model=basemodels.srm.SRMCompleteCreate,
             )
 
         workbook.save(file_path)

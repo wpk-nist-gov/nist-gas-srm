@@ -17,7 +17,7 @@ DBNAMES_TABLENAMES_MAPPING = {
     "cylinder_results": "Cylinder results",
     "analysis_function_coefficients": "Analysis function coefficients",
     "correlation_coefficients": "Correlation coefficients",
-    "outliers": "Outliers",
+    "outliers": "RCertOutliers",
 }
 
 if (excelfile := st.session_state.get("srm_file")) is not None:
@@ -26,7 +26,7 @@ if (excelfile := st.session_state.get("srm_file")) is not None:
         data_ = excel_interface.excel_to_dataframe_by_name(
             name,
             excelfile,
-            model=basemodels.rcert.CompleteCreate,
+            model=basemodels.rcert.RCertCompleteCreate,
         )
 
         with tab:

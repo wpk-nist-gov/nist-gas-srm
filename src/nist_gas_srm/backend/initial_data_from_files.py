@@ -112,15 +112,15 @@ def get_dataframe(session: Session, statement: Any, **kwargs: Any) -> pd.DataFra
 # def get_standards_data_stats(session: Session, srm_name: str) -> None:
 #     statement = (
 #         select(
-#             StandardsData.name,
-#             StandardsData.number,
-#             func.avg(StandardsData.ratio),
-#             (func.avg(col(StandardsData.ratio)) / func.count(col(StandardsData.ratio))),
-#             # func.stddev(StandardsData.ratio),
+#             MeasurementsStandards.name,
+#             MeasurementsStandards.number,
+#             func.avg(MeasurementsStandards.ratio),
+#             (func.avg(col(MeasurementsStandards.ratio)) / func.count(col(MeasurementsStandards.ratio))),
+#             # func.stddev(MeasurementsStandards.ratio),
 #         )
 #         .join(models.SRMTable)
 #         .where(models.SRMTable.name == srm_name)
-#         .group_by(StandardsData.name)
+#         .group_by(MeasurementsStandards.name)
 #     )
 
 
@@ -149,7 +149,7 @@ def main(argv: Sequence[str] | None = None) -> bool:
                 logger.info("Path: %s", path)
                 add_srm(session, path)
 
-    #     new_ratio = models.RatioData.model_validate({
+    #     new_ratio = models.MeasurementsRatios.model_validate({
     #         "name": "abc",
     #         "number": "100",
     #         "ratio": 0.5,
@@ -165,7 +165,7 @@ def main(argv: Sequence[str] | None = None) -> bool:
 
     # # delete a subtable
     # with Session(engine) as session:
-    #     delete_subtable(session, paths[0].name, models.RatioAnalysisFixedEffects)
+    #     delete_subtable(session, paths[0].name, models.MeasurementsRatioAnalysisFixedEffects)
 
     # with Session(engine) as session:
     #     delete_srm(session, paths[0].name)
@@ -174,7 +174,7 @@ def main(argv: Sequence[str] | None = None) -> bool:
     #     print(
     #         get_dataframe(
     #             session=session,
-    #             statement=select(RatioData)
+    #             statement=select(MeasurementsRatios)
     #             .join(models.SRMTable)
     #             .where(models.SRMTable.name == paths[0].name),
     #         )
@@ -183,7 +183,7 @@ def main(argv: Sequence[str] | None = None) -> bool:
     #     print(
     #         get_dataframe(
     #             session=session,
-    #             statement=select(VendorData)
+    #             statement=select(MeasurementsVendors)
     #             .join(models.SRMTable)
     #             .where(models.SRMTable.name == paths[0].name),
     #         )
@@ -196,11 +196,11 @@ def main(argv: Sequence[str] | None = None) -> bool:
     #     df = get_dataframe(
     #         session=session,
     #         statement=select_columns(
-    #             StandardsData.name,
-    #             StandardsData.number,
-    #             StandardsData.ratio,
-    #             StandardsData.concentration,
-    #             StandardsData.unc,
+    #             MeasurementsStandards.name,
+    #             MeasurementsStandards.number,
+    #             MeasurementsStandards.ratio,
+    #             MeasurementsStandards.concentration,
+    #             MeasurementsStandards.unc,
     #         )
     #         .join(models.SRMTable)
     #         .where(models.SRMTable.name == paths[0].name),
@@ -214,7 +214,7 @@ def main(argv: Sequence[str] | None = None) -> bool:
     #     df = get_dataframe(
     #         session=session,
     #         statement=select(
-    #             RatioData,
+    #             MeasurementsRatios,
     #         )
     #         .join(models.SRMTable)
     #         .where(models.SRMTable.name == paths[0].name),

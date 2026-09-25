@@ -27,35 +27,41 @@ class Measurements(
     __tablename__ = cast("declared_attr[str]", "measurements")
 
     srm_table: Optional["SRMTable"] = Relationship(back_populates="measurements")  # pyright: ignore[reportDeprecated]
-    ratios: list["RatioData"] = Relationship(
+    ratios: list["MeasurementsRatios"] = Relationship(
         back_populates="measurements", cascade_delete=True
     )
-    vendors: list["VendorData"] = Relationship(
+    vendors: list["MeasurementsVendors"] = Relationship(
         back_populates="measurements", cascade_delete=True
     )
-    standards: list["StandardsData"] = Relationship(
+    standards: list["MeasurementsStandards"] = Relationship(
         back_populates="measurements", cascade_delete=True
     )
-    past_lot_standards: list["PastLotStandards"] = Relationship(
+    past_lot_standards: list["MeasurementsPastLotStandards"] = Relationship(
         back_populates="measurements",
         cascade_delete=True,
     )
-    additional_lot_standards: list["AdditionalLotStandards"] = Relationship(
+    additional_lot_standards: list["MeasurementsAdditionalLotStandards"] = Relationship(
         back_populates="measurements",
         cascade_delete=True,
     )
-    ratio_analysis_random_effects: list["RatioAnalysisRandomEffects"] = Relationship(
-        back_populates="measurements",
-        cascade_delete=True,
+    ratio_analysis_random_effects: list["MeasurementsRatioAnalysisRandomEffects"] = (
+        Relationship(
+            back_populates="measurements",
+            cascade_delete=True,
+        )
     )
-    ratio_analysis_fixed_effects: list["RatioAnalysisFixedEffects"] = Relationship(
-        back_populates="measurements",
-        cascade_delete=True,
+    ratio_analysis_fixed_effects: list["MeasurementsRatioAnalysisFixedEffects"] = (
+        Relationship(
+            back_populates="measurements",
+            cascade_delete=True,
+        )
     )
 
 
 # * subtables
-class RatioData(basemodels.measurements.RatioDataBase, IDPrimaryKey, table=True):
+class MeasurementsRatios(
+    basemodels.measurements.MeasurementsRatiosBase, IDPrimaryKey, table=True
+):
     """Ratio Data table"""
 
     __tablename__ = cast("declared_attr[str]", "measurements_ratios")
@@ -63,8 +69,10 @@ class RatioData(basemodels.measurements.RatioDataBase, IDPrimaryKey, table=True)
     measurements: Measurements | None = Relationship(back_populates="ratios")
 
 
-class RatioAnalysisRandomEffects(
-    basemodels.measurements.RatioAnalysisRandomEffectsBase, IDPrimaryKey, table=True
+class MeasurementsRatioAnalysisRandomEffects(
+    basemodels.measurements.MeasurementsRatioAnalysisRandomEffectsBase,
+    IDPrimaryKey,
+    table=True,
 ):
     __tablename__ = cast(
         "declared_attr[str]", "measurements_ratio_analysis_random_effects"
@@ -75,8 +83,10 @@ class RatioAnalysisRandomEffects(
     )
 
 
-class RatioAnalysisFixedEffects(
-    basemodels.measurements.RatioAnalysisFixedEffectsBase, IDPrimaryKey, table=True
+class MeasurementsRatioAnalysisFixedEffects(
+    basemodels.measurements.MeasurementsRatioAnalysisFixedEffectsBase,
+    IDPrimaryKey,
+    table=True,
 ):
     __tablename__ = cast(
         "declared_attr[str]", "measurements_ratio_analysis_fixed_effects"
@@ -86,7 +96,9 @@ class RatioAnalysisFixedEffects(
     )
 
 
-class VendorData(basemodels.measurements.VendorDataBase, IDPrimaryKey, table=True):
+class MeasurementsVendors(
+    basemodels.measurements.MeasurementsVendorsBase, IDPrimaryKey, table=True
+):
     """Vendor data table"""
 
     __tablename__ = cast("declared_attr[str]", "measurements_vendors")
@@ -94,8 +106,8 @@ class VendorData(basemodels.measurements.VendorDataBase, IDPrimaryKey, table=Tru
     measurements: Measurements | None = Relationship(back_populates="vendors")
 
 
-class StandardsData(
-    basemodels.measurements.StandardsDataBase, IDPrimaryKey, table=True
+class MeasurementsStandards(
+    basemodels.measurements.MeasurementsStandardsBase, IDPrimaryKey, table=True
 ):
     """Standards data table"""
 
@@ -104,8 +116,8 @@ class StandardsData(
     measurements: Measurements | None = Relationship(back_populates="standards")
 
 
-class PastLotStandards(
-    basemodels.measurements.PastLotStandardsBase, IDPrimaryKey, table=True
+class MeasurementsPastLotStandards(
+    basemodels.measurements.MeasurementsPastLotStandardsBase, IDPrimaryKey, table=True
 ):
     """Past lot standards table"""
 
@@ -116,8 +128,10 @@ class PastLotStandards(
     )
 
 
-class AdditionalLotStandards(
-    basemodels.measurements.AdditionalLotStandardsBase, IDPrimaryKey, table=True
+class MeasurementsAdditionalLotStandards(
+    basemodels.measurements.MeasurementsAdditionalLotStandardsBase,
+    IDPrimaryKey,
+    table=True,
 ):
     """Additional lot standards table"""
 
@@ -129,11 +143,11 @@ class AdditionalLotStandards(
 
 
 MeasurementsSubTableType: TypeAlias = (
-    RatioData
-    | VendorData
-    | StandardsData
-    | RatioAnalysisRandomEffects
-    | RatioAnalysisFixedEffects
-    | PastLotStandards
-    | AdditionalLotStandards
+    MeasurementsRatios
+    | MeasurementsVendors
+    | MeasurementsStandards
+    | MeasurementsRatioAnalysisRandomEffects
+    | MeasurementsRatioAnalysisFixedEffects
+    | MeasurementsPastLotStandards
+    | MeasurementsAdditionalLotStandards
 )
