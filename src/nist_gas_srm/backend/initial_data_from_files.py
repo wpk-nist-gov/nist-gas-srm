@@ -38,7 +38,7 @@ def add_srm(
 
     # do this to circumvent issues covered
     # here: https://github.com/fastapi/sqlmodel/issues/453
-    srm_metadata = basemodels.SRMDataCreate(
+    srm_metadata = basemodels.srm.SRMDataCreate(
         name=path.name,
         **parse_excel_filename_to_metadata(path.name),
     )
@@ -65,7 +65,7 @@ def delete_srm(session: Session, srm: str | models.SRMData) -> None:
 def delete_subtable(
     session: Session,
     srm: str | models.SRMData,
-    table: type[basemodels.SRMDataForeignKey],
+    table: type[basemodels.keys.SRMDataForeignKey],
 ) -> None:
     srm = get_srm_by_name(session, srm)
     _ = session.exec(delete(table).where(col(table.srm_id) == srm.id))

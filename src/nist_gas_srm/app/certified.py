@@ -24,7 +24,9 @@ if (excelfile := st.session_state.get("srm_file")) is not None:
     tabs = st.tabs(list(DBNAMES_TABLENAMES_MAPPING.values()))
     for tab, name in zip(tabs, DBNAMES_TABLENAMES_MAPPING, strict=True):
         data_ = excel_interface.excel_to_dataframe_by_name(
-            name, excelfile, model=basemodels.RCertCreateComplete
+            name,
+            excelfile,
+            model=basemodels.rcert.CompleteCreate,
         )
 
         with tab:

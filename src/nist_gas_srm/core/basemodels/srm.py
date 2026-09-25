@@ -24,7 +24,7 @@ from sqlmodel import (
 )
 from sqlmodel._compat import SQLModelConfig  # ruff:ignore[import-private-name]
 
-from nist_gas_srm.core.excel_interface import SheetNames, SQLDataFrameInterface
+from nist_gas_srm.core import excel_interface
 from nist_gas_srm.core.excel_utils import (
     simple_write_to_excel,
 )
@@ -151,9 +151,9 @@ class RatioDataPublic(RatioDataBase, IDPrimaryKeyPublic):
     pass
 
 
-class RatioDataCreate(RatioDataBase, SQLDataFrameInterface):
+class RatioDataCreate(RatioDataBase, excel_interface.SQLDataFrameInterface):
     dataframe_name = "ratios"
-    sheet_name = SheetNames.ratio
+    sheet_name = excel_interface.SheetNames.ratio
 
     @override
     @classmethod
@@ -195,9 +195,9 @@ class VendorDataPublic(VendorDataBase, IDPrimaryKeyPublic):
     pass
 
 
-class VendorDataCreate(VendorDataBase, SQLDataFrameInterface):
+class VendorDataCreate(VendorDataBase, excel_interface.SQLDataFrameInterface):
     dataframe_name = "vendors"
-    sheet_name = SheetNames.vendor
+    sheet_name = excel_interface.SheetNames.vendor
 
     @override
     @classmethod
@@ -227,9 +227,9 @@ class StandardsDataPublic(StandardsDataBase, IDPrimaryKeyPublic):
     pass
 
 
-class StandardsDataCreate(StandardsDataBase, SQLDataFrameInterface):
+class StandardsDataCreate(StandardsDataBase, excel_interface.SQLDataFrameInterface):
     dataframe_name = "standards"
-    sheet_name = SheetNames.standards
+    sheet_name = excel_interface.SheetNames.standards
 
     @override
     @classmethod
@@ -350,9 +350,11 @@ class PastLotStandardsDataPublic(PastLotStandardsDataBase, IDPrimaryKeyPublic):
     pass
 
 
-class PastLotStandardsDataCreate(PastLotStandardsDataBase, SQLDataFrameInterface):
+class PastLotStandardsDataCreate(
+    PastLotStandardsDataBase, excel_interface.SQLDataFrameInterface
+):
     dataframe_name = "past_lot_standards"
-    sheet_name = SheetNames.lot_standards
+    sheet_name = excel_interface.SheetNames.lot_standards
 
     @override
     @classmethod
@@ -402,10 +404,10 @@ class AdditionalLotStandardsDataPublic(
 
 
 class AdditionalLotStandardsDataCreate(
-    AdditionalLotStandardsDataBase, SQLDataFrameInterface
+    AdditionalLotStandardsDataBase, excel_interface.SQLDataFrameInterface
 ):
     dataframe_name = "additional_lot_standards"
-    sheet_name = SheetNames.lot_standards
+    sheet_name = excel_interface.SheetNames.lot_standards
 
     @override
     @classmethod
@@ -460,10 +462,10 @@ class RatioAnalysisRandomEffectsDataPublic(
 
 
 class RatioAnalysisRandomEffectsDataCreate(
-    RatioAnalysisRandomEffectsDataBase, SQLDataFrameInterface
+    RatioAnalysisRandomEffectsDataBase, excel_interface.SQLDataFrameInterface
 ):
     dataframe_name = "ratio_analysis_random_effects"
-    sheet_name = SheetNames.ratio_analysis
+    sheet_name = excel_interface.SheetNames.ratio_analysis
 
     @override
     @classmethod
@@ -528,10 +530,10 @@ class RatioAnalysisFixedEffectsDataPublic(
 
 
 class RatioAnalysisFixedEffectsDataCreate(
-    RatioAnalysisFixedEffectsDataBase, SQLDataFrameInterface
+    RatioAnalysisFixedEffectsDataBase, excel_interface.SQLDataFrameInterface
 ):
     dataframe_name = "ratio_analysis_fixed_effects"
-    sheet_name = SheetNames.ratio_analysis
+    sheet_name = excel_interface.SheetNames.ratio_analysis
 
     @override
     @classmethod
