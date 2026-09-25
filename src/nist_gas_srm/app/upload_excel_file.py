@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 import uuid
 from datetime import UTC, datetime
 from functools import partial
@@ -85,33 +86,40 @@ def refresh_tables(tables: Iterable[EditableTableSRM]) -> None:
 
 
 # * Initialize an empty starting template -------------------------------------
-DBNAMES_TABLENAMES_MAPPING = {
-    "ratios": "Ratio data",
-    "vendors": "Vendor data",
-    "standards": "Standards",
-    "ratio_analysis_random_effects": "Ratio analysis",
-    "ratio_analysis_fixed_effects": "Ratio analysis fixed effects",
-    "past_lot_standards": "Past lot standards",
-    "additional_lot_standards": "Additional lot standards",
-    # standard analysis
-    "standard_analysis.params": "Parameters",
-    "standard_analysis.genline_params": "GenLine parameters",
-    "standard_analysis.genline_solution": "GenLine solution",
-    "standard_analysis.genline_eval": "GenLine evaluation",
-    # certifiede values
-    "rcert.srm_values": "SRM values",
-    "rcert.standards_values": "Standards values",
-    "rcert.additional_lot_standards": "Certified additional lot standards",
-    "rcert.cylinder_results": "Cylinder results",
-    "rcert.analysis_function_coefficients": "Analysis function coefficients",
-    "rcert.correlation_coefficients": "Correlation coefficients",
-    "rcert.outliers": "Outliers",
+TABLEGROUP_DBNAMES_TABLENAMES_MAPPING = {
+    "Measurements": {
+        "ratios": "Ratio data",
+        "vendors": "Vendor data",
+        "standards": "Standards",
+        "ratio_analysis_random_effects": "Ratio analysis",
+        "ratio_analysis_fixed_effects": "Ratio analysis fixed effects",
+        "past_lot_standards": "Past lot standards",
+        "additional_lot_standards": "Additional lot standards",
+    },
+    "Standard Analysis": {
+        "standard_analysis.params": "Parameters",
+        "standard_analysis.genline_params": "GenLine parameters",
+        "standard_analysis.genline_solution": "GenLine solution",
+        "standard_analysis.genline_eval": "GenLine evaluation",
+    },
+    "RCertification": {
+        "rcert.srm_values": "SRM values",
+        "rcert.standards_values": "Standards values",
+        "rcert.additional_lot_standards": "Certified additional lot standards",
+        "rcert.cylinder_results": "Cylinder results",
+        "rcert.analysis_function_coefficients": "Analysis function coefficients",
+        "rcert.correlation_coefficients": "Correlation coefficients",
+        "rcert.outliers": "Outliers",
+    },
 }
 
-TABLES = [
-    EditableTableSRM(attr=attr, name=name)
-    for attr, name in DBNAMES_TABLENAMES_MAPPING.items()
-]
+TABLES = {
+    table_group: [
+        EditableTableSRM(attr=attr, name=name)
+        for attr, name in dbnames_tablenames_mapping.items()
+    ]
+    for table_group, dbnames_tablenames_mapping in TABLEGROUP_DBNAMES_TABLENAMES_MAPPING.items()
+}
 
 
 if "srm_file" not in st.session_state:
@@ -162,24 +170,27 @@ metadata_from_filename = st.button(
 )
 submit_to_database = st.button("Submit data")
 refersh_tables = st.button(
-    "Refresh all tables", on_click=partial(refresh_tables, TABLES)
+    "Refresh all tables",
+    on_click=partial(refresh_tables, itertools.chain.from_iterable(TABLES.values())),
 )
 
 if st.session_state.srm_file is not None:
     excelfile = st.session_state.srm_file
 
-    tabs = st.tabs([table.name for table in TABLES])
+    for table_group, tables in TABLES.items():
+        with st.expander(table_group, expanded=False):
+            tabs = st.tabs([table.name for table in tables])
 
-    for tab, table in zip(tabs, TABLES, strict=True):
-        with tab:
-            table.refresh_table_widget()
-            table.editable_table_widget(
-                excelfile,
-                num_rows="dynamic",
-                width="stretch",
-                hide_index=True,
-                placeholder="-",
-            )
+            for tab, table in zip(tabs, tables, strict=True):
+                with tab:
+                    table.refresh_table_widget()
+                    table.editable_table_widget(
+                        excelfile,
+                        num_rows="dynamic",
+                        width="stretch",
+                        hide_index=True,
+                        placeholder="-",
+                    )
 
     if submit_to_database:
         st.info("uploaded data")
