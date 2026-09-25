@@ -23,6 +23,7 @@ from .excel_utils import (
 )
 
 RCERT_PATTERN = re.compile(r"^rcert\.")
+STANDARD_ANALYSIS_PATTERN = re.compile(r"^standard_analysis\.")
 
 
 class SheetNames(StrEnum):
@@ -359,15 +360,20 @@ def excel_to_dataframe_by_name(
     """
 
     annotation: Any
-    if name.startswith("rcert."):
-        if (obj := model.model_fields.get("rcert")) is None:
-            msg = "model does not contain rcert"
-            raise ValueError(msg)
-        model_: Any = obj.annotation
-        assert issubclass(model_, SQLModel)
-        return excel_to_dataframe_by_name(
-            RCERT_PATTERN.sub("", name), excelfile=excelfile, model=model_
-        )
+
+    for prefix, pattern in [
+        ("rcert", RCERT_PATTERN),
+        ("standard_analysis", STANDARD_ANALYSIS_PATTERN),
+    ]:
+        if name.startswith(f"{prefix}."):
+            if (obj := model.model_fields.get(prefix)) is None:
+                msg = f"model does not contain {prefix}"
+                raise ValueError(msg)
+            model_: Any = obj.annotation
+            assert issubclass(model_, SQLModel)
+            return excel_to_dataframe_by_name(
+                pattern.sub("", name), excelfile=excelfile, model=model_
+            )
 
     annotation = model.model_fields[name].annotation
     if (origin := get_origin(annotation)) is not list:

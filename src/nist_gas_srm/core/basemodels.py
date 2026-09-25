@@ -130,7 +130,10 @@ class SRMDataBase(SQLModel):
 
     model_config = SQLModelConfig(ignored_types=(hybrid_property,))
 
-    name: str = Field(sa_column=Column("name", VARCHAR))
+    name: str | None = Field(sa_column=Column("name", VARCHAR), default=None)
+    note: str | None = Field(sa_column=Column("note", VARCHAR), default=None)
+    units: str = "ppm"
+
     srm_id: int = Field(index=True)
     batch_id: OptionalLowerString
     lot_id: LowerString
@@ -628,7 +631,7 @@ class StandardAnalysisForeignKey(SQLModel):
     standard_analysis_id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
         nullable=False,
-        foreign_key="standard_analysis.id",
+        foreign_key="standard_analysis_data.id",
         ondelete="CASCADE",
     )
 
@@ -733,7 +736,7 @@ class StandardAnalysisGenLineParamsBase(StandardAnalysisForeignKey):
     )
 
     name: str
-    value: float
+    value: Annotated[float | None, BeforeValidator(validate_nan_to_none)]
     stderr: float
 
 
@@ -1456,7 +1459,7 @@ class StandardAnalysisComplete(StandardAnalysisPublic):
     params: list[StandardAnalysisParamsPublic] = []
     genline_params: list[StandardAnalysisGenLineParamsPublic] = []
     genline_solution: list[StandardAnalysisGenLineSolutionPublic] = []
-    genlint_eval: list[StandardAnalysisGenLineEvalPublic] = []
+    genline_eval: list[StandardAnalysisGenLineEvalPublic] = []
 
 
 class SRMDataPublicComplete(SRMDataPublic):
@@ -1489,7 +1492,7 @@ class StandardAnalysisCreateComplete(StandardAnalysisCreate):
     params: list[StandardAnalysisParamsCreate] = []
     genline_params: list[StandardAnalysisGenLineParamsCreate] = []
     genline_solution: list[StandardAnalysisGenLineSolutionCreate] = []
-    genlint_eval: list[StandardAnalysisGenLineEvalCreate] = []
+    genline_eval: list[StandardAnalysisGenLineEvalCreate] = []
 
 
 class SRMDataCreateComplete(SRMDataCreate):
