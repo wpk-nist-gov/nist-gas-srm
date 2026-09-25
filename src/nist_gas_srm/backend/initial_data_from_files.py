@@ -68,7 +68,7 @@ def delete_subtable(
     table: type[basemodels.SRMDataForeignKey],
 ) -> None:
     srm = get_srm_by_name(session, srm)
-    _ = session.exec(delete(table).where(col(table.srmdata_id) == srm.id))
+    _ = session.exec(delete(table).where(col(table.srm_id) == srm.id))
     session.commit()
 
 
