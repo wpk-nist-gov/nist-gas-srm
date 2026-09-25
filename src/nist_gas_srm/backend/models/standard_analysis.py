@@ -16,7 +16,7 @@ from ._fixmixin import FixMixin
 if TYPE_CHECKING:
     from sqlalchemy.orm import declared_attr
 
-    from .srm import SRMData
+    from .srm import SRMTable
 
 
 FORMAT = "[%(name)s - %(levelname)s] %(message)s"
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 # * Standard analysis
-class StandardAnalysisData(
+class StandardAnalysisTable(
     stdanal.StandardAnalysisBase,
     IDPrimaryKey,
     FixMixin,
@@ -33,58 +33,58 @@ class StandardAnalysisData(
 ):
     """Standard analysis data"""
 
-    __tablename__ = cast("declared_attr[str]", "standard_analysis_root")
+    __tablename__ = cast("declared_attr[str]", "standard_analysis_table")
 
     model_config = SQLModelConfig(str_to_lower=True)
-    srm_root: Optional["SRMData"] = Relationship(back_populates="standard_analysis")  # pyright: ignore[reportDeprecated]
+    srm_table: Optional["SRMTable"] = Relationship(back_populates="standard_analysis")  # pyright: ignore[reportDeprecated]
 
-    params: list["ParamsData"] = Relationship(
-        back_populates="standard_analysis_root",
+    params: list["Params"] = Relationship(
+        back_populates="standard_analysis_table",
         cascade_delete=True,
     )
-    genline_params: list["GenLineParamsData"] = Relationship(
-        back_populates="standard_analysis_root",
+    genline_params: list["GenLineParams"] = Relationship(
+        back_populates="standard_analysis_table",
         cascade_delete=True,
     )
-    genline_solution: list["GenLineSolutionData"] = Relationship(
-        back_populates="standard_analysis_root",
-        cascade_delete=True,
-    )
-
-    genline_eval: list["GenLineEvalData"] = Relationship(
-        back_populates="standard_analysis_root",
+    genline_solution: list["GenLineSolution"] = Relationship(
+        back_populates="standard_analysis_table",
         cascade_delete=True,
     )
 
+    genline_eval: list["GenLineEval"] = Relationship(
+        back_populates="standard_analysis_table",
+        cascade_delete=True,
+    )
 
-class ParamsData(stdanal.ParamsBase, IDPrimaryKey, table=True):
+
+class Params(stdanal.ParamsBase, IDPrimaryKey, table=True):
     __tablename__ = cast("declared_attr[str]", "standard_analysis_params")
-    standard_analysis_root: StandardAnalysisData | None = Relationship(
+    standard_analysis_table: StandardAnalysisTable | None = Relationship(
         back_populates="params"
     )
 
 
-class GenLineParamsData(stdanal.GenLineParamsBase, IDPrimaryKey, table=True):
+class GenLineParams(stdanal.GenLineParamsBase, IDPrimaryKey, table=True):
     __tablename__ = cast("declared_attr[str]", "standard_analysis_genline_params")
-    standard_analysis_root: StandardAnalysisData | None = Relationship(
+    standard_analysis_table: StandardAnalysisTable | None = Relationship(
         back_populates="genline_params"
     )
 
 
-class GenLineSolutionData(stdanal.GenLineSolutionBase, IDPrimaryKey, table=True):
+class GenLineSolution(stdanal.GenLineSolutionBase, IDPrimaryKey, table=True):
     __tablename__ = cast("declared_attr[str]", "standard_analysis_genline_solution")
-    standard_analysis_root: StandardAnalysisData | None = Relationship(
+    standard_analysis_table: StandardAnalysisTable | None = Relationship(
         back_populates="genline_solution"
     )
 
 
-class GenLineEvalData(stdanal.GenLineEvalBase, IDPrimaryKey, table=True):
+class GenLineEval(stdanal.GenLineEvalBase, IDPrimaryKey, table=True):
     __tablename__ = cast("declared_attr[str]", "standard_analysis_genline_eval")
-    standard_analysis_root: StandardAnalysisData | None = Relationship(
+    standard_analysis_table: StandardAnalysisTable | None = Relationship(
         back_populates="genline_eval"
     )
 
 
-StandardAnalysisSubTable: TypeAlias = (
-    ParamsData | GenLineParamsData | GenLineSolutionData | GenLineEvalData
+StandardAnalysisSubTableType: TypeAlias = (
+    Params | GenLineParams | GenLineSolution | GenLineEval
 )

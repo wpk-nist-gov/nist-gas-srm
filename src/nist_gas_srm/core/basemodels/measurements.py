@@ -27,8 +27,8 @@ from nist_gas_srm.core.validate import (
 
 from .keys import (
     IDPrimaryKeyPublic,
-    SRMDataForeignKey,
-    SRMDataForeignKeyUpdate,
+    SRMForeignKey,
+    SRMForeignKeyUpdate,
 )
 from .utils import (
     to_pascal,
@@ -50,7 +50,7 @@ class _MeasurementsForeignKeyUpdate(SQLModel):
 
 
 # root table
-class MeasurementsBase(SRMDataForeignKey, SQLModel):
+class MeasurementsBase(SRMForeignKey, SQLModel):
     pass
 
 
@@ -62,7 +62,7 @@ class MeasurementsCreate(MeasurementsBase):
     pass
 
 
-class MeasurementsUpdate(SRMDataForeignKeyUpdate):
+class MeasurementsUpdate(SRMForeignKeyUpdate):
     pass
 
 
@@ -287,7 +287,7 @@ class StandardsDataUpdate(SampleIDAndNumberUpdate, _MeasurementsForeignKeyUpdate
 
 
 # ** Past lot standards -------------------------------------------------------
-class PastLotStandardsDataBase(MeasurementsForeignKey):
+class PastLotStandardsBase(MeasurementsForeignKey):
     """Past lot standards"""
 
     model_config = SQLModelConfig(populate_by_name=True)
@@ -297,12 +297,12 @@ class PastLotStandardsDataBase(MeasurementsForeignKey):
     value: float = Field(validation_alias="Past Conc")
 
 
-class PastLotStandardsDataPublic(PastLotStandardsDataBase, IDPrimaryKeyPublic):
+class PastLotStandardsPublic(PastLotStandardsBase, IDPrimaryKeyPublic):
     pass
 
 
-class PastLotStandardsDataCreate(
-    PastLotStandardsDataBase, excel_interface.SQLDataFrameInterface
+class PastLotStandardsCreate(
+    PastLotStandardsBase, excel_interface.SQLDataFrameInterface
 ):
     dataframe_name = "past_lot_standards"
     sheet_name = excel_interface.SheetNames.lot_standards
@@ -330,9 +330,7 @@ class PastLotStandardsDataCreate(
         )
 
 
-class PastLotStandardsDataUpdate(
-    SampleIDAndNumberUpdate, _MeasurementsForeignKeyUpdate
-):
+class PastLotStandardsUpdate(SampleIDAndNumberUpdate, _MeasurementsForeignKeyUpdate):
     name: str | None = None
     number: int | None = None
     ratio: float | None = None
@@ -341,7 +339,7 @@ class PastLotStandardsDataUpdate(
 
 
 # ** Additional lot standards -------------------------------------------------
-class AdditionalLotStandardsDataBase(MeasurementsForeignKey):
+class AdditionalLotStandardsBase(MeasurementsForeignKey):
     """AdditionalLotStandards"""
 
     model_config = SQLModelConfig(populate_by_name=True)
@@ -350,14 +348,12 @@ class AdditionalLotStandardsDataBase(MeasurementsForeignKey):
     ratio: float = Field(validation_alias="Ratio")
 
 
-class AdditionalLotStandardsDataPublic(
-    AdditionalLotStandardsDataBase, IDPrimaryKeyPublic
-):
+class AdditionalLotStandardsPublic(AdditionalLotStandardsBase, IDPrimaryKeyPublic):
     pass
 
 
-class AdditionalLotStandardsDataCreate(
-    AdditionalLotStandardsDataBase, excel_interface.SQLDataFrameInterface
+class AdditionalLotStandardsCreate(
+    AdditionalLotStandardsBase, excel_interface.SQLDataFrameInterface
 ):
     dataframe_name = "additional_lot_standards"
     sheet_name = excel_interface.SheetNames.lot_standards
@@ -385,7 +381,7 @@ class AdditionalLotStandardsDataCreate(
         )
 
 
-class AdditionalLotStandardsDataUpdate(
+class AdditionalLotStandardsUpdate(
     SampleIDAndNumberUpdate, _MeasurementsForeignKeyUpdate
 ):
     name: str | None = None
@@ -394,7 +390,7 @@ class AdditionalLotStandardsDataUpdate(
 
 
 # ** Ratio Analysis -----------------------------------------------------------
-class RatioAnalysisRandomEffectsDataBase(MeasurementsForeignKey):
+class RatioAnalysisRandomEffectsBase(MeasurementsForeignKey):
     model_config = SQLModelConfig(
         alias_generator=to_pascal,
         populate_by_name=True,
@@ -408,14 +404,14 @@ class RatioAnalysisRandomEffectsDataBase(MeasurementsForeignKey):
     )
 
 
-class RatioAnalysisRandomEffectsDataPublic(
-    RatioAnalysisRandomEffectsDataBase, IDPrimaryKeyPublic
+class RatioAnalysisRandomEffectsPublic(
+    RatioAnalysisRandomEffectsBase, IDPrimaryKeyPublic
 ):
     pass
 
 
-class RatioAnalysisRandomEffectsDataCreate(
-    RatioAnalysisRandomEffectsDataBase, excel_interface.SQLDataFrameInterface
+class RatioAnalysisRandomEffectsCreate(
+    RatioAnalysisRandomEffectsBase, excel_interface.SQLDataFrameInterface
 ):
     dataframe_name = "ratio_analysis_random_effects"
     sheet_name = excel_interface.SheetNames.ratio_analysis
@@ -458,14 +454,14 @@ class RatioAnalysisRandomEffectsDataCreate(
         #     cell.value = f"=Z{row} / {norm}"
 
 
-class RatioAnalysisRandomEffectsDataUpdate(_MeasurementsForeignKeyUpdate):
+class RatioAnalysisRandomEffectsUpdate(_MeasurementsForeignKeyUpdate):
     groups: str | None
     name: str | None
     stddev: float | None
     count: int | None
 
 
-class RatioAnalysisFixedEffectsDataBase(MeasurementsForeignKey):
+class RatioAnalysisFixedEffectsBase(MeasurementsForeignKey):
     model_config = SQLModelConfig(
         alias_generator=to_pascal,
         populate_by_name=True,
@@ -476,14 +472,14 @@ class RatioAnalysisFixedEffectsDataBase(MeasurementsForeignKey):
     t_value: float = Field(validation_alias="t value")
 
 
-class RatioAnalysisFixedEffectsDataPublic(
-    RatioAnalysisFixedEffectsDataBase, IDPrimaryKeyPublic
+class RatioAnalysisFixedEffectsPublic(
+    RatioAnalysisFixedEffectsBase, IDPrimaryKeyPublic
 ):
     pass
 
 
-class RatioAnalysisFixedEffectsDataCreate(
-    RatioAnalysisFixedEffectsDataBase, excel_interface.SQLDataFrameInterface
+class RatioAnalysisFixedEffectsCreate(
+    RatioAnalysisFixedEffectsBase, excel_interface.SQLDataFrameInterface
 ):
     dataframe_name = "ratio_analysis_fixed_effects"
     sheet_name = excel_interface.SheetNames.ratio_analysis
@@ -511,20 +507,20 @@ class RatioAnalysisFixedEffectsDataCreate(
         )
 
 
-class RatioAnalysisFixedEffectsDataUpdate(_MeasurementsForeignKeyUpdate):
+class RatioAnalysisFixedEffectsUpdate(_MeasurementsForeignKeyUpdate):
     estimate: float | None
     stderr: float | None
     t_value: float | None
 
 
-MeasurementsSubTableCreate: TypeAlias = (
+MeasurementsSubTableCreateType: TypeAlias = (
     RatioDataCreate
     | VendorDataCreate
     | StandardsDataCreate
-    | RatioAnalysisRandomEffectsDataCreate
-    | RatioAnalysisFixedEffectsDataCreate
-    | PastLotStandardsDataCreate
-    | AdditionalLotStandardsDataCreate
+    | RatioAnalysisRandomEffectsCreate
+    | RatioAnalysisFixedEffectsCreate
+    | PastLotStandardsCreate
+    | AdditionalLotStandardsCreate
 )
 
 
@@ -533,17 +529,17 @@ class CompletePublic(MeasurementsPublic):
     ratios: list[RatioDataPublic] = []
     vendors: list[VendorDataPublic] = []
     standards: list[StandardsDataPublic] = []
-    past_lot_standards: list[PastLotStandardsDataPublic] = []
-    additional_lot_standards: list[AdditionalLotStandardsDataPublic] = []
-    ratio_analysis_random_effects: list[RatioAnalysisRandomEffectsDataPublic] = []
-    ratio_analysis_fixed_effects: list[RatioAnalysisFixedEffectsDataPublic] = []
+    past_lot_standards: list[PastLotStandardsPublic] = []
+    additional_lot_standards: list[AdditionalLotStandardsPublic] = []
+    ratio_analysis_random_effects: list[RatioAnalysisRandomEffectsPublic] = []
+    ratio_analysis_fixed_effects: list[RatioAnalysisFixedEffectsPublic] = []
 
 
 class CompleteCreate(MeasurementsCreate):
     ratios: list[RatioDataCreate] = []
     vendors: list[VendorDataCreate] = []
     standards: list[StandardsDataCreate] = []
-    past_lot_standards: list[PastLotStandardsDataCreate] = []
-    additional_lot_standards: list[AdditionalLotStandardsDataCreate] = []
-    ratio_analysis_random_effects: list[RatioAnalysisRandomEffectsDataCreate] = []
-    ratio_analysis_fixed_effects: list[RatioAnalysisFixedEffectsDataCreate] = []
+    past_lot_standards: list[PastLotStandardsCreate] = []
+    additional_lot_standards: list[AdditionalLotStandardsCreate] = []
+    ratio_analysis_random_effects: list[RatioAnalysisRandomEffectsCreate] = []
+    ratio_analysis_fixed_effects: list[RatioAnalysisFixedEffectsCreate] = []

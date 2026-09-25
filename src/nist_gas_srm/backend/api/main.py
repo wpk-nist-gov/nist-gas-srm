@@ -81,7 +81,7 @@ def welcome() -> dict[str, str]:
 
 @app.get("/srmrcert/complete", response_model=basemodels.srm.CompletePublic)
 @app.get("/srm/complete", response_model=basemodels.srm.CompletePublic)
-@app.get("/srm", response_model=basemodels.srm.SRMDataPublic)
+@app.get("/srm", response_model=basemodels.srm.SRMPublic)
 def read_srm(
     *,
     session: SessionDepends,
@@ -89,7 +89,7 @@ def read_srm(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm: str | None = None,
-) -> models.SRMData:
+) -> models.SRMTable:
     """Get list of srms"""
 
     return crud.get_srm(
@@ -103,7 +103,7 @@ def read_srm(
 
 @app.get("/srmrcerts/complete", response_model=list[basemodels.srm.CompletePublic])
 @app.get("/srms/complete", response_model=list[basemodels.srm.CompletePublic])
-@app.get("/srms", response_model=list[basemodels.srm.SRMDataPublic])
+@app.get("/srms", response_model=list[basemodels.srm.SRMPublic])
 def read_srms(
     *,
     session: SessionDepends,
@@ -111,7 +111,7 @@ def read_srms(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm: Annotated[list[str] | None, Query()] = None,
-) -> Sequence[models.SRMData]:
+) -> Sequence[models.SRMTable]:
     """Get list of srms"""
 
     return crud.get_srms(
@@ -132,7 +132,7 @@ def read_rcert(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm: str | None = None,
-) -> models.RCertData:
+) -> models.RCertTable:
     """Get list of srms"""
 
     return crud.get_rcert(
@@ -153,7 +153,7 @@ def read_rcerts(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm: Annotated[list[str] | None, Query()] = None,
-) -> Sequence[models.RCertData]:
+) -> Sequence[models.RCertTable]:
     """Get list of srms"""
 
     return crud.get_rcerts(
@@ -186,34 +186,34 @@ def read_rcerts_cylinder_results(
     ).cylinder_results
 
 
-@app.post("/srm", response_model=basemodels.srm.SRMDataPublic)
+@app.post("/srm", response_model=basemodels.srm.SRMPublic)
 def create_srm(
     *,
     session: SessionDepends,
-    srmdata_in: basemodels.srm.SRMDataCreate,
-) -> models.SRMData:
+    srmdata_in: basemodels.srm.SRMCreate,
+) -> models.SRMTable:
     return crud.add_srm_from_create(session=session, srmdata_in=srmdata_in)
 
 
-@app.post("/srm/complete", response_model=basemodels.srm.SRMDataPublic)
+@app.post("/srm/complete", response_model=basemodels.srm.SRMPublic)
 def create_srm_complete(
     *,
     session: SessionDepends,
     srmdata_in: basemodels.srm.CompleteCreate,
-) -> models.SRMData:
+) -> models.SRMTable:
     return crud.add_srm_from_create(session=session, srmdata_in=srmdata_in)
 
 
-@app.post("/srmrcert/complete", response_model=basemodels.srm.SRMDataPublic)
+@app.post("/srmrcert/complete", response_model=basemodels.srm.SRMPublic)
 def create_srmrcert_complete(
     *,
     session: SessionDepends,
     srmdata_in: basemodels.srm.CompleteCreate,
-) -> models.SRMData:
+) -> models.SRMTable:
     return crud.add_srm_from_create(session=session, srmdata_in=srmdata_in)
 
 
-@app.post("/upload-excel", response_model=basemodels.srm.SRMDataPublic)
+@app.post("/upload-excel", response_model=basemodels.srm.SRMPublic)
 async def create_upload_file(
     *,
     session: SessionDepends,
@@ -221,10 +221,10 @@ async def create_upload_file(
         str, Form()
     ] = '{"name": "string", "srm_id": 0, "batch_id": null, "lot_id": "string", "timestamp": null}',
     uploadfile: Annotated[UploadFile, File()],
-) -> Any:  # models.SRMData:
+) -> Any:  # models.SRMTable:
 
     try:
-        srmdata_create = basemodels.srm.SRMDataCreate.model_validate_json(srmdata_in)
+        srmdata_create = basemodels.srm.SRMCreate.model_validate_json(srmdata_in)
     except ValidationError as e:
         raise HTTPException(status_code=422, detail=e.errors()) from e
 

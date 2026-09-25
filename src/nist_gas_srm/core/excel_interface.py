@@ -359,22 +359,17 @@ def excel_to_dataframe_by_name(
         DataFrame.
     """
 
+    prefix, sep, root = name.partition(".")
+
+    if sep == ".":
+        if (obj := model.model_fields.get(prefix)) is None:
+            msg = f"model does not contain {prefix}"
+            raise ValueError(msg)
+        model_: Any = obj.annotation
+        assert issubclass(model_, SQLModel)
+        return excel_to_dataframe_by_name(root, excelfile=excelfile, model=model_)
+
     annotation: Any
-
-    for prefix, pattern in [
-        ("rcert", RCERT_PATTERN),
-        ("standard_analysis", STANDARD_ANALYSIS_PATTERN),
-    ]:
-        if name.startswith(f"{prefix}."):
-            if (obj := model.model_fields.get(prefix)) is None:
-                msg = f"model does not contain {prefix}"
-                raise ValueError(msg)
-            model_: Any = obj.annotation
-            assert issubclass(model_, SQLModel)
-            return excel_to_dataframe_by_name(
-                pattern.sub("", name), excelfile=excelfile, model=model_
-            )
-
     annotation = model.model_fields[name].annotation
     if (origin := get_origin(annotation)) is not list:
         msg = f"{name} is not a list field.  Got {origin}."

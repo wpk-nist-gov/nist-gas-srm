@@ -35,7 +35,7 @@ from .utils import (
 )
 
 
-class SRMDataBase(SQLModel):
+class SRMBase(SQLModel):
     """Metadata base class"""
 
     __table_args__ = (
@@ -62,20 +62,20 @@ class SRMDataBase(SQLModel):
         return f"{self.srm_id}{self.batch_id or ''}{'-' + self.lot_id if self.lot_id else ''}"
 
 
-class SRMDataPublic(SRMDataBase, IDPrimaryKeyPublic):
+class SRMPublic(SRMBase, IDPrimaryKeyPublic):
     pass
 
 
-class SRMDataCreate(SRMDataBase):
+class SRMCreate(SRMBase):
     pass
 
 
-class SRMDataUpdate(SQLModel):
+class SRMUpdate(SQLModel):
     name: str | None = None
     timestamp: datetime | None = None
 
 
-class SRMDataQuery(SQLModel):
+class SRMQuery(SQLModel):
     srm_id: int | None = None
     batch_id: OptionalLowerString = None
     lot_id: OptionalLowerString = None
@@ -108,13 +108,13 @@ class SRMDataQuery(SQLModel):
         return cls.model_validate(kwargs)
 
 
-class CompletePublic(SRMDataPublic):
+class CompletePublic(SRMPublic):
     rcert: rcert.CompletePublic
     measurements: measurements.CompletePublic
     standard_analysis: stdanal.CompletePublic
 
 
-class CompleteCreate(SRMDataCreate):
+class CompleteCreate(SRMCreate):
     rcert: rcert.CompleteCreate
     measurements: measurements.CompleteCreate
     standard_analysis: stdanal.CompleteCreate

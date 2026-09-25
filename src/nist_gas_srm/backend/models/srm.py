@@ -15,8 +15,8 @@ from nist_gas_srm.core.basemodels.keys import IDPrimaryKey
 
 from ._fixmixin import FixMixin
 from .measurements import Measurements
-from .rcert import RCertData
-from .standard_analysis import StandardAnalysisData
+from .rcert import RCertTable
+from .standard_analysis import StandardAnalysisTable
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import declared_attr
@@ -27,19 +27,19 @@ logging.basicConfig(level=logging.INFO, format=FORMAT)
 logger = logging.getLogger(__name__)
 
 
-class SRMData(basemodels.srm.SRMDataBase, IDPrimaryKey, FixMixin, table=True):
+class SRMTable(basemodels.srm.SRMBase, IDPrimaryKey, FixMixin, table=True):
     """Metadata table"""
 
-    __tablename__ = cast("declared_attr[str]", "srm_root")
+    __tablename__ = cast("declared_attr[str]", "srm_table")
 
     model_config = SQLModelConfig(str_to_lower=True)
 
     measurements: Measurements = Relationship(
-        back_populates="srm_root", cascade_delete=True
+        back_populates="srm_table", cascade_delete=True
     )
 
-    rcert: RCertData = Relationship(back_populates="srm_root", cascade_delete=True)
+    rcert: RCertTable = Relationship(back_populates="srm_table", cascade_delete=True)
 
-    standard_analysis: StandardAnalysisData = Relationship(
-        back_populates="srm_root", cascade_delete=True
+    standard_analysis: StandardAnalysisTable = Relationship(
+        back_populates="srm_table", cascade_delete=True
     )

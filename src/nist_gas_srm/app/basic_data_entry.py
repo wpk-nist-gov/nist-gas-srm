@@ -3,7 +3,7 @@
 import pandas as pd
 import streamlit as st
 
-from nist_gas_srm.core.basemodels.srm import SRMDataCreate
+from nist_gas_srm.core.basemodels.srm import SRMCreate
 
 # ruff: disable[commented-out-code]
 # using streamlit-pydantic
@@ -46,10 +46,10 @@ with st.form("entry_form", clear_on_submit=False):
 # # Display
 if submitted:
     st.write(f"params={PARAMS}")
-    # st.session_state.srm_data = SRMDataCreate.model_validate({
+    # st.session_state.srm_data = SRMCreate.model_validate({
     #     short_name: value for short_name, value in PARAMS.items() if value is not None
     # })  # ruff: ignore[commented-out-code]
-    st.session_state.srm_data = SRMDataCreate.model_validate(PARAMS)
+    st.session_state.srm_data = SRMCreate.model_validate(PARAMS)
 
 
 st.write("### Submitted metadata")

@@ -88,13 +88,13 @@ def refresh_tables(tables: Iterable[EditableTableSRM]) -> None:
 # * Initialize an empty starting template -------------------------------------
 TABLEGROUP_DBNAMES_TABLENAMES_MAPPING = {
     "Measurements": {
-        "ratios": "Ratio data",
-        "vendors": "Vendor data",
-        "standards": "Standards",
-        "ratio_analysis_random_effects": "Ratio analysis",
-        "ratio_analysis_fixed_effects": "Ratio analysis fixed effects",
-        "past_lot_standards": "Past lot standards",
-        "additional_lot_standards": "Additional lot standards",
+        "measurements.ratios": "Ratio data",
+        "measurements.vendors": "Vendor data",
+        "measurements.standards": "Standards",
+        "measurements.ratio_analysis_random_effects": "Ratio analysis",
+        "measurements.ratio_analysis_fixed_effects": "Ratio analysis fixed effects",
+        "measurements.past_lot_standards": "Past lot standards",
+        "measurements.additional_lot_standards": "Additional lot standards",
     },
     "Standard Analysis": {
         "standard_analysis.params": "Parameters",

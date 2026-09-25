@@ -27,8 +27,8 @@ from nist_gas_srm.core.validate import (
 
 from .keys import (
     IDPrimaryKeyPublic,
-    SRMDataForeignKey,
-    SRMDataForeignKeyUpdate,
+    SRMForeignKey,
+    SRMForeignKeyUpdate,
 )
 from .utils import (
     TestOutAnn,
@@ -42,7 +42,7 @@ class RCertForeignKey(SQLModel):
     rcert_id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
         nullable=False,
-        foreign_key="rcert_root.id",
+        foreign_key="rcert_table.id",
         ondelete="CASCADE",
     )
 
@@ -54,8 +54,8 @@ class _RCertForeignKeyUpdate(SQLModel):
 
 # ** RCert
 # NOTE(wpk): include SQLModel here to make linter happy
-class RCertBase(SRMDataForeignKey, SQLModel):
-    """Points back to srm_root"""
+class RCertBase(SRMForeignKey, SQLModel):
+    """Points back to srm_table"""
 
 
 class RCertPublic(RCertBase, IDPrimaryKeyPublic):
@@ -66,7 +66,7 @@ class RCertCreate(RCertBase):
     pass
 
 
-class RCertUpdate(SRMDataForeignKeyUpdate):
+class RCertUpdate(SRMForeignKeyUpdate):
     pass
 
 
@@ -210,7 +210,7 @@ class StandardsValuesUpdate(_RCertForeignKeyUpdate):
 
 
 # ** Additional lot standards
-class AdditionalLotStandardsBase(RCertForeignKey):
+class AdditionalLotStandardsCertBase(RCertForeignKey):
     model_config = SQLModelConfig(populate_by_name=True)
 
     name: str = Field(validation_alias="Additional LSs")
@@ -221,11 +221,15 @@ class AdditionalLotStandardsBase(RCertForeignKey):
     uncert_ci95: float = Field(validation_alias="95% CI")  # 95 % confidence interval
 
 
-class AdditionalLotStandardsPublic(AdditionalLotStandardsBase, IDPrimaryKeyPublic):
+class AdditionalLotStandardsCertPublic(
+    AdditionalLotStandardsCertBase, IDPrimaryKeyPublic
+):
     pass
 
 
-class AdditionalLotStandardsCreate(AdditionalLotStandardsBase, SQLDataFrameInterface):
+class AdditionalLotStandardsCertCreate(
+    AdditionalLotStandardsCertBase, SQLDataFrameInterface
+):
     dataframe_name = "rcert.additional_lot_standards"
     sheet_name = SheetNames.rcert
 
@@ -249,7 +253,7 @@ class AdditionalLotStandardsCreate(AdditionalLotStandardsBase, SQLDataFrameInter
         )
 
 
-class AdditionalLotStandardsUpdate(_RCertForeignKeyUpdate):
+class AdditionalLotStandardsCertUpdate(_RCertForeignKeyUpdate):
     name: str | None = None
     number: int | None = None
     value: float | None = None
@@ -472,10 +476,10 @@ class OutliersUpdate(_RCertForeignKeyUpdate):
     value: float | None = None
 
 
-RCertSubTableCreate: TypeAlias = (
+RCertSubTableCreateType: TypeAlias = (
     SRMValuesCreate
     | StandardsValuesCreate
-    | AdditionalLotStandardsCreate
+    | AdditionalLotStandardsCertCreate
     | CylinderResultsCreate
     | AnalysisFunctionCoefficientsCreate
     | CorrelationCoefficientsCreate
@@ -487,7 +491,7 @@ RCertSubTableCreate: TypeAlias = (
 class CompletePublic(RCertPublic):
     srm_values: list[SRMValuesPublic] = []
     standards_values: list[StandardsValuesPublic] = []
-    additional_lot_standards: list[AdditionalLotStandardsPublic] = []
+    additional_lot_standards: list[AdditionalLotStandardsCertPublic] = []
     cylinder_results: list[CylinderResultsPublic] = []
     analysis_function_coefficients: list[AnalysisFunctionCoefficientsPublic] = []
     correlation_coefficients: list[CorrelationCoefficientsPublic] = []
@@ -497,7 +501,7 @@ class CompletePublic(RCertPublic):
 class CompleteCreate(RCertCreate):
     srm_values: list[SRMValuesCreate] = []
     standards_values: list[StandardsValuesCreate] = []
-    additional_lot_standards: list[AdditionalLotStandardsCreate] = []
+    additional_lot_standards: list[AdditionalLotStandardsCertCreate] = []
     cylinder_results: list[CylinderResultsCreate] = []
     analysis_function_coefficients: list[AnalysisFunctionCoefficientsCreate] = []
     correlation_coefficients: list[CorrelationCoefficientsCreate] = []
