@@ -106,9 +106,9 @@ class _SampleIDAndNumberUpdate(SQLModel):
 
 
 class SRMDataForeignKey(SQLModel):
-    srmdata_id: uuid.UUID = Field(
+    srm_id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
-        foreign_key="srmdata.id",
+        foreign_key="srm_root.id",
         nullable=False,
         ondelete="CASCADE",
         validation_alias="SRMDataID",
@@ -631,7 +631,7 @@ class StandardAnalysisForeignKey(SQLModel):
     standard_analysis_id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
         nullable=False,
-        foreign_key="standard_analysis_data.id",
+        foreign_key="standard_analysis_root.id",
         ondelete="CASCADE",
     )
 
@@ -1006,7 +1006,7 @@ class RCertForeignKey(SQLModel):
     rcert_id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
         nullable=False,
-        foreign_key="rcertdata.id",
+        foreign_key="rcert_root.id",
         ondelete="CASCADE",
     )
 
@@ -1018,7 +1018,7 @@ class _RCertForeignKeyUpdate(SQLModel):
 
 # ** RCert
 class RCertBase(SRMDataForeignKey):
-    """Points back to srmdata"""
+    """Points back to srm_root"""
 
 
 class RCertPublic(RCertBase, _IDPrimaryKeyPublic):
