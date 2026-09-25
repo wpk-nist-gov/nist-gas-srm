@@ -63,6 +63,9 @@ def get_frame(
 def get_value_from_worksheet(
     xls: pd.ExcelFile, sheet_name: str, rowx: int, colx: int | str
 ) -> Any:
+    """
+    Note that row and column are zero base indexed
+    """
     if isinstance(colx, str):
         colx = column_index_from_string(colx) - 1
 
