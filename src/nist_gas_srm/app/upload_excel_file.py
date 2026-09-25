@@ -69,7 +69,7 @@ class EditableTableSRM(EditableTableBase):
             excel_interface.excel_to_dataframe_by_name(
                 self.attr,
                 obj,
-                model=basemodels.complete.CompleteCreate,
+                model=basemodels.srm.CompleteCreate,
             ),
             **kwargs,
         )

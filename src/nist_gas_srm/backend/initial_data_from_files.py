@@ -15,6 +15,7 @@ from sqlmodel import (
 )
 
 from nist_gas_srm.core import basemodels
+from nist_gas_srm.core.basemodels.keys import SRMDataForeignKey
 from nist_gas_srm.core.excel_utils import parse_excel_filename_to_metadata
 
 from . import crud, models
@@ -65,7 +66,7 @@ def delete_srm(session: Session, srm: str | models.SRMData) -> None:
 def delete_subtable(
     session: Session,
     srm: str | models.SRMData,
-    table: type[basemodels.keys.SRMDataForeignKey],
+    table: type[SRMDataForeignKey],
 ) -> None:
     srm = get_srm_by_name(session, srm)
     _ = session.exec(delete(table).where(col(table.srm_id) == srm.id))
@@ -75,7 +76,7 @@ def delete_subtable(
 def add_srm_subtable_row(
     session: Session,
     srm: str | models.SRMData,
-    obj: models.srm.SRMSubTable,
+    obj: models.measurements.MeasurementsSubTable,
 ) -> None:
     srm = get_srm_by_name(session, srm)
     obj.srmdata = srm

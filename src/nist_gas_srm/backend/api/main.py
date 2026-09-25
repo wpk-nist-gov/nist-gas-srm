@@ -79,7 +79,7 @@ def welcome() -> dict[str, str]:
     return {"detail": "Welcome to NIST Gas SRM database"}
 
 
-@app.get("/srmrcert/complete", response_model=basemodels.complete.CompletePublic)
+@app.get("/srmrcert/complete", response_model=basemodels.srm.CompletePublic)
 @app.get("/srm/complete", response_model=basemodels.srm.CompletePublic)
 @app.get("/srm", response_model=basemodels.srm.SRMDataPublic)
 def read_srm(
@@ -101,7 +101,7 @@ def read_srm(
     )
 
 
-@app.get("/srmrcerts/complete", response_model=list[basemodels.complete.CompletePublic])
+@app.get("/srmrcerts/complete", response_model=list[basemodels.srm.CompletePublic])
 @app.get("/srms/complete", response_model=list[basemodels.srm.CompletePublic])
 @app.get("/srms", response_model=list[basemodels.srm.SRMDataPublic])
 def read_srms(
@@ -208,7 +208,7 @@ def create_srm_complete(
 def create_srmrcert_complete(
     *,
     session: SessionDepends,
-    srmdata_in: basemodels.complete.CompleteCreate,
+    srmdata_in: basemodels.srm.CompleteCreate,
 ) -> models.SRMData:
     return crud.add_srm_from_create(session=session, srmdata_in=srmdata_in)
 
@@ -278,7 +278,7 @@ async def download_excel(
     srm: str | None = None,
 ) -> FileResponse:
 
-    srmdata = basemodels.complete.CompleteCreate.model_validate(
+    srmdata = basemodels.srm.CompleteCreate.model_validate(
         crud.get_srm(
             session=session,
             srm_id=srm_id,
@@ -308,7 +308,7 @@ async def download_excel(
             dict_of_dataframes_to_workbook(
                 data,
                 workbook,
-                model=basemodels.complete.CompleteCreate,
+                model=basemodels.srm.CompleteCreate,
             )
 
         workbook.save(file_path)
