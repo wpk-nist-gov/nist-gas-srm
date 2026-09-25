@@ -1,8 +1,7 @@
 """Basic model"""
 
 import logging
-from operator import methodcaller
-from typing import Any, TypeAlias, cast
+from typing import TYPE_CHECKING, Any, TypeAlias, cast
 
 from pydantic import model_validator
 from sqlmodel import (
@@ -32,9 +31,18 @@ from nist_gas_srm.core.basemodels import (
     RCertSRMValuesBase,
     RCertStandardsValuesBase,
     SRMDataBase,
+    StandardAnalysisBase,
+    StandardAnalysisGenLineEvalBase,
+    StandardAnalysisGenLineParamsBase,
+    StandardAnalysisGenLineSolutionBase,
+    StandardAnalysisParamsBase,
     StandardsDataBase,
     VendorDataBase,
 )
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import declared_attr
+
 
 FORMAT = "[%(name)s - %(levelname)s] %(message)s"
 logging.basicConfig(level=logging.INFO, format=FORMAT)
@@ -111,10 +119,16 @@ class SRMData(SRMDataBase, IDPrimaryKey, _FixMixin, table=True):
 
     rcert: "RCertData" = Relationship(back_populates="srmdata", cascade_delete=True)
 
+    standard_analysis: "StandardAnalysisData" = Relationship(
+        back_populates="srmdata", cascade_delete=True
+    )
+
 
 # * subtables
 class RatioData(RatioDataBase, IDPrimaryKey, table=True):
     """Ratio Data table"""
+
+    __tablename__ = cast("declared_attr[str]", "srm_ratios")
 
     srmdata: SRMData | None = Relationship(back_populates="ratios")
 
@@ -122,6 +136,8 @@ class RatioData(RatioDataBase, IDPrimaryKey, table=True):
 class RatioAnalysisRandomEffectsData(
     RatioAnalysisRandomEffectsDataBase, IDPrimaryKey, table=True
 ):
+    __tablename__ = cast("declared_attr[str]", "srm_ratio_analysis_random_effects")
+
     srmdata: SRMData | None = Relationship(
         back_populates="ratio_analysis_random_effects"
     )
@@ -130,6 +146,7 @@ class RatioAnalysisRandomEffectsData(
 class RatioAnalysisFixedEffectsData(
     RatioAnalysisFixedEffectsDataBase, IDPrimaryKey, table=True
 ):
+    __tablename__ = cast("declared_attr[str]", "srm_ratio_analysis_fixed_effects")
     srmdata: SRMData | None = Relationship(
         back_populates="ratio_analysis_fixed_effects"
     )
@@ -138,17 +155,23 @@ class RatioAnalysisFixedEffectsData(
 class VendorData(VendorDataBase, IDPrimaryKey, table=True):
     """Vendor data table"""
 
+    __tablename__ = cast("declared_attr[str]", "srm_vendors")
+
     srmdata: SRMData | None = Relationship(back_populates="vendors")
 
 
 class StandardsData(StandardsDataBase, IDPrimaryKey, table=True):
     """Standards data table"""
 
+    __tablename__ = cast("declared_attr[str]", "srm_standards")
+
     srmdata: SRMData | None = Relationship(back_populates="standards")
 
 
 class PastLotStandardsData(PastLotStandardsDataBase, IDPrimaryKey, table=True):
     """Past lot standards table"""
+
+    __tablename__ = cast("declared_attr[str]", "srm_past_lot_standards")
 
     srmdata: SRMData | None = Relationship(back_populates="past_lot_standards")
 
@@ -158,7 +181,71 @@ class AdditionalLotStandardsData(
 ):
     """Additional lot standards table"""
 
+    __tablename__ = cast("declared_attr[str]", "srm_additional_lot_standards")
+
     srmdata: SRMData | None = Relationship(back_populates="additional_lot_standards")
+
+
+# * Standard analysis
+class StandardAnalysisData(StandardAnalysisBase, IDPrimaryKey, _FixMixin, table=True):
+    """Standard analysis data"""
+
+    __tablename__ = cast("declared_attr[str]", "standard_analysis_data")
+
+    model_config = SQLModelConfig(str_to_lower=True)
+    srmdata: SRMData | None = Relationship(back_populates="standard_analysis")
+
+    params: list["StandardAnalysisParamsData"] = Relationship(
+        back_populates="standard_analysis_data",
+        cascade_delete=True,
+    )
+    genline_params: list["StandardAnalysisGenLineParamsData"] = Relationship(
+        back_populates="standard_analysis_data",
+        cascade_delete=True,
+    )
+    genline_solution: list["StandardAnalysisGenLineSolutionData"] = Relationship(
+        back_populates="standard_analysis_data",
+        cascade_delete=True,
+    )
+
+    genline_eval: list["StandardAnalysisGenLineEvalData"] = Relationship(
+        back_populates="standard_analysis_data",
+        cascade_delete=True,
+    )
+
+
+class StandardAnalysisParamsData(StandardAnalysisParamsBase, IDPrimaryKey, table=True):
+    __tablename__ = cast("declared_attr[str]", "standard_analysis_params")
+    standard_analysis_data: StandardAnalysisData | None = Relationship(
+        back_populates="params"
+    )
+
+
+class StandardAnalysisGenLineParamsData(
+    StandardAnalysisGenLineParamsBase, IDPrimaryKey, table=True
+):
+    __tablename__ = cast("declared_attr[str]", "standard_analysis_genline_params")
+    standard_analysis_data: StandardAnalysisData | None = Relationship(
+        back_populates="genline_params"
+    )
+
+
+class StandardAnalysisGenLineSolutionData(
+    StandardAnalysisGenLineSolutionBase, IDPrimaryKey, table=True
+):
+    __tablename__ = cast("declared_attr[str]", "standard_analysis_genline_solution")
+    standard_analysis_data: StandardAnalysisData | None = Relationship(
+        back_populates="genline_solution"
+    )
+
+
+class StandardAnalysisGenLineEvalData(
+    StandardAnalysisGenLineEvalBase, IDPrimaryKey, table=True
+):
+    __tablename__ = cast("declared_attr[str]", "standard_analysis_genline_eval")
+    standard_analysis_data: StandardAnalysisData | None = Relationship(
+        back_populates="genline_eval"
+    )
 
 
 # * RCert
@@ -193,28 +280,35 @@ class RCertData(RCertBase, IDPrimaryKey, _FixMixin, table=True):
 
 
 class RCertSRMValues(RCertSRMValuesBase, IDPrimaryKey, table=True):
+    __tablename__ = cast("declared_attr[str]", "rcert_srm_values")
+
     rcertdata: RCertData | None = Relationship(back_populates="srm_values")
 
 
 class RCertStandardsValues(RCertStandardsValuesBase, IDPrimaryKey, table=True):
+    __tablename__ = cast("declared_attr[str]", "rcert_standards_values")
     rcertdata: RCertData | None = Relationship(back_populates="standards_values")
 
 
 class RCertAdditionalLotStandards(
     RCertAdditionalLotStandardsBase, IDPrimaryKey, table=True
 ):
+    __tablename__ = cast("declared_attr[str]", "rcert_additional_lot_standards")
+
     rcertdata: RCertData | None = Relationship(
         back_populates="additional_lot_standards"
     )
 
 
 class RCertCylinderResults(RCertCylinderResultsBase, IDPrimaryKey, table=True):
+    __tablename__ = cast("declared_attr[str]", "rcert_cylinder_results")
     rcertdata: RCertData | None = Relationship(back_populates="cylinder_results")
 
 
 class RCertAnalysisFunctionCoefficients(
     RCertAnalysisFunctionCoefficientsBase, IDPrimaryKey, table=True
 ):
+    __tablename__ = cast("declared_attr[str]", "rcert_analysis_function_coefficients")
     rcertdata: RCertData | None = Relationship(
         back_populates="analysis_function_coefficients"
     )
@@ -223,12 +317,14 @@ class RCertAnalysisFunctionCoefficients(
 class RCertCorrelationCoefficients(
     RCertCorrelationCoefficientsBase, IDPrimaryKey, table=True
 ):
+    __tablename__ = cast("declared_attr[str]", "rcert_correlation_coefficients")
     rcertdata: RCertData | None = Relationship(
         back_populates="correlation_coefficients"
     )
 
 
 class RCertOutliers(RCertOutliersBase, IDPrimaryKey, table=True):
+    __tablename__ = cast("declared_attr[str]", "rcert_outliers")
     rcertdata: RCertData | None = Relationship(back_populates="outliers")
 
 
@@ -243,6 +339,13 @@ SRMSubTable: TypeAlias = (
     | AdditionalLotStandardsData
 )
 
+StandardAnalysisSubTable: TypeAlias = (
+    StandardAnalysisParamsData
+    | StandardAnalysisGenLineParamsData
+    | StandardAnalysisGenLineSolutionData
+    | StandardAnalysisGenLineEvalData
+)
+
 RCertSubTable: TypeAlias = (
     RCertSRMValues
     | RCertStandardsValues
@@ -252,43 +355,6 @@ RCertSubTable: TypeAlias = (
     | RCertCorrelationCoefficients
     | RCertOutliers
 )
-
-
-# * name/getter/cls triples
-SRMDATA_NAME_CALLER_CLS = [
-    (name, methodcaller(name if attr is None else attr), cls)
-    for name, attr, cls in (
-        ("ratios", "ratio_data", RatioData),
-        ("vendords", "vendor_data", VendorData),
-        ("standards", "standards_data", StandardsData),
-        ("ratio_analysis_random_effects", None, RatioAnalysisRandomEffectsData),
-        (
-            "ratio_analysis_fixed_effects",
-            "ratio_analysis_fixed_effects_intercept",
-            RatioAnalysisFixedEffectsData,
-        ),
-        ("past_lot_standards", None, PastLotStandardsData),
-        ("additional_lot_standards", None, AdditionalLotStandardsData),
-    )
-]
-
-
-RCERTDATA_NAME_CALLER_CLS = [
-    (name, methodcaller(name if attr is None else attr), cls)
-    for name, attr, cls in (
-        ("srm_values", None, RCertSRMValues),
-        ("standards_values", None, RCertStandardsValues),
-        ("additional_lot_standards", None, RCertAdditionalLotStandards),
-        ("cylinder_results", None, RCertCylinderResults),
-        ("analysis_function_coefficients", None, RCertAnalysisFunctionCoefficients),
-        (
-            "correlation_coefficients",
-            "correlation_coefficients_flat",
-            RCertCorrelationCoefficients,
-        ),
-        ("outliers", None, RCertOutliers),
-    )
-]
 
 
 # * Utils ---------------------------------------------------------------------
