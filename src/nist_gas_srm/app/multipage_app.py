@@ -14,5 +14,5 @@ pg = st.navigation([
     table_entry_page,
     upload_page,
     certified_page,
-])
+])  # ty: ignore[call-non-callable]
 pg.run()
