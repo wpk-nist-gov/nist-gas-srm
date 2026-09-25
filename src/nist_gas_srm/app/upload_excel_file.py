@@ -93,6 +93,11 @@ DBNAMES_TABLENAMES_MAPPING = {
     "ratio_analysis_fixed_effects": "Ratio analysis fixed effects",
     "past_lot_standards": "Past lot standards",
     "additional_lot_standards": "Additional lot standards",
+    # standard analysis
+    "standard_analysis.params": "Parameters",
+    "standard_analysis.genline_params": "GenLine parameters",
+    "standard_analysis.genline_solution": "GenLine solution",
+    "standard_analysis.genline_eval": "GenLine evaluation",
     # certifiede values
     "rcert.srm_values": "SRM values",
     "rcert.standards_values": "Standards values",
@@ -124,7 +129,6 @@ if "srm_metadata" not in st.session_state:
             }
         ],
     )
-
 
 # * Input widgets -------------------------------------------------------------
 upload_file = st.file_uploader("Excel file to upload", type=".xls")
