@@ -42,6 +42,7 @@ class MeasurementsForeignKey(SQLModel):
         nullable=False,
         foreign_key="measurements.id",
         ondelete="CASCADE",
+        validation_alias="measurements_id",
     )
 
 

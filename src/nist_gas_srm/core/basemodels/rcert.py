@@ -44,6 +44,7 @@ class RCertForeignKey(SQLModel):
         nullable=False,
         foreign_key="rcert_table.id",
         ondelete="CASCADE",
+        validation_alias="rcert_id",
     )
 
 

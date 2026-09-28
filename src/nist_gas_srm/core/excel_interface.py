@@ -3,7 +3,7 @@
 
 import contextlib
 import re
-from collections.abc import Callable, Hashable
+from collections.abc import Callable, Hashable, Sequence
 from enum import StrEnum
 from functools import cache
 from operator import methodcaller
@@ -222,14 +222,30 @@ def json_to_dict_of_models(
     return out
 
 
-def json_to_dict_of_dataframes(
+def json_to_dict_of_dataframes(  # ruff: ignore[complex-structure, too-many-branches]
     data: dict[str, Any],
     model: type[SQLModel],
     normalize: bool = True,
+    prefix: Sequence[str] | None = None,
+    rename_columns: bool = True,
+    meta: str | Sequence[Any] | None = ("srm_id", "batch_id", "lot_id"),
+    **kwargs: Any,
 ) -> dict[str, Any]:
 
+    if meta is not None and not isinstance(meta, str):
+        meta = list(meta)
+
+    other_params: dict[str, Any] = {
+        "normalize": normalize,
+        "rename_columns": rename_columns,
+        "meta": meta,
+        **kwargs,
+    }
+
     out: dict[str, Any] = {}
-    for name, field in model.model_fields.items():
+    key: Sequence[str] | None
+
+    for name, field in model.model_fields.items():  # ruff: ignore[too-many-nested-blocks]
         if not normalize and name not in data:
             continue
 
@@ -241,20 +257,75 @@ def json_to_dict_of_dataframes(
             inner_model = _annotation_to_model(annotation, name)
             if issubclass(inner_model, SQLDataFrameInterface):
                 if normalize:
+                    key = name if prefix is None else [*prefix, name]
+
                     with contextlib.suppress(KeyError):
-                        out[name] = pd.json_normalize(
-                            data, name, ["srm_id", "batch_id", "lot_id"]
-                        ).rename(columns=inner_model.dbnames_to_colnames())
+                        df = pd.json_normalize(
+                            data,
+                            key,
+                            meta=meta,
+                            **kwargs,
+                        )
+                        if rename_columns:
+                            df = df.rename(columns=inner_model.dbnames_to_colnames())
+                        out[name] = df
                 elif name in data:
                     out[name] = inner_model.dicts_to_dataframe(data[name])
 
         elif issubclass(annotation, SQLModel):  # pylint: disable=confusing-consecutive-elif
             # Recursive
             inner_model = annotation
+            if normalize:
+                data_ = data
+                key = [name] if prefix is None else [*prefix, name]
+            else:
+                data_ = data[name]
+                key = prefix
+
             if v := json_to_dict_of_dataframes(
-                data if normalize else data[name], inner_model, normalize
+                data=data_,
+                model=inner_model,
+                prefix=key,
+                **other_params,
             ):
                 out[name] = v
+    return out
+
+
+def clean_normalized_dataframe(
+    data: dict[str, Any],
+    drop: Sequence[str] = (
+        "srm_id",
+        "batch_id",
+        "lot_id",
+        "rcert_id",
+        "standard_analysis_id",
+        "measurements_id",
+    ),
+    srm_name: str | None = "srm_name",
+) -> dict[str, Any]:
+
+    drop = [drop] if isinstance(drop, str) else list(drop)
+
+    out: dict[str, Any] = {}
+    for key, value in data.items():
+        if isinstance(value, pd.DataFrame):
+            if value.empty:
+                continue
+
+            df = value.drop(drop, axis=1, errors="ignore") if drop else value.copy()
+            srm_name_value = (
+                value.srm_id.astype(str)
+                + value.batch_id.where(lambda x: ~x.isnull(), "")
+                + "-"
+                + value.lot_id.astype(str)
+            )
+            df.insert(0, srm_name, srm_name_value)
+
+            out[key] = df
+        else:
+            out[key] = clean_normalized_dataframe(value, drop=drop, srm_name=srm_name)
+
     return out
 
 
