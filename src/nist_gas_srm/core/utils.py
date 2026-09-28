@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import enum
+import itertools
+import operator
 import re
 from collections.abc import MutableMapping
 from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
-    from typing import Any, TypeVar
+    from collections.abc import Callable, Hashable, Iterable, Mapping
+    from typing import Any, Literal, TypeAlias, TypeVar
 
     T = TypeVar("T")
 
@@ -62,3 +66,76 @@ def unflatten_dict(flat_dict: dict[str, Any], separator: str = ".") -> dict[str,
         current_level[keys[-1]] = value
 
     return expanded_dict
+
+
+class _Missing(enum.Enum):
+    """
+    Sentinel to indicate the lack of a value when ``None`` is ambiguous.
+
+    If extending attrs, you can use ``typing.Literal[MISSING]`` to show
+    that a value may be ``MISSING``.
+
+    .. versionchanged:: 21.1.0 ``bool(MISSING)`` is now False.
+    .. versionchanged:: 22.2.0 ``MISSING`` is now an ``enum.Enum`` variant.
+    """
+
+    MISSING = enum.auto()
+
+    def __repr__(self) -> str:  # pyright: ignore[reportImplicitOverride]
+        return "MISSING"  # pragma: no cover
+
+    def __bool__(self) -> bool:
+        return False  # pragma: no cover
+
+
+MISSING = _Missing.MISSING
+"""
+Sentinel to indicate the lack of a value when ``None`` is ambiguous.
+"""
+
+MISSING_TYPE: TypeAlias = "Literal[_Missing.MISSING]"
+
+
+def get_in(
+    keys: str | Iterable[Hashable],
+    nested_dict: Mapping[Any, T],
+    split: str | None = ".",
+    default: T | MISSING_TYPE = MISSING,
+    factory: Callable[[], T] | None = None,
+) -> T:
+    """
+    >>> foo = {"a": {"b": {"c": 1}}}
+    >>> get_in(["a", "b"], foo)
+    {'c': 1}
+
+    """
+    from functools import reduce
+
+    if isinstance(keys, str):
+        keys = [keys]
+
+    if split is not None:
+        keys = itertools.chain.from_iterable(
+            cast(
+                "Iterable[Hashable]", key.split(split) if isinstance(key, str) else key
+            )
+            for key in keys
+        )
+
+    try:
+        return cast(
+            "T",
+            reduce(
+                cast("Callable[..., Any]", operator.getitem),
+                keys,
+                nested_dict,
+            ),
+        )
+    except (KeyError, IndexError, TypeError):
+        if factory is not None:
+            return factory()
+        if default is not MISSING:
+            return default
+
+    msg = f"Keys {keys} not found and not default or factory"
+    raise ValueError(msg)

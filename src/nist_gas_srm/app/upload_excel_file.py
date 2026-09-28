@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, cast
 import pandas as pd
 import streamlit as st
 
+from nist_gas_srm.app._utils import TABLEGROUP_DBNAMES_TABLENAMES_MAPPING
 from nist_gas_srm.core import basemodels, excel_interface
 from nist_gas_srm.core.typing_compat import override
 
@@ -86,33 +87,6 @@ def refresh_tables(tables: Iterable[EditableTableSRM]) -> None:
 
 
 # * Initialize an empty starting template -------------------------------------
-TABLEGROUP_DBNAMES_TABLENAMES_MAPPING = {
-    "Measurements": {
-        "measurements.ratios": "Ratio data",
-        "measurements.vendors": "Vendor data",
-        "measurements.standards": "Standards",
-        "measurements.ratio_analysis_random_effects": "Ratio analysis",
-        "measurements.ratio_analysis_fixed_effects": "Ratio analysis fixed effects",
-        "measurements.past_lot_standards": "Past lot standards",
-        "measurements.additional_lot_standards": "Additional lot standards",
-    },
-    "Standard Analysis": {
-        "standard_analysis.params": "Parameters",
-        "standard_analysis.genline_params": "StandardAnalysisGenLine parameters",
-        "standard_analysis.genline_solution": "StandardAnalysisGenLine solution",
-        "standard_analysis.genline_eval": "StandardAnalysisGenLine evaluation",
-    },
-    "RCertification": {
-        "rcert.srm_values": "SRM values",
-        "rcert.standards_values": "Standards values",
-        "rcert.additional_lot_standards": "Certified additional lot standards",
-        "rcert.cylinder_results": "Cylinder results",
-        "rcert.analysis_function_coefficients": "Analysis function coefficients",
-        "rcert.correlation_coefficients": "Correlation coefficients",
-        "rcert.outliers": "RCertOutliers",
-    },
-}
-
 TABLES = {
     table_group: [
         EditableTableSRM(attr=attr, name=name)
