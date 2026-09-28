@@ -167,8 +167,9 @@ docstring-code-format = true
     "PD",
 ]
 "tests/**" = [
-    "assert", # - Assert is fine with tests
-    "D",      # - Don't need to document tests
+    "assert",                # - Assert is fine with tests
+    "D",
+    "private-member-access",
 ]
 
 [tool.ruff.lint]
@@ -294,7 +295,7 @@ strict = true
 warn_unused_configs = true
 
 [[tool.mypy.overrides]]
-module = [ "statsmodels.*" ]
+module = [ "statsmodels.*", "uncertainties" ]
 ignore_missing_imports = true
 ignore_errors = true
 

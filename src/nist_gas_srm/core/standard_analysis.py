@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import numpy as np
 import odrpack
@@ -110,100 +110,37 @@ def get_average_additional_lot_standards_frame(
     return pd.concat((ref, out), ignore_index=True)
 
 
-def eval_x(
-    y: ArrayLike,
-    uy: ArrayLike,
-    a: NDArrayAny,
-    siga: NDArrayAny,
-    degree: int | None = None,
+def eval_polynomial_error(
+    x: ArrayLike, ux: ArrayLike, beta: ArrayLike, cov_beta: ArrayLike
 ) -> tuple[NDArrayFloat64, NDArrayFloat64]:
     """
-    evaluate X from polynomaial of form
+    evaluate polynmial and error for polynmial of form
 
-    x = a[0] * y ** degree + a[1] * y**(degree -1) + ... + a[k] * y ** (degree -k ) + ... + a[degree]
-
-
-    Parameters
-    ----------
-    a : np.ndarray
-    siga : np.ndarray
-
-    Notes
-    -----
-    ``a = out.beta[-1::-1]`` and ``siga = out.cov_beta[-1::-1, -1::-1]``
-
+    y = beta[0] + beta[1] * x ** 1 + ...
     """
-    y = np.asarray(y, dtype=np.float64)
-    uy = np.asarray(uy, dtype=np.float64)
 
-    a = np.asarray(a, dtype=np.float64)
-    siga = np.asarray(siga, dtype=np.float64)
+    from uncertainties import correlated_values, unumpy  # pyright: ignore[reportMissingTypeStubs, reportUnknownVariableType]
 
-    if degree is None:
-        degree = len(a) - 1
-
-    match degree:
-        case 1:
-            x = y * a[0] + a[1]
-            ux = np.sqrt(
-                (a[0] * uy) ** 2 + siga[1, 1] + (y**2 * siga[0, 0]) + 2 * y * siga[1, 0]
-            )
-
-        case 2:
-            x = a[0] * y * y + a[1] * y + a[2]
-            t = (
-                (a[1] + 2 * a[0] * y) ** 2 * uy**2
-                + siga[2, 2]
-                + (siga[1, 1] * y**2)
-                + (siga[0, 0] * y**4)
-                + (2 * y * siga[2, 1])
-                + (2 * siga[2, 0] * y**2)
-                + (2 * siga[1, 0] * y**3)
-            )
-            ux = np.sqrt(t)
-        case 3:
-            x = a[0] * y**3 + a[1] * y**2 + a[2] * y + a[3]
-            t = (
-                ((a[2] + 2 * y * a[1] + 3 * y**2 * a[0]) * uy) ** 2
-                + siga[3, 3]
-                + (siga[2, 2] * y**2)
-                + (siga[1, 1] * y**4)
-                + (siga[0, 0] * y**6)
-                + 2 * y * siga[3, 2]
-                + 2 * y**2 * siga[3, 1]
-                + 2 * y**3 * siga[3, 0]
-                + 2 * y**3 * siga[2, 1]
-                + 2 * y**4 * siga[2, 0]
-                + 2 * y**5 * siga[1, 0]
-            )
-            ux = np.sqrt(t)
-
-        case _:
-            msg = f"Degree {degree} not supported"
-            raise NotImplementedError(msg)
-
-    return x, ux
-
-
-def _fit_func_1(x: NDArrayFloat64, beta: NDArray1DFloat64) -> NDArrayFloat64:
-    return cast("NDArrayFloat64", beta[0] + beta[1] * x)
-
-
-def _fit_func_2(x: NDArrayFloat64, beta: NDArray1DFloat64) -> NDArrayFloat64:
-    return cast("NDArrayFloat64", beta[0] + beta[1] * x + beta[2] * x**2)
-
-
-def _fit_func_3(x: NDArrayFloat64, beta: NDArray1DFloat64) -> NDArrayFloat64:
-    return cast(
-        "NDArrayFloat64", beta[0] + beta[1] * x + beta[2] * x**2 + beta[3] * x**3
+    x, ux, beta, cov_beta = (
+        np.asarray(_, dtype=np.float64) for _ in (x, ux, beta, cov_beta)
     )
 
+    beta_uncert: Any = correlated_values(beta, cov_beta)
+    x_uncert: Any = unumpy.uarray(x, ux)  # pyright: ignore[reportUnknownMemberType]
 
-_fit_funcs = {
-    1: _fit_func_1,
-    2: _fit_func_2,
-    3: _fit_func_3,
-}
+    y = _polynomial_func(x_uncert, beta_uncert)
+
+    return unumpy.nominal_values(y), unumpy.std_devs(y)  # pyright: ignore[reportUnknownMemberType]
+
+
+def _polynomial_func(
+    x: NDArrayFloat64, beta: Sequence[Any] | NDArray1DFloat64
+) -> NDArrayFloat64:
+    """"""
+    result: NDArrayFloat64 = np.zeros_like(x)
+    for coefficient in reversed(beta):
+        result = result * x + coefficient
+    return result
 
 
 def fit_standards_data(
@@ -227,7 +164,7 @@ def fit_standards_data(
         beta0 = [1.0] * (degree + 1)
 
     return odrpack.odr_fit(
-        _fit_funcs[degree],
+        _polynomial_func,
         p_x,
         p_y,
         beta0=np.array(beta0),
@@ -299,11 +236,11 @@ def eval_table(
     ratio_name: str = "Ratio",
 ) -> pd.DataFrame:
 
-    y, yerr = eval_x(
+    y, yerr = eval_polynomial_error(
         average_additional_lot_standards[ratio_name].to_numpy(),
         average_additional_lot_standards[f"{ratio_name}_stderr"].to_numpy(),
-        a=np.flip(beta),
-        siga=np.flip(cov_beta),
+        beta=beta,
+        cov_beta=cov_beta,
     )
 
     return average_additional_lot_standards.assign(
