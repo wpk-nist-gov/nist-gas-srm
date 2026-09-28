@@ -79,7 +79,20 @@ def welcome() -> dict[str, str]:
     return {"detail": "Welcome to NIST Gas SRM database"}
 
 
-@app.get("/srmrcert/complete", response_model=basemodels.srm.SRMCompletePublic)
+@app.get("/srm/rcert/complete", response_model=basemodels.srm.SRMRCertCompletePublic)
+@app.get("/srm/rcert", response_model=basemodels.srm.SRMRCertPublic)
+@app.get(
+    "/srm/standard-analysis/complete",
+    response_model=basemodels.srm.SRMStandardAnalysisCompletePublic,
+)
+@app.get(
+    "/srm/standard-analysis", response_model=basemodels.srm.SRMStandardAnalysisPublic
+)
+@app.get(
+    "/srm/measurements/complete",
+    response_model=basemodels.srm.SRMMeasurementsCompletePublic,
+)
+@app.get("/srm/measurements", response_model=basemodels.srm.SRMRMeasurementsPublic)
 @app.get("/srm/complete", response_model=basemodels.srm.SRMCompletePublic)
 @app.get("/srm", response_model=basemodels.srm.SRMPublic)
 def read_srm(
@@ -101,7 +114,25 @@ def read_srm(
     )
 
 
-@app.get("/srmrcerts/complete", response_model=list[basemodels.srm.SRMCompletePublic])
+@app.get(
+    "/srms/rcert/complete", response_model=list[basemodels.srm.SRMRCertCompletePublic]
+)
+@app.get("/srms/rcert", response_model=list[basemodels.srm.SRMRCertPublic])
+@app.get(
+    "/srms/standard-analysis/complete",
+    response_model=list[basemodels.srm.SRMStandardAnalysisCompletePublic],
+)
+@app.get(
+    "/srms/standard-analysis",
+    response_model=list[basemodels.srm.SRMStandardAnalysisPublic],
+)
+@app.get(
+    "/srms/measurements/complete",
+    response_model=list[basemodels.srm.SRMMeasurementsCompletePublic],
+)
+@app.get(
+    "/srms/measurements", response_model=list[basemodels.srm.SRMRMeasurementsPublic]
+)
 @app.get("/srms/complete", response_model=list[basemodels.srm.SRMCompletePublic])
 @app.get("/srms", response_model=list[basemodels.srm.SRMPublic])
 def read_srms(
@@ -157,6 +188,110 @@ def read_rcerts(
     """Get list of srms"""
 
     return crud.get_rcerts(
+        session=session,
+        srm_id=srm_id,
+        batch_id=batch_id,
+        lot_id=lot_id,
+        srm_query=srm,
+    )
+
+
+@app.get(
+    "/measurement/complete",
+    response_model=basemodels.measurements.MeasurementsCompletePublic,
+)
+@app.get("/measurement", response_model=basemodels.measurements.MeasurementsPublic)
+def read_meausrement(
+    *,
+    session: SessionDepends,
+    srm_id: int | None = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
+    srm: str | None = None,
+) -> models.Measurements:
+    """Get list of srms"""
+
+    return crud.get_measurement(
+        session=session,
+        srm_id=srm_id,
+        batch_id=batch_id,
+        lot_id=lot_id,
+        srm_query=srm,
+    )
+
+
+@app.get(
+    "/measurements/complete",
+    response_model=list[basemodels.measurements.MeasurementsCompletePublic],
+)
+@app.get(
+    "/measurements", response_model=list[basemodels.measurements.MeasurementsPublic]
+)
+def read_measurements(
+    *,
+    session: SessionDepends,
+    srm_id: int | None = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
+    srm: Annotated[list[str] | None, Query()] = None,
+) -> Sequence[models.Measurements]:
+    """Get list of srms"""
+
+    return crud.get_measurements(
+        session=session,
+        srm_id=srm_id,
+        batch_id=batch_id,
+        lot_id=lot_id,
+        srm_query=srm,
+    )
+
+
+@app.get(
+    "/standard-analysis/complete",
+    response_model=basemodels.standard_analysis.StandardAnalysisCompletePublic,
+)
+@app.get(
+    "/standard-analysis",
+    response_model=basemodels.standard_analysis.StandardAnalysisPublic,
+)
+def read_standard_analysis(
+    *,
+    session: SessionDepends,
+    srm_id: int | None = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
+    srm: str | None = None,
+) -> models.StandardAnalysisTable:
+    """Get list of srms"""
+
+    return crud.get_standard_analysis(
+        session=session,
+        srm_id=srm_id,
+        batch_id=batch_id,
+        lot_id=lot_id,
+        srm_query=srm,
+    )
+
+
+@app.get(
+    "/standard-analyses/complete",
+    response_model=list[basemodels.standard_analysis.StandardAnalysisCompletePublic],
+)
+@app.get(
+    "/standard-analyses",
+    response_model=list[basemodels.standard_analysis.StandardAnalysisPublic],
+)
+def read_standard_analyses(
+    *,
+    session: SessionDepends,
+    srm_id: int | None = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
+    srm: Annotated[list[str] | None, Query()] = None,
+) -> Sequence[models.StandardAnalysisTable]:
+    """Get list of srms"""
+
+    return crud.get_standard_analyses(
         session=session,
         srm_id=srm_id,
         batch_id=batch_id,

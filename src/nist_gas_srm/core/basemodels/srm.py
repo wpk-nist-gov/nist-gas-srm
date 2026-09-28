@@ -109,12 +109,52 @@ class SRMQuery(SQLModel):
 
 
 class SRMCompletePublic(SRMPublic):
-    rcert: rcert.RCertCompletePublic
     measurements: measurements.MeasurementsCompletePublic
     standard_analysis: stdanal.StandardAnalysisCompletePublic
+    rcert: rcert.RCertCompletePublic
 
 
 class SRMCompleteCreate(SRMCreate):
-    rcert: rcert.RCertCompleteCreate
     measurements: measurements.MeasurementsCompleteCreate
     standard_analysis: stdanal.StandardAnalysisCompleteCreate
+    rcert: rcert.RCertCompleteCreate
+
+
+# measurements only
+class SRMMeasurementsCompletePublic(SRMPublic):
+    measurements: measurements.MeasurementsCompletePublic
+
+
+class SRMMeasurementsCompleteCreate(SRMCreate):
+    measurements: measurements.MeasurementsCompleteCreate
+
+
+# standard_analysis only
+class SRMStandardAnalysisCompletePublic(SRMPublic):
+    standard_analysis: stdanal.StandardAnalysisCompletePublic
+
+
+class SRMStandardAnalysisCompleteCreate(SRMCreate):
+    standard_analysis: stdanal.StandardAnalysisCompleteCreate
+
+
+# rcert only
+class SRMRCertCompletePublic(SRMPublic):
+    rcert: rcert.RCertCompletePublic
+
+
+class SRMRCertCompleteCreate(SRMCreate):
+    rcert: rcert.RCertCompleteCreate
+
+
+# Single publics
+class SRMRMeasurementsPublic(SRMPublic):
+    measurements: measurements.MeasurementsPublic
+
+
+class SRMStandardAnalysisPublic(SRMPublic):
+    standard_analysis: stdanal.StandardAnalysisPublic
+
+
+class SRMRCertPublic(SRMPublic):
+    rcert: rcert.RCertPublic
