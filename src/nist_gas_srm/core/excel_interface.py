@@ -295,6 +295,7 @@ def json_to_dict_of_dataframes(  # ruff: ignore[complex-structure, too-many-bran
 def clean_normalized_dataframe(
     data: dict[str, Any],
     drop: Sequence[str] = (
+        "id",
         "srm_id",
         "batch_id",
         "lot_id",

@@ -183,6 +183,84 @@ def get_rcerts(
     ]
 
 
+def get_measurement(
+    *,
+    session: Session,
+    srm_id: int | None = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
+    srm_query: basemodels.srm.SRMQuery | str | None = None,
+) -> models.Measurements:
+
+    return get_srm(
+        session=session,
+        srm_id=srm_id,
+        batch_id=batch_id,
+        lot_id=lot_id,
+        srm_query=srm_query,
+    ).measurements
+
+
+def get_measurements(
+    *,
+    session: Session,
+    srm_id: int | None = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
+    srm_query: Sequence[basemodels.srm.SRMQuery | str] | None = None,
+) -> Sequence[models.Measurements]:
+
+    return [
+        _.measurements
+        for _ in get_srms(
+            session=session,
+            srm_id=srm_id,
+            batch_id=batch_id,
+            lot_id=lot_id,
+            srm_query=srm_query,
+        )
+    ]
+
+
+def get_standard_analysis(
+    *,
+    session: Session,
+    srm_id: int | None = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
+    srm_query: basemodels.srm.SRMQuery | str | None = None,
+) -> models.StandardAnalysisTable:
+
+    return get_srm(
+        session=session,
+        srm_id=srm_id,
+        batch_id=batch_id,
+        lot_id=lot_id,
+        srm_query=srm_query,
+    ).standard_analysis
+
+
+def get_standard_analyses(
+    *,
+    session: Session,
+    srm_id: int | None = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
+    srm_query: Sequence[basemodels.srm.SRMQuery | str] | None = None,
+) -> Sequence[models.StandardAnalysisTable]:
+
+    return [
+        _.standard_analysis
+        for _ in get_srms(
+            session=session,
+            srm_id=srm_id,
+            batch_id=batch_id,
+            lot_id=lot_id,
+            srm_query=srm_query,
+        )
+    ]
+
+
 def add_srm_item(
     *,
     session: Session,
