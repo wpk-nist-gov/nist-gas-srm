@@ -43,6 +43,7 @@ srms = st.multiselect(
     accept_new_options=True,
 )
 
+
 if srms:
     data = get_data(srms)
     if data:
