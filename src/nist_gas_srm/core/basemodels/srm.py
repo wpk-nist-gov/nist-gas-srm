@@ -2,6 +2,7 @@
 # ruff:file-ignore[manual-from-import]
 # pylint: disable=abstract-method
 
+from collections.abc import Iterable
 from datetime import UTC, datetime
 from typing import (
     Annotated,
@@ -35,9 +36,9 @@ from .utils import (
 )
 
 
-class _FromStringMixin(SQLModel):
+class FromSRMQuery(SQLModel):
     @classmethod
-    def from_string(cls, string: str) -> Self:
+    def from_srm_query(cls, srm_query: str | Self) -> Self:
         """
         Match patterns like:
 
@@ -49,14 +50,28 @@ class _FromStringMixin(SQLModel):
 
         """
 
-        if (m := JSON_PATTERN.match(string)) is not None:
-            return cls.model_validate_json(string)
+        if not isinstance(srm_query, str):
+            return srm_query
 
-        if (m := SRM_PATTERN.match(string)) is not None:
+        if (m := JSON_PATTERN.match(srm_query)) is not None:
+            return cls.model_validate_json(srm_query)
+
+        if (m := SRM_PATTERN.match(srm_query)) is not None:
             return cls.model_validate({
                 k: v for k, v in m.groupdict().items() if v is not None
             })
         return cls()
+
+    @classmethod
+    def from_srm_queries(cls, srm_queries: Iterable[str | Self]) -> list[Self]:
+        if isinstance(srm_queries, str):
+            srm_queries = [srm_queries]
+        return [cls.from_srm_query(srm_query) for srm_query in srm_queries]
+
+    @classmethod
+    def from_params_exclude_none(cls, **kwargs: Any) -> Self:
+        kwargs = {k: v for k, v in kwargs.items() if v is not None}
+        return cls.model_validate(kwargs)
 
 
 class SRMBase(SQLModel):
@@ -90,7 +105,7 @@ class SRMPublic(SRMBase, IDPrimaryKeyPublic):
     pass
 
 
-class SRMCreate(SRMBase, _FromStringMixin):
+class SRMCreate(SRMBase, FromSRMQuery):
     pass
 
 
@@ -99,18 +114,13 @@ class SRMUpdate(SQLModel):
     timestamp: datetime | None = None
 
 
-class SRMQuery(_FromStringMixin):
+class SRMQuery(FromSRMQuery):
     srm_id: int | None = None
     batch_id: OptionalLowerString = None
     lot_id: OptionalLowerString = None
 
-    @classmethod
-    def from_params_exclude_none(cls, **kwargs: Any) -> Self:
-        kwargs = {k: v for k, v in kwargs.items() if v is not None}
-        return cls.model_validate(kwargs)
 
-
-# * Publics
+# * Public combinations
 class SRMCompletePublic(SRMPublic):
     measurements: measurements.MeasurementsCompletePublic
     standard_analysis: stdanal.StandardAnalysisCompletePublic
@@ -141,7 +151,7 @@ class SRMRCertPublic(SRMPublic):
     rcert: rcert.RCertPublic
 
 
-# * Creates
+# * Create combinations
 class SRMCompleteCreate(SRMCreate):
     measurements: measurements.MeasurementsCompleteCreate
     standard_analysis: stdanal.StandardAnalysisCompleteCreate

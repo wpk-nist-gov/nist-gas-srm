@@ -101,7 +101,7 @@ def read_srm(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm: str | None = None,
+    srm_query: str | None = None,
 ) -> models.SRMTable:
     """Get list of srms"""
 
@@ -110,7 +110,7 @@ def read_srm(
         srm_id=srm_id,
         batch_id=batch_id,
         lot_id=lot_id,
-        srm_query=srm,
+        srm_query=srm_query,
     )
 
 
@@ -141,7 +141,7 @@ def read_srms(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm: Annotated[list[str] | None, Query()] = None,
+    srm_query: Annotated[list[str] | None, Query()] = None,
 ) -> Sequence[models.SRMTable]:
     """Get list of srms"""
 
@@ -150,7 +150,7 @@ def read_srms(
         srm_id=srm_id,
         batch_id=batch_id,
         lot_id=lot_id,
-        srm_query=srm,
+        srm_query=srm_query,
     )
 
 
@@ -162,7 +162,7 @@ def read_rcert(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm: str | None = None,
+    srm_query: str | None = None,
 ) -> models.RCertTable:
     """Get list of srms"""
 
@@ -171,7 +171,7 @@ def read_rcert(
         srm_id=srm_id,
         batch_id=batch_id,
         lot_id=lot_id,
-        srm_query=srm,
+        srm_query=srm_query,
     )
 
 
@@ -183,7 +183,7 @@ def read_rcerts(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm: Annotated[list[str] | None, Query()] = None,
+    srm_query: Annotated[list[str] | None, Query()] = None,
 ) -> Sequence[models.RCertTable]:
     """Get list of srms"""
 
@@ -192,7 +192,7 @@ def read_rcerts(
         srm_id=srm_id,
         batch_id=batch_id,
         lot_id=lot_id,
-        srm_query=srm,
+        srm_query=srm_query,
     )
 
 
@@ -207,7 +207,7 @@ def read_meausrement(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm: str | None = None,
+    srm_query: str | None = None,
 ) -> models.Measurements:
     """Get list of srms"""
 
@@ -216,7 +216,7 @@ def read_meausrement(
         srm_id=srm_id,
         batch_id=batch_id,
         lot_id=lot_id,
-        srm_query=srm,
+        srm_query=srm_query,
     )
 
 
@@ -233,7 +233,7 @@ def read_measurements(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm: Annotated[list[str] | None, Query()] = None,
+    srm_query: Annotated[list[str] | None, Query()] = None,
 ) -> Sequence[models.Measurements]:
     """Get list of srms"""
 
@@ -242,7 +242,7 @@ def read_measurements(
         srm_id=srm_id,
         batch_id=batch_id,
         lot_id=lot_id,
-        srm_query=srm,
+        srm_query=srm_query,
     )
 
 
@@ -260,7 +260,7 @@ def read_standard_analysis(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm: str | None = None,
+    srm_query: str | None = None,
 ) -> models.StandardAnalysisTable:
     """Get list of srms"""
 
@@ -269,7 +269,7 @@ def read_standard_analysis(
         srm_id=srm_id,
         batch_id=batch_id,
         lot_id=lot_id,
-        srm_query=srm,
+        srm_query=srm_query,
     )
 
 
@@ -287,7 +287,7 @@ def read_standard_analyses(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm: Annotated[list[str] | None, Query()] = None,
+    srm_query: Annotated[list[str] | None, Query()] = None,
 ) -> Sequence[models.StandardAnalysisTable]:
     """Get list of srms"""
 
@@ -296,7 +296,7 @@ def read_standard_analyses(
         srm_id=srm_id,
         batch_id=batch_id,
         lot_id=lot_id,
-        srm_query=srm,
+        srm_query=srm_query,
     )
 
 
@@ -400,13 +400,13 @@ async def create_upload_file(
     srm_query: Annotated[
         str, Form()
     ] = '{"name": "string", "srm_id": 0, "batch_id": null, "lot_id": "string", "timestamp": null}',
-    uploadfile: Annotated[UploadFile, File()],
+    file: Annotated[UploadFile, File()],
 ) -> Any:  # models.SRMTable:
 
     logger.info("srm_query %s %s", srm_query, type(srm_query))
 
     try:
-        srmdata_create = basemodels.srm.SRMCreate.from_string(srm_query)
+        srmdata_create = basemodels.srm.SRMCreate.from_srm_query(srm_query)
     except ValidationError as e:
         raise HTTPException(status_code=422, detail=e.errors()) from e
 
@@ -419,14 +419,14 @@ async def create_upload_file(
         lot_id=srmdata_create.lot_id,
     )
 
-    if uploadfile.filename is None or not uploadfile.filename.endswith(".xls"):
+    if file.filename is None or not file.filename.endswith(".xls"):
         raise HTTPException(
             status_code=400,
-            detail="Invalid uploadfile type. Please upload an Excel uploadfile.",
+            detail="Invalid file type. Please upload an Excel file.",
         )
 
-    # 2. Read the uploadfile contents into memory
-    contents = await uploadfile.read()
+    # 2. Read the file contents into memory
+    contents = await file.read()
 
     try:  # pylint: disable=too-many-try-statements
         # 3. Load the byte stream into a Pandas DataFrame
@@ -440,7 +440,7 @@ async def create_upload_file(
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Error processing Excel uploadfile: {e!s}",
+            detail=f"Error processing Excel file: {e!s}",
         ) from e
 
 
@@ -459,7 +459,7 @@ async def download_excel(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm: str | None = None,
+    srm_query: str | None = None,
 ) -> FileResponse:
 
     srmdata = basemodels.srm.SRMCompleteCreate.model_validate(
@@ -468,12 +468,20 @@ async def download_excel(
             srm_id=srm_id,
             batch_id=batch_id,
             lot_id=lot_id,
-            srm_query=srm,
+            srm_query=srm_query,
         )
     )
 
     # convert to dict of dataframes
-    data = model_to_dict_of_dataframes(srmdata, drop_dbnames=["srmdata_id", "rcert_id"])
+    data = model_to_dict_of_dataframes(
+        srmdata,
+        drop_dbnames=[
+            "srm_table_id",
+            "measurements_id",
+            "standard_analysis_id",
+            "rcert_id",
+        ],
+    )
 
     # filename
     filename = (

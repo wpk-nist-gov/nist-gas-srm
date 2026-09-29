@@ -37,21 +37,6 @@ def update_srm(
     return db_srmdata
 
 
-def _validate_srm_query(
-    srm_query: basemodels.srm.SRMQuery | str,
-) -> basemodels.srm.SRMQuery:
-    if isinstance(srm_query, basemodels.srm.SRMQuery):
-        return srm_query
-    return basemodels.srm.SRMQuery.from_string(srm_query)
-
-
-def _validate_srm_queries(
-    srm_queries: Iterable[basemodels.srm.SRMQuery | str],
-) -> list[basemodels.srm.SRMQuery]:
-
-    return [_validate_srm_query(s) for s in srm_queries]
-
-
 def _get_sql_and_from_model(
     query: basemodels.srm.SRMQuery,
     model: type[SQLModel] = models.SRMTable,
@@ -69,13 +54,13 @@ def _get_where_from_srm_query(
 ) -> ColumnElement[bool]:
 
     if isinstance(srm_query, str):
-        srm_query = basemodels.srm.SRMQuery.from_string(srm_query)
+        srm_query = basemodels.srm.SRMQuery.from_srm_query(srm_query)
 
     if isinstance(srm_query, basemodels.srm.SRMQuery):
         where_ = _get_sql_and_from_model(srm_query)
 
     else:
-        srm_query = _validate_srm_queries(srm_query)
+        srm_query = basemodels.srm.SRMQuery.from_srm_queries(srm_query)
         where_ = sql_or_(*(_get_sql_and_from_model(obj) for obj in srm_query))
     return where_
 
