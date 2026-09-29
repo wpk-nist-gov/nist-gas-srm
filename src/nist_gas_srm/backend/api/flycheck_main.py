@@ -400,7 +400,7 @@ async def create_upload_file(
     srm_query: Annotated[
         str, Form()
     ] = '{"name": "string", "srm_id": 0, "batch_id": null, "lot_id": "string", "timestamp": null}',
-    file: Annotated[UploadFile, File()],
+    uploadfile: Annotated[UploadFile, File()],
 ) -> Any:  # models.SRMTable:
 
     logger.info("srm_query %s %s", srm_query, type(srm_query))
@@ -419,14 +419,14 @@ async def create_upload_file(
         lot_id=srmdata_create.lot_id,
     )
 
-    if file.filename is None or not file.filename.endswith(".xls"):
+    if uploadfile.filename is None or not uploadfile.filename.endswith(".xls"):
         raise HTTPException(
             status_code=400,
-            detail="Invalid file type. Please upload an Excel file.",
+            detail="Invalid uploadfile type. Please upload an Excel uploadfile.",
         )
 
-    # 2. Read the file contents into memory
-    contents = await file.read()
+    # 2. Read the uploadfile contents into memory
+    contents = await uploadfile.read()
 
     try:  # pylint: disable=too-many-try-statements
         # 3. Load the byte stream into a Pandas DataFrame
@@ -440,7 +440,7 @@ async def create_upload_file(
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Error processing Excel file: {e!s}",
+            detail=f"Error processing Excel uploadfile: {e!s}",
         ) from e
 
 
@@ -473,15 +473,7 @@ async def download_excel(
     )
 
     # convert to dict of dataframes
-    data = model_to_dict_of_dataframes(
-        srmdata,
-        drop_dbnames=[
-            "srm_table_id",
-            "measurements_id",
-            "standard_analysis_id",
-            "rcert_id",
-        ],
-    )
+    data = model_to_dict_of_dataframes(srmdata, drop_dbnames=["srmdata_id", "rcert_id"])
 
     # filename
     filename = (

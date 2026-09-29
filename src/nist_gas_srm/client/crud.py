@@ -13,16 +13,22 @@ if TYPE_CHECKING:
     from httpx import Client, Response
 
 
-def _get_params_drop_none(**kwargs: Any) -> dict[str, Any]:
-    return {k: v for k, v in kwargs.items() if v is not None}
-
-
-def _validate_srm_query(
-    srm_query: basemodels.srm.SRMQuery | str,
-) -> basemodels.srm.SRMQuery:
-    if isinstance(srm_query, str):
-        return basemodels.srm.SRMQuery.from_string(srm_query)
-    return srm_query
+def _get_srm_params(
+    srm_query: str | basemodels.srm.SRMQuery | None,
+    *,
+    srm_id: int | None = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
+) -> dict[str, Any]:
+    if srm_query is not None:
+        return {
+            "srm_query": basemodels.srm.SRMQuery.from_srm_query(
+                srm_query
+            ).model_dump_json(exclude_unset=True)
+        }
+    return basemodels.srm.SRMQuery.from_params_exclude_none(
+        srm_id=srm_id, batch_id=batch_id, lot_id=lot_id
+    ).model_dump(exclude_unset=True)
 
 
 def _get_multiple(
@@ -32,7 +38,7 @@ def _get_multiple(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: Sequence[basemodels.srm.SRMQuery | str] | None = None,
+    srm_query: Sequence[str | basemodels.srm.SRMQuery] | None = None,
     subtable: str | None = None,
     complete: bool = False,
 ) -> Response:
@@ -41,13 +47,17 @@ def _get_multiple(
     if complete:
         url = f"{url}/complete"
     if srm_query is not None:
-        srm_str_query = [
-            _validate_srm_query(q).model_dump_json(exclude_unset=True)
+        srm_query_str = [
+            basemodels.srm.SRMQuery.from_srm_query(q).model_dump_json(
+                exclude_unset=True
+            )
             for q in srm_query
         ]
-        return client.get(url, params={"srm": srm_str_query})
+        return client.get(url, params={"srm_query": srm_query_str})
 
-    params = _get_params_drop_none(srm_id=srm_id, batch_id=batch_id, lot_id=lot_id)
+    params = basemodels.srm.SRMQuery.from_params_exclude_none(
+        srm_id=srm_id, batch_id=batch_id, lot_id=lot_id
+    ).model_dump(exclude_unset=True)
     return client.get(url, params=params)
 
 
@@ -64,7 +74,7 @@ def _get_single(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: basemodels.srm.SRMQuery | str | None = None,
+    srm_query: str | basemodels.srm.SRMQuery | None = None,
     complete: bool = False,
     subtable: str | None = None,
 ) -> Response:
@@ -72,13 +82,8 @@ def _get_single(
         url = f"{url}/{subtable}"
     if complete:
         url = f"{url}/complete"
-    if srm_query is not None:
-        srm_str_query = _validate_srm_query(srm_query).model_dump_json(
-            exclude_unset=True
-        )
-        return client.get(url, params={"srm": srm_str_query})
 
-    params = _get_params_drop_none(srm_id=srm_id, batch_id=batch_id, lot_id=lot_id)
+    params = _get_srm_params(srm_query, srm_id=srm_id, batch_id=batch_id, lot_id=lot_id)
     return client.get(url, params=params)
 
 
@@ -95,19 +100,39 @@ def upload_excel_file(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: basemodels.srm.SRMCreate | basemodels.srm.SRMQuery | str | None = None,
+    srm_query: str | basemodels.srm.SRMCreate | basemodels.srm.SRMQuery | None = None,
 ) -> Response:
     if srm_query is not None:
-        if isinstance(srm_query, str):
-            srm_query = basemodels.srm.SRMCreate.from_string(srm_query)
-        srm_str_query = srm_query.model_dump_json(exclude_unset=True)
+        srm_query_str = (
+            basemodels.srm.SRMCreate.from_srm_query(srm_query)
+            if isinstance(srm_query, str)
+            else srm_query
+        ).model_dump_json(exclude_unset=True)
     else:
-        srm_str_query = basemodels.srm.SRMQuery.from_params_exclude_none(
+        srm_query_str = basemodels.srm.SRMQuery.from_params_exclude_none(
             srm_id=srm_id, batch_id=batch_id, lot_id=lot_id
         ).model_dump_json(exclude_unset=True)
 
     with path.open("rb") as f:
-        files = {"uploadfile": (path.name, f, "application/vnd.ms-excel")}
+        files = {"file": (path.name, f, "application/vnd.ms-excel")}
         return client.post(
-            "/upload-excel", data={"srm_query": srm_str_query}, files=files
+            "/upload-excel", data={"srm_query": srm_query_str}, files=files
         )
+
+
+def download_excel_file(
+    client: Client,
+    *,
+    path: Path,
+    srm_id: int | None = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
+    srm_query: str | basemodels.srm.SRMQuery | None = None,
+) -> None:
+
+    params = _get_srm_params(srm_query, srm_id=srm_id, batch_id=batch_id, lot_id=lot_id)
+
+    response = client.get("/download-excel", params=params)
+
+    with path.open("wb") as f:
+        _ = f.write(response.content)
