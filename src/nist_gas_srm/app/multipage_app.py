@@ -10,6 +10,9 @@ view = st.Page("view.py", title="View measurements")
 
 certified_page = st.Page("certified.py", title="Certified data")
 
+download_excel = st.Page("download_excel_file.py", title="Download excel file")
+
+
 pg = st.navigation([
     home_page,
     basic_entry_page,

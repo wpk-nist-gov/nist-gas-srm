@@ -92,7 +92,7 @@ def welcome() -> dict[str, str]:
     "/srm/measurements/complete",
     response_model=basemodels.srm.SRMMeasurementsCompletePublic,
 )
-@app.get("/srm/measurements", response_model=basemodels.srm.SRMRMeasurementsPublic)
+@app.get("/srm/measurements", response_model=basemodels.srm.SRMMeasurementsPublic)
 @app.get("/srm/complete", response_model=basemodels.srm.SRMCompletePublic)
 @app.get("/srm", response_model=basemodels.srm.SRMPublic)
 def read_srm(
@@ -131,7 +131,7 @@ def read_srm(
     response_model=list[basemodels.srm.SRMMeasurementsCompletePublic],
 )
 @app.get(
-    "/srms/measurements", response_model=list[basemodels.srm.SRMRMeasurementsPublic]
+    "/srms/measurements", response_model=list[basemodels.srm.SRMMeasurementsPublic]
 )
 @app.get("/srms/complete", response_model=list[basemodels.srm.SRMCompletePublic])
 @app.get("/srms", response_model=list[basemodels.srm.SRMPublic])
@@ -339,11 +339,56 @@ def create_srm_complete(
     return crud.add_srm_from_create(session=session, srmdata_in=srmdata_in)
 
 
-@app.post("/srmrcert/complete", response_model=basemodels.srm.SRMPublic)
-def create_srmrcert_complete(
+@app.post("/srm/measurements", response_model=basemodels.srm.SRMPublic)
+def create_srm_measurements(
     *,
     session: SessionDepends,
-    srmdata_in: basemodels.srm.SRMCompleteCreate,
+    srmdata_in: basemodels.srm.SRMMeasurementsCreate,
+) -> models.SRMTable:
+    return crud.add_srm_from_create(session=session, srmdata_in=srmdata_in)
+
+
+@app.post("/srm/measurements/complete", response_model=basemodels.srm.SRMPublic)
+def create_srm_measurements_complete(
+    *,
+    session: SessionDepends,
+    srmdata_in: basemodels.srm.SRMMeasurementsCompleteCreate,
+) -> models.SRMTable:
+    return crud.add_srm_from_create(session=session, srmdata_in=srmdata_in)
+
+
+@app.post("/srm/standard-analysis", response_model=basemodels.srm.SRMPublic)
+def create_srm_standard_analysis(
+    *,
+    session: SessionDepends,
+    srmdata_in: basemodels.srm.SRMStandardAnalysisCreate,
+) -> models.SRMTable:
+    return crud.add_srm_from_create(session=session, srmdata_in=srmdata_in)
+
+
+@app.post("/srm/standard-analysis/complete", response_model=basemodels.srm.SRMPublic)
+def create_srm_standard_analysis_complete(
+    *,
+    session: SessionDepends,
+    srmdata_in: basemodels.srm.SRMStandardAnalysisCompleteCreate,
+) -> models.SRMTable:
+    return crud.add_srm_from_create(session=session, srmdata_in=srmdata_in)
+
+
+@app.post("/srm/rcert", response_model=basemodels.srm.SRMPublic)
+def create_srm_rcert(
+    *,
+    session: SessionDepends,
+    srmdata_in: basemodels.srm.SRMRCertCreate,
+) -> models.SRMTable:
+    return crud.add_srm_from_create(session=session, srmdata_in=srmdata_in)
+
+
+@app.post("/srm/rcert/complete", response_model=basemodels.srm.SRMPublic)
+def create_srm_rcert_complete(
+    *,
+    session: SessionDepends,
+    srmdata_in: basemodels.srm.SRMRCertCompleteCreate,
 ) -> models.SRMTable:
     return crud.add_srm_from_create(session=session, srmdata_in=srmdata_in)
 
@@ -352,16 +397,20 @@ def create_srmrcert_complete(
 async def create_upload_file(
     *,
     session: SessionDepends,
-    srmdata_in: Annotated[
+    srm_query: Annotated[
         str, Form()
     ] = '{"name": "string", "srm_id": 0, "batch_id": null, "lot_id": "string", "timestamp": null}',
     uploadfile: Annotated[UploadFile, File()],
 ) -> Any:  # models.SRMTable:
 
+    logger.info("srm_query %s %s", srm_query, type(srm_query))
+
     try:
-        srmdata_create = basemodels.srm.SRMCreate.model_validate_json(srmdata_in)
+        srmdata_create = basemodels.srm.SRMCreate.from_string(srm_query)
     except ValidationError as e:
         raise HTTPException(status_code=422, detail=e.errors()) from e
+
+    logger.info("srmdata_create %s", srmdata_create)
 
     _raise_if_srms_exist(
         session=session,
