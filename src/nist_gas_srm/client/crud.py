@@ -95,12 +95,12 @@ def upload_excel_file(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: basemodels.srm.SRMQuery | str | None = None,
+    srm_query: basemodels.srm.SRMCreate | basemodels.srm.SRMQuery | str | None = None,
 ) -> Response:
     if srm_query is not None:
-        srm_str_query = _validate_srm_query(srm_query).model_dump_json(
-            exclude_unset=True
-        )
+        if isinstance(srm_query, str):
+            srm_query = basemodels.srm.SRMCreate.from_string(srm_query)
+        srm_str_query = srm_query.model_dump_json(exclude_unset=True)
     else:
         srm_str_query = basemodels.srm.SRMQuery.from_params_exclude_none(
             srm_id=srm_id, batch_id=batch_id, lot_id=lot_id
