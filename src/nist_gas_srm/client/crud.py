@@ -7,6 +7,7 @@ from nist_gas_srm.core import basemodels
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from pathlib import Path
     from typing import Any
 
     from httpx import Client, Response
@@ -85,3 +86,28 @@ get_srm = partial(_get_single, url="/srm")
 get_measurements = partial(_get_single, url="/measurement")
 get_standard_analysis = partial(_get_single, url="/standard-analysis")
 get_rcerts = partial(_get_single, url="/rcert")
+
+
+def upload_excel_file(
+    client: Client,
+    *,
+    path: Path,
+    srm_id: int | None = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
+    srm_query: basemodels.srm.SRMQuery | str | None = None,
+) -> Response:
+    if srm_query is not None:
+        srm_str_query = _validate_srm_query(srm_query).model_dump_json(
+            exclude_unset=True
+        )
+    else:
+        srm_str_query = basemodels.srm.SRMQuery.from_params_exclude_none(
+            srm_id=srm_id, batch_id=batch_id, lot_id=lot_id
+        ).model_dump_json(exclude_unset=True)
+
+    with path.open("rb") as f:
+        files = {"uploadfile": (path.name, f, "application/vnd.ms-excel")}
+        return client.post(
+            "/upload-excel", data={"srm_query": srm_str_query}, files=files
+        )

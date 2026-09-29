@@ -35,51 +35,7 @@ from .utils import (
 )
 
 
-class SRMBase(SQLModel):
-    """Metadata base class"""
-
-    __table_args__ = (
-        UniqueConstraint("srm_id", "batch_id", "lot_id", name="unique_user_product"),
-    )
-
-    model_config = SQLModelConfig(ignored_types=(hybrid_property,))
-
-    name: str | None = Field(sa_column=Column("name", VARCHAR), default=None)
-    note: str | None = Field(sa_column=Column("note", VARCHAR), default=None)
-    units: str = "ppm"
-
-    srm_id: int = Field(index=True)
-    batch_id: OptionalLowerString
-    lot_id: LowerString
-
-    timestamp: Annotated[datetime, BeforeValidator(validate_timestamp)] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False),
-        default_factory=lambda: datetime.now(UTC),
-    )
-
-    @hybrid_property
-    def srm_string_id(self) -> str:
-        return f"{self.srm_id}{self.batch_id or ''}{'-' + self.lot_id if self.lot_id else ''}"
-
-
-class SRMPublic(SRMBase, IDPrimaryKeyPublic):
-    pass
-
-
-class SRMCreate(SRMBase):
-    pass
-
-
-class SRMUpdate(SQLModel):
-    name: str | None = None
-    timestamp: datetime | None = None
-
-
-class SRMQuery(SQLModel):
-    srm_id: int | None = None
-    batch_id: OptionalLowerString = None
-    lot_id: OptionalLowerString = None
-
+class _FromStringMixin(SQLModel):
     @classmethod
     def from_string(cls, string: str) -> Self:
         """
@@ -102,53 +58,78 @@ class SRMQuery(SQLModel):
             })
         return cls()
 
+
+class SRMBase(SQLModel):
+    """Metadata base class"""
+
+    __table_args__ = (
+        UniqueConstraint("srm_id", "batch_id", "lot_id", name="unique_user_product"),
+    )
+
+    model_config = SQLModelConfig(ignored_types=(hybrid_property,))
+
+    name: str | None = Field(sa_column=Column("name", VARCHAR), default=None)
+    note: str | None = Field(sa_column=Column("note", VARCHAR), default=None)
+    units: str = "ppm"
+
+    srm_id: int = Field(index=True)
+    batch_id: OptionalLowerString = None
+    lot_id: LowerString
+
+    timestamp: Annotated[datetime, BeforeValidator(validate_timestamp)] = Field(
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+        default_factory=lambda: datetime.now(UTC),
+    )
+
+    @hybrid_property
+    def srm_string_id(self) -> str:
+        return f"{self.srm_id}{self.batch_id or ''}{'-' + self.lot_id if self.lot_id else ''}"
+
+
+class SRMPublic(SRMBase, IDPrimaryKeyPublic):
+    pass
+
+
+class SRMCreate(SRMBase, _FromStringMixin):
+    pass
+
+
+class SRMUpdate(SQLModel):
+    name: str | None = None
+    timestamp: datetime | None = None
+
+
+class SRMQuery(_FromStringMixin):
+    srm_id: int | None = None
+    batch_id: OptionalLowerString = None
+    lot_id: OptionalLowerString = None
+
     @classmethod
     def from_params_exclude_none(cls, **kwargs: Any) -> Self:
         kwargs = {k: v for k, v in kwargs.items() if v is not None}
         return cls.model_validate(kwargs)
 
 
+# * Publics
 class SRMCompletePublic(SRMPublic):
     measurements: measurements.MeasurementsCompletePublic
     standard_analysis: stdanal.StandardAnalysisCompletePublic
     rcert: rcert.RCertCompletePublic
 
 
-class SRMCompleteCreate(SRMCreate):
-    measurements: measurements.MeasurementsCompleteCreate
-    standard_analysis: stdanal.StandardAnalysisCompleteCreate
-    rcert: rcert.RCertCompleteCreate
-
-
-# measurements only
 class SRMMeasurementsCompletePublic(SRMPublic):
     measurements: measurements.MeasurementsCompletePublic
 
 
-class SRMMeasurementsCompleteCreate(SRMCreate):
-    measurements: measurements.MeasurementsCompleteCreate
-
-
-# standard_analysis only
 class SRMStandardAnalysisCompletePublic(SRMPublic):
     standard_analysis: stdanal.StandardAnalysisCompletePublic
 
 
-class SRMStandardAnalysisCompleteCreate(SRMCreate):
-    standard_analysis: stdanal.StandardAnalysisCompleteCreate
-
-
-# rcert only
 class SRMRCertCompletePublic(SRMPublic):
     rcert: rcert.RCertCompletePublic
 
 
-class SRMRCertCompleteCreate(SRMCreate):
-    rcert: rcert.RCertCompleteCreate
-
-
-# Single publics
-class SRMRMeasurementsPublic(SRMPublic):
+class SRMMeasurementsPublic(SRMPublic):
     measurements: measurements.MeasurementsPublic
 
 
@@ -158,3 +139,34 @@ class SRMStandardAnalysisPublic(SRMPublic):
 
 class SRMRCertPublic(SRMPublic):
     rcert: rcert.RCertPublic
+
+
+# * Creates
+class SRMCompleteCreate(SRMCreate):
+    measurements: measurements.MeasurementsCompleteCreate
+    standard_analysis: stdanal.StandardAnalysisCompleteCreate
+    rcert: rcert.RCertCompleteCreate
+
+
+class SRMMeasurementsCompleteCreate(SRMCreate):
+    measurements: measurements.MeasurementsCompleteCreate
+
+
+class SRMStandardAnalysisCompleteCreate(SRMCreate):
+    standard_analysis: stdanal.StandardAnalysisCompleteCreate
+
+
+class SRMRCertCompleteCreate(SRMCreate):
+    rcert: rcert.RCertCompleteCreate
+
+
+class SRMMeasurementsCreate(SRMCreate):
+    measurements: measurements.MeasurementsCreate
+
+
+class SRMStandardAnalysisCreate(SRMCreate):
+    standard_analysis: stdanal.StandardAnalysisCreate
+
+
+class SRMRCertCreate(SRMCreate):
+    rcert: rcert.RCertCreate
