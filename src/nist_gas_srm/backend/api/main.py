@@ -23,6 +23,7 @@ from sqlmodel import Session
 from nist_gas_srm.backend import crud, models
 from nist_gas_srm.backend.core.db import engine, init_db
 from nist_gas_srm.core import basemodels
+from nist_gas_srm.core.basemodels.utils import srm_params_to_srm_query
 from nist_gas_srm.core.excel_interface import (
     dict_of_dataframes_to_workbook,
     model_to_dict_of_dataframes,
@@ -68,9 +69,13 @@ def _raise_if_srms_exist(
         batch_id=batch_id,
         lot_id=lot_id,
     ):
+        srm_query = srm_params_to_srm_query(
+            srm_id=srm_id, batch_id=batch_id, lot_id=lot_id
+        ).upper()
+        logger.info("SRM %s exists", srm_query)
         raise HTTPException(
             status_code=400,
-            detail=f"SRM with {srm_id=}, {batch_id=}, {lot_id=} exists.",
+            detail=f"SRM {srm_query} exists.",
         )
 
 
@@ -495,6 +500,8 @@ async def download_excel(
 
     with TemporaryDirectory(delete=False) as d:
         file_path = Path(d) / filename
+
+        logger.info("hello %s", file_path)
 
         with xlsx_manager(template_xlsx) as workbook:
             dict_of_dataframes_to_workbook(

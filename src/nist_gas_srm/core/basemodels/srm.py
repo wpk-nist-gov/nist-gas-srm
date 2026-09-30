@@ -33,6 +33,7 @@ from .keys import IDPrimaryKeyPublic
 from .utils import (
     LowerString,
     OptionalLowerString,
+    srm_params_to_srm_query,
 )
 
 
@@ -98,7 +99,9 @@ class SRMBase(SQLModel):
 
     @hybrid_property
     def srm_string_id(self) -> str:
-        return f"{self.srm_id}{self.batch_id or ''}{'-' + self.lot_id if self.lot_id else ''}"
+        return srm_params_to_srm_query(
+            srm_id=self.srm_id, batch_id=self.batch_id, lot_id=self.lot_id
+        )
 
 
 class SRMPublic(SRMBase, IDPrimaryKeyPublic):

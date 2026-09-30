@@ -32,7 +32,7 @@ class EditableWidget:
 
     def widget(self, **kwargs: Any) -> Any:
         kwargs = {**kwargs, **self.kwargs}
-        return self.widget_func(self.label, *kwargs, key=self.keyname)
+        return self.widget_func(self.label, **kwargs, key=self.keyname)
 
     def update_key(self, value: Any) -> None:
         st.session_state[self.keyname] = value
@@ -44,7 +44,10 @@ st.subheader("Enter SRM metadata")
 
 editable_srm_widgets = {
     "srm_id": EditableWidget(
-        "ID", st.number_input, placeholder="2627", min_value=1, max_value=100000
+        "ID",
+        st.number_input,
+        min_value=1,
+        max_value=10000000,
     ),
     "batch_id": EditableWidget("Batch", st.text_input, placeholder="a"),
     "lot_id": EditableWidget("Lot", st.text_input, placeholder="XXX"),
@@ -97,9 +100,11 @@ def _submit_data_to_database() -> None:
                 upload_name=upload_file.name,
             )
 
-            st.write(response)
+            if not response.is_success:
+                st.error(response.json()["detail"])
+            else:
+                st.info(f"Uploaded {srm_query.srm_string_id.upper()}")
 
 
 if submit_to_database:
     _submit_data_to_database()
-    st.info("uploaded data")
