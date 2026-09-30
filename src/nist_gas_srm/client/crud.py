@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from functools import partial
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from nist_gas_srm.core import basemodels
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from pathlib import Path
-    from typing import Any
+    from typing import Any, BinaryIO
 
     from httpx import Client, Response
 
@@ -95,12 +95,13 @@ get_rcerts = partial(_get_single, url="/rcert")
 
 def upload_excel_file(
     client: Client,
+    path_or_buffer: Path | BinaryIO,
     *,
-    path: Path,
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: str | basemodels.srm.SRMCreate | basemodels.srm.SRMQuery | None = None,
+    upload_name: str | None = None,
 ) -> Response:
     if srm_query is not None:
         srm_query_str = (
@@ -113,26 +114,39 @@ def upload_excel_file(
             srm_id=srm_id, batch_id=batch_id, lot_id=lot_id
         ).model_dump_json(exclude_unset=True)
 
-    with path.open("rb") as f:
-        files = {"file": (path.name, f, "application/vnd.ms-excel")}
-        return client.post(
-            "/upload-excel", data={"srm_query": srm_query_str}, files=files
-        )
+    func = partial(client.post, "/upload-excel", data={"srm_query": srm_query_str})
+    mime_type = "application/vnd.ms-excel"
+
+    if isinstance(path_or_buffer, Path):
+        if upload_name is None:
+            upload_name = path_or_buffer.name
+
+        with path_or_buffer.open("rb") as f:
+            return func(files={"file": (upload_name, f, mime_type)})
+
+    if upload_name is None:
+        msg = "must specify `upload_name` if passing buffer"
+        raise ValueError(msg)
+
+    return func(files={"file": (upload_name, path_or_buffer, mime_type)})
 
 
 def download_excel_file(
     client: Client,
+    path: Path | None = None,
     *,
-    path: Path,
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: str | basemodels.srm.SRMQuery | None = None,
-) -> None:
+) -> Response:
 
     params = _get_srm_params(srm_query, srm_id=srm_id, batch_id=batch_id, lot_id=lot_id)
 
     response = client.get("/download-excel", params=params)
 
-    with path.open("wb") as f:
-        _ = f.write(response.content)
+    if path is not None:
+        with path.open("wb") as f:
+            _ = f.write(response.content)
+
+    return response
