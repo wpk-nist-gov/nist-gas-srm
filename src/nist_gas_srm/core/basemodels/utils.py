@@ -37,3 +37,12 @@ LowerString = Annotated[str, StringConstraints(min_length=1, to_lower=True)]
 OptionalLowerString = Annotated[
     str | None, StringConstraints(min_length=1, to_lower=True)
 ]
+
+
+def srm_params_to_srm_query(
+    srm_id: int | None = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
+) -> str:
+
+    return f"{srm_id}{batch_id or ''}{'-' + lot_id if lot_id else ''}"

@@ -6,6 +6,7 @@ import httpx
 
 from nist_gas_srm.client import crud
 from nist_gas_srm.core import basemodels
+from nist_gas_srm.core.basemodels.utils import srm_params_to_srm_query
 
 FASTAPI_URL = "http://127.0.0.1:8000"
 
@@ -37,12 +38,6 @@ TABLEGROUP_DBNAMES_TABLENAMES_MAPPING = {
 }
 
 
-def get_srm_string_id(
-    srm_id: int, batch_id: str | None = None, lot_id: str | None = None
-) -> str:
-    return f"{srm_id}{batch_id or ''}{'-' + lot_id if lot_id else ''}"
-
-
 def get_all_srms(include_subtypes: bool = True) -> list[str]:
     with httpx.Client(base_url=FASTAPI_URL) as client:
         response = crud.get_srms(client)
@@ -58,14 +53,15 @@ def get_all_srms(include_subtypes: bool = True) -> list[str]:
 
         # which srm + batch is repeated
         for value, count in Counter(
-            get_srm_string_id(model.srm_id, model.batch_id) for model in models
+            srm_params_to_srm_query(model.srm_id, model.batch_id) for model in models
         ).items():
             if count > 1:
                 out.add(value)
 
         # which srm + lot is repeated
         for value, count in Counter(
-            get_srm_string_id(model.srm_id, lot_id=model.lot_id) for model in models
+            srm_params_to_srm_query(model.srm_id, lot_id=model.lot_id)
+            for model in models
         ).items():
             if count > 1:
                 out.add(value)

@@ -1,5 +1,6 @@
 """Basic crud operations"""
 
+import logging
 from collections.abc import Iterable, Sequence
 
 import pandas as pd
@@ -10,6 +11,10 @@ from sqlmodel import Session, SQLModel, and_ as sql_and_, or_ as sql_or_, select
 from nist_gas_srm.core import basemodels, excel_interface  # , read_excel
 
 from . import models
+
+FORMAT = "[%(name)s - %(levelname)s] %(message)s"
+logging.basicConfig(level=logging.INFO, format=FORMAT)
+logger = logging.getLogger(__name__)
 
 
 def create_srm(
@@ -340,6 +345,7 @@ def add_srm_from_excel_obj(
     data.update(srmdata_create.model_dump())
 
     srmdata_in = basemodels.srm.SRMCompleteCreate.model_validate(data)
+
     return add_srm_from_create(session=session, srmdata_in=srmdata_in)
 
 
