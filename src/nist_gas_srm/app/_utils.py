@@ -43,30 +43,31 @@ def get_srm_string_id(
     return f"{srm_id}{batch_id or ''}{'-' + lot_id if lot_id else ''}"
 
 
-def get_all_srms() -> list[str]:
+def get_all_srms(include_subtypes: bool = True) -> list[str]:
     with httpx.Client(base_url=FASTAPI_URL) as client:
         response = crud.get_srms(client)
     models = [basemodels.srm.SRMPublic.model_validate(x) for x in response.json()]
 
     out = {model.srm_string_id for model in models}
 
-    # which srm_id is repeated?
-    for value, count in Counter(str(model.srm_id) for model in models).items():
-        if count > 1:
-            out.add(value)
+    if include_subtypes:
+        # which srm_id is repeated?
+        for value, count in Counter(str(model.srm_id) for model in models).items():
+            if count > 1:
+                out.add(value)
 
-    # which srm + batch is repeated
-    for value, count in Counter(
-        get_srm_string_id(model.srm_id, model.batch_id) for model in models
-    ).items():
-        if count > 1:
-            out.add(value)
+        # which srm + batch is repeated
+        for value, count in Counter(
+            get_srm_string_id(model.srm_id, model.batch_id) for model in models
+        ).items():
+            if count > 1:
+                out.add(value)
 
-    # which srm + lot is repeated
-    for value, count in Counter(
-        get_srm_string_id(model.srm_id, lot_id=model.lot_id) for model in models
-    ).items():
-        if count > 1:
-            out.add(value)
+        # which srm + lot is repeated
+        for value, count in Counter(
+            get_srm_string_id(model.srm_id, lot_id=model.lot_id) for model in models
+        ).items():
+            if count > 1:
+                out.add(value)
 
     return sorted(out)
