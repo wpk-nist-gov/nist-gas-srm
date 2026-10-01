@@ -61,7 +61,7 @@ class FromSRMQuery(SQLModel):
         if not isinstance(srm_query, str):
             return srm_query
 
-        if (m := JSON_PATTERN.match(srm_query)) is not None:
+        if JSON_PATTERN.match(srm_query) is not None:
             return cls.model_validate_json(srm_query)
 
         if (m := SRM_PATTERN.match(srm_query)) is not None:
@@ -69,6 +69,26 @@ class FromSRMQuery(SQLModel):
                 k: v for k, v in m.groupdict().items() if v is not None
             })
         return cls()
+
+    @classmethod
+    def validate_srm_query_fuzzy(cls, srm_query: str | Self) -> str | Self:
+        if not isinstance(srm_query, str):
+            return srm_query
+
+        if JSON_PATTERN.match(srm_query) is not None:
+            return cls.model_validate_json(srm_query)
+
+        return (
+            srm_query
+            .replace(r"\*", r"#DUMMYSTAR")
+            .replace(r"\?", r"#DUMMYQUESTION")
+            .replace(r"_", r"\_")
+            .replace(r"%", r"\%")
+            .replace(r"?", r"_")
+            .replace(r"*", r"%")
+            .replace(r"#DUMMYSTAR", "*")
+            .replace(r"#DUMMYQUESTION", "?")
+        )
 
     @classmethod
     def from_srm_queries(cls, srm_queries: Iterable[str | Self]) -> list[Self]:

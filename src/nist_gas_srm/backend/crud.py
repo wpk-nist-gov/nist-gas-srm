@@ -7,8 +7,8 @@ from typing import overload
 
 import pandas as pd
 from sqlalchemy.engine.result import ScalarResult
-from sqlalchemy.sql.elements import ColumnElement
-from sqlmodel import Session, SQLModel, and_ as sql_and_, or_ as sql_or_, select
+from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
+from sqlmodel import Session, and_ as sql_and_, or_ as sql_or_, select
 
 from nist_gas_srm.core import basemodels, excel_interface  # , read_excel
 
@@ -44,10 +44,45 @@ def update_srm(
     return db_srmdata
 
 
-def _get_sql_and_from_model(
-    query: basemodels.srm.SRMQuery,
-    model: type[SQLModel] = models.SRMTable,
-) -> ColumnElement[bool]:
+# def _get_sql_and_from_model(
+#     query: basemodels.srm.SRMQuery,
+#     model: type[SQLModel] = models.SRMTable,
+# ) -> ColumnElement[bool]:
+#     return sql_and_(
+#         *(
+#             getattr(model, attr) == value
+#             for attr, value in query.model_dump(exclude_unset=True).items()
+#         )
+#     )
+
+# def _get_where_from_srm_query(
+#     srm_query: str | basemodels.srm.SRMQuery | Iterable[str | basemodels.srm.SRMQuery],
+#     model: type[SQLModel] = models.SRMTable,
+# ) -> ColumnElement[bool]:
+
+#     if isinstance(srm_query, str):
+#         srm_query = basemodels.srm.SRMQuery.from_srm_query(srm_query)
+
+#     if isinstance(srm_query, basemodels.srm.SRMQuery):
+#         return  _get_sql_and_from_model(srm_query, model=model)
+
+#     srm_query = basemodels.srm.SRMQuery.from_srm_queries(srm_query)
+#     return sql_or_(
+#         *(_get_sql_and_from_model(obj, model=model) for obj in srm_query)
+#     )
+
+
+def _get_sql_and_from_model_fuzzy(
+    query: str | basemodels.srm.SRMQuery,
+    model: type[models.SRMTable] = models.SRMTable,
+) -> ColumnElement[bool] | BinaryExpression[bool]:
+
+    if isinstance(query, str):
+        query = basemodels.srm.SRMQuery.validate_srm_query_fuzzy(query)
+
+    if isinstance(query, str):
+        return model.srm_string_id.ilike(query, escape="\\")
+
     return sql_and_(
         *(
             getattr(model, attr) == value
@@ -56,23 +91,17 @@ def _get_sql_and_from_model(
     )
 
 
-def _get_where_from_srm_query(
-    srm_query: str | basemodels.srm.SRMQuery | Iterable[basemodels.srm.SRMQuery | str],
-    model: type[SQLModel] = models.SRMTable,
-) -> ColumnElement[bool]:
+def _get_where_from_srm_query_maybe_fuzzy(
+    srm_query: str | basemodels.srm.SRMQuery | Iterable[str | basemodels.srm.SRMQuery],
+    model: type[models.SRMTable] = models.SRMTable,
+) -> ColumnElement[bool] | BinaryExpression[bool]:
 
-    if isinstance(srm_query, str):
-        srm_query = basemodels.srm.SRMQuery.from_srm_query(srm_query)
+    if isinstance(srm_query, str | basemodels.srm.SRMQuery):
+        return _get_sql_and_from_model_fuzzy(srm_query)
 
-    if isinstance(srm_query, basemodels.srm.SRMQuery):
-        where_ = _get_sql_and_from_model(srm_query, model=model)
-
-    else:
-        srm_query = basemodels.srm.SRMQuery.from_srm_queries(srm_query)
-        where_ = sql_or_(
-            *(_get_sql_and_from_model(obj, model=model) for obj in srm_query)
-        )
-    return where_
+    return sql_or_(
+        *(_get_sql_and_from_model_fuzzy(obj, model=model) for obj in srm_query)
+    )
 
 
 @overload
@@ -106,8 +135,9 @@ def _get_srm_result(
     lot_id: str | None = None,
     srm_query: str
     | basemodels.srm.SRMQuery
-    | Sequence[basemodels.srm.SRMQuery | str]
+    | Sequence[str | basemodels.srm.SRMQuery]
     | None = None,
+    srm_query_regex: str | None = None,
     srm_table_id: uuid.UUID | Sequence[uuid.UUID] | None = None,
 ) -> ScalarResult[models.SRMTable]:
 
@@ -118,15 +148,18 @@ def _get_srm_result(
         return session.exec(query)
 
     if srm_query is not None:
-        where_ = _get_where_from_srm_query(srm_query)
+        where_ = _get_where_from_srm_query_maybe_fuzzy(srm_query)
         query = query.where(where_)
         return session.exec(query)
+
+    if srm_query_regex is not None:
+        raise NotImplementedError
 
     srm_query = basemodels.srm.SRMQuery.from_params_exclude_none(
         srm_id=srm_id, batch_id=batch_id, lot_id=lot_id
     )
     if srm_query.model_dump(exclude_unset=True):
-        where_ = _get_where_from_srm_query(srm_query)
+        where_ = _get_where_from_srm_query_maybe_fuzzy(srm_query)
         query = query.where(where_)
 
     return session.exec(query)
@@ -138,7 +171,8 @@ def get_srm(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: basemodels.srm.SRMQuery | str | None = None,
+    srm_query: str | basemodels.srm.SRMQuery | None = None,
+    srm_query_regex: str | None = None,
     srm_table_id: uuid.UUID | None = None,
 ) -> models.SRMTable:
     """Get single srm"""
@@ -149,6 +183,7 @@ def get_srm(
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
+        srm_query_regex=srm_query_regex,
         srm_table_id=srm_table_id,
     ).one()
 
@@ -159,7 +194,7 @@ def get_srms(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: Sequence[basemodels.srm.SRMQuery | str] | None = None,
+    srm_query: Sequence[str | basemodels.srm.SRMQuery] | None = None,
     srm_table_id: Sequence[uuid.UUID] | None = None,
 ) -> Sequence[models.SRMTable]:
     """Get multiple srm"""
@@ -179,7 +214,7 @@ def get_rcert(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: basemodels.srm.SRMQuery | str | None = None,
+    srm_query: str | basemodels.srm.SRMQuery | None = None,
     srm_table_id: uuid.UUID | None = None,
 ) -> models.RCertTable:
 
@@ -199,7 +234,7 @@ def get_rcerts(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: Sequence[basemodels.srm.SRMQuery | str] | None = None,
+    srm_query: Sequence[str | basemodels.srm.SRMQuery] | None = None,
     srm_table_id: Sequence[uuid.UUID] | None = None,
 ) -> Sequence[models.RCertTable]:
 
@@ -222,7 +257,7 @@ def get_measurement(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: basemodels.srm.SRMQuery | str | None = None,
+    srm_query: str | basemodels.srm.SRMQuery | None = None,
     srm_table_id: uuid.UUID | None = None,
 ) -> models.Measurements:
 
@@ -242,7 +277,7 @@ def get_measurements(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: Sequence[basemodels.srm.SRMQuery | str] | None = None,
+    srm_query: Sequence[str | basemodels.srm.SRMQuery] | None = None,
     srm_table_id: Sequence[uuid.UUID] | None = None,
 ) -> Sequence[models.Measurements]:
 
@@ -265,7 +300,7 @@ def get_standard_analysis(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: basemodels.srm.SRMQuery | str | None = None,
+    srm_query: str | basemodels.srm.SRMQuery | None = None,
     srm_table_id: uuid.UUID | None = None,
 ) -> models.StandardAnalysisTable:
 
@@ -285,7 +320,7 @@ def get_standard_analyses(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: Sequence[basemodels.srm.SRMQuery | str] | None = None,
+    srm_query: Sequence[str | basemodels.srm.SRMQuery] | None = None,
     srm_table_id: Sequence[uuid.UUID] | None = None,
 ) -> Sequence[models.StandardAnalysisTable]:
 
