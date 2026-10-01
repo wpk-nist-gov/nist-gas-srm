@@ -1,3 +1,4 @@
 from . import measurements, rcert, srm, standard_analysis
+from .srm import Message
 
-__all__ = ["measurements", "rcert", "srm", "standard_analysis"]
+__all__ = ["Message", "measurements", "rcert", "srm", "standard_analysis"]

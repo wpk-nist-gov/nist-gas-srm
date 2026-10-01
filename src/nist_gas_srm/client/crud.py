@@ -9,6 +9,7 @@ from nist_gas_srm.core import basemodels
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import Any, BinaryIO
+    from uuid import UUID
 
     from httpx import Client, Response
 
@@ -19,16 +20,26 @@ def _get_srm_params(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
+    srm_table_id: str | UUID | None = None,
 ) -> dict[str, Any]:
+
+    params: dict[str, Any] = {}
+
+    if srm_table_id is not None:
+        params["id"] = srm_table_id
+
     if srm_query is not None:
-        return {
-            "srm_query": basemodels.srm.SRMQuery.from_srm_query(
-                srm_query
-            ).model_dump_json(exclude_unset=True)
-        }
-    return basemodels.srm.SRMQuery.from_params_exclude_none(
-        srm_id=srm_id, batch_id=batch_id, lot_id=lot_id
-    ).model_dump(exclude_unset=True)
+        params["srm_query"] = basemodels.srm.SRMQuery.from_srm_query(
+            srm_query
+        ).model_dump_json(exclude_unset=True)
+
+    params.update(
+        basemodels.srm.SRMQuery.from_params_exclude_none(
+            srm_id=srm_id, batch_id=batch_id, lot_id=lot_id
+        ).model_dump(exclude_unset=True)
+    )
+
+    return params
 
 
 def _get_multiple(
@@ -39,6 +50,7 @@ def _get_multiple(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: Sequence[str | basemodels.srm.SRMQuery] | None = None,
+    srm_table_id: Sequence[str | UUID] | None = None,
     subtable: str | None = None,
     complete: bool = False,
 ) -> Response:
@@ -46,18 +58,26 @@ def _get_multiple(
         url = f"{url}/{subtable}"
     if complete:
         url = f"{url}/complete"
+
+    params: dict[str, Any] = {}
+
+    if srm_table_id is not None:
+        params["id"] = srm_table_id
+
     if srm_query is not None:
-        srm_query_str = [
+        params["srm_query"] = [
             basemodels.srm.SRMQuery.from_srm_query(q).model_dump_json(
                 exclude_unset=True
             )
             for q in srm_query
         ]
-        return client.get(url, params={"srm_query": srm_query_str})
 
-    params = basemodels.srm.SRMQuery.from_params_exclude_none(
-        srm_id=srm_id, batch_id=batch_id, lot_id=lot_id
-    ).model_dump(exclude_unset=True)
+    params.update(
+        basemodels.srm.SRMQuery.from_params_exclude_none(
+            srm_id=srm_id, batch_id=batch_id, lot_id=lot_id
+        ).model_dump(exclude_unset=True)
+    )
+
     return client.get(url, params=params)
 
 
@@ -75,6 +95,7 @@ def _get_single(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: str | basemodels.srm.SRMQuery | None = None,
+    srm_table_id: str | UUID | None = None,
     complete: bool = False,
     subtable: str | None = None,
 ) -> Response:
@@ -83,7 +104,13 @@ def _get_single(
     if complete:
         url = f"{url}/complete"
 
-    params = _get_srm_params(srm_query, srm_id=srm_id, batch_id=batch_id, lot_id=lot_id)
+    params = _get_srm_params(
+        srm_query,
+        srm_id=srm_id,
+        batch_id=batch_id,
+        lot_id=lot_id,
+        srm_table_id=srm_table_id,
+    )
     return client.get(url, params=params)
 
 

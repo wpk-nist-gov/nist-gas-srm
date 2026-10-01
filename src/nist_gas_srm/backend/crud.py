@@ -1,7 +1,9 @@
 """Basic crud operations"""
 
 import logging
+import uuid
 from collections.abc import Iterable, Sequence
+from typing import overload
 
 import pandas as pd
 from sqlalchemy.engine.result import ScalarResult
@@ -56,18 +58,44 @@ def _get_sql_and_from_model(
 
 def _get_where_from_srm_query(
     srm_query: str | basemodels.srm.SRMQuery | Iterable[basemodels.srm.SRMQuery | str],
+    model: type[SQLModel] = models.SRMTable,
 ) -> ColumnElement[bool]:
 
     if isinstance(srm_query, str):
         srm_query = basemodels.srm.SRMQuery.from_srm_query(srm_query)
 
     if isinstance(srm_query, basemodels.srm.SRMQuery):
-        where_ = _get_sql_and_from_model(srm_query)
+        where_ = _get_sql_and_from_model(srm_query, model=model)
 
     else:
         srm_query = basemodels.srm.SRMQuery.from_srm_queries(srm_query)
-        where_ = sql_or_(*(_get_sql_and_from_model(obj) for obj in srm_query))
+        where_ = sql_or_(
+            *(_get_sql_and_from_model(obj, model=model) for obj in srm_query)
+        )
     return where_
+
+
+@overload
+def _get_where_from_srm_table_id(
+    srm_table_id: uuid.UUID,
+    model: type[models.SRMTable] = models.SRMTable,
+) -> bool: ...
+@overload
+def _get_where_from_srm_table_id(
+    srm_table_id: Sequence[uuid.UUID],
+    model: type[models.SRMTable] = models.SRMTable,
+) -> ColumnElement[bool]: ...
+
+
+def _get_where_from_srm_table_id(
+    srm_table_id: uuid.UUID | Sequence[uuid.UUID],
+    model: type[models.SRMTable] = models.SRMTable,
+) -> bool | ColumnElement[bool]:
+    if isinstance(srm_table_id, uuid.UUID):
+        return model.id == srm_table_id
+    return sql_or_(
+        *(_get_where_from_srm_table_id(obj, model=model) for obj in srm_table_id)
+    )
 
 
 def _get_srm_result(
@@ -80,13 +108,20 @@ def _get_srm_result(
     | basemodels.srm.SRMQuery
     | Sequence[basemodels.srm.SRMQuery | str]
     | None = None,
+    srm_table_id: uuid.UUID | Sequence[uuid.UUID] | None = None,
 ) -> ScalarResult[models.SRMTable]:
 
     query = select(models.SRMTable)
+    if srm_table_id is not None:
+        where_ = _get_where_from_srm_table_id(srm_table_id)
+        query = query.where(where_)
+        return session.exec(query)
+
     if srm_query is not None:
         where_ = _get_where_from_srm_query(srm_query)
         query = query.where(where_)
         return session.exec(query)
+
     srm_query = basemodels.srm.SRMQuery.from_params_exclude_none(
         srm_id=srm_id, batch_id=batch_id, lot_id=lot_id
     )
@@ -104,6 +139,7 @@ def get_srm(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: basemodels.srm.SRMQuery | str | None = None,
+    srm_table_id: uuid.UUID | None = None,
 ) -> models.SRMTable:
     """Get single srm"""
 
@@ -113,6 +149,7 @@ def get_srm(
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
+        srm_table_id=srm_table_id,
     ).one()
 
 
@@ -123,6 +160,7 @@ def get_srms(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: Sequence[basemodels.srm.SRMQuery | str] | None = None,
+    srm_table_id: Sequence[uuid.UUID] | None = None,
 ) -> Sequence[models.SRMTable]:
     """Get multiple srm"""
     return _get_srm_result(
@@ -131,6 +169,7 @@ def get_srms(
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
+        srm_table_id=srm_table_id,
     ).all()
 
 
@@ -141,6 +180,7 @@ def get_rcert(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: basemodels.srm.SRMQuery | str | None = None,
+    srm_table_id: uuid.UUID | None = None,
 ) -> models.RCertTable:
 
     return get_srm(
@@ -149,6 +189,7 @@ def get_rcert(
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
+        srm_table_id=srm_table_id,
     ).rcert
 
 
@@ -159,6 +200,7 @@ def get_rcerts(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: Sequence[basemodels.srm.SRMQuery | str] | None = None,
+    srm_table_id: Sequence[uuid.UUID] | None = None,
 ) -> Sequence[models.RCertTable]:
 
     return [
@@ -169,6 +211,7 @@ def get_rcerts(
             batch_id=batch_id,
             lot_id=lot_id,
             srm_query=srm_query,
+            srm_table_id=srm_table_id,
         )
     ]
 
@@ -180,6 +223,7 @@ def get_measurement(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: basemodels.srm.SRMQuery | str | None = None,
+    srm_table_id: uuid.UUID | None = None,
 ) -> models.Measurements:
 
     return get_srm(
@@ -188,6 +232,7 @@ def get_measurement(
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
+        srm_table_id=srm_table_id,
     ).measurements
 
 
@@ -198,6 +243,7 @@ def get_measurements(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: Sequence[basemodels.srm.SRMQuery | str] | None = None,
+    srm_table_id: Sequence[uuid.UUID] | None = None,
 ) -> Sequence[models.Measurements]:
 
     return [
@@ -208,6 +254,7 @@ def get_measurements(
             batch_id=batch_id,
             lot_id=lot_id,
             srm_query=srm_query,
+            srm_table_id=srm_table_id,
         )
     ]
 
@@ -219,6 +266,7 @@ def get_standard_analysis(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: basemodels.srm.SRMQuery | str | None = None,
+    srm_table_id: uuid.UUID | None = None,
 ) -> models.StandardAnalysisTable:
 
     return get_srm(
@@ -227,6 +275,7 @@ def get_standard_analysis(
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
+        srm_table_id=srm_table_id,
     ).standard_analysis
 
 
@@ -237,6 +286,7 @@ def get_standard_analyses(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: Sequence[basemodels.srm.SRMQuery | str] | None = None,
+    srm_table_id: Sequence[uuid.UUID] | None = None,
 ) -> Sequence[models.StandardAnalysisTable]:
 
     return [
@@ -247,6 +297,7 @@ def get_standard_analyses(
             batch_id=batch_id,
             lot_id=lot_id,
             srm_query=srm_query,
+            srm_table_id=srm_table_id,
         )
     ]
 
