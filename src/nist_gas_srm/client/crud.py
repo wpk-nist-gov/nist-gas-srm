@@ -20,6 +20,7 @@ def _get_srm_params(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
+    srm_query_regex: str | None = None,
     srm_table_id: str | UUID | None = None,
 ) -> dict[str, Any]:
 
@@ -29,9 +30,14 @@ def _get_srm_params(
         params["id"] = srm_table_id
 
     if srm_query is not None:
-        params["srm_query"] = basemodels.srm.SRMQuery.from_srm_query(
+        params["srm_query"] = (
             srm_query
-        ).model_dump_json(exclude_unset=True)
+            if isinstance(srm_query, str)
+            else srm_query.model_dump_json(exclude_unset=True)
+        )
+
+    if srm_query_regex is not None:
+        params["query_regex"] = srm_query_regex
 
     params.update(
         basemodels.srm.SRMQuery.from_params_exclude_none(
@@ -50,6 +56,7 @@ def _get_multiple(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: Sequence[str | basemodels.srm.SRMQuery] | None = None,
+    srm_query_regex: Sequence[str] | None = None,
     srm_table_id: Sequence[str | UUID] | None = None,
     subtable: str | None = None,
     complete: bool = False,
@@ -66,11 +73,12 @@ def _get_multiple(
 
     if srm_query is not None:
         params["srm_query"] = [
-            basemodels.srm.SRMQuery.from_srm_query(q).model_dump_json(
-                exclude_unset=True
-            )
+            q if isinstance(q, str) else q.model_dump_json(exclude_unset=True)
             for q in srm_query
         ]
+
+    if srm_query_regex is not None:
+        params["query_regex"] = srm_query_regex
 
     params.update(
         basemodels.srm.SRMQuery.from_params_exclude_none(
@@ -166,9 +174,16 @@ def download_excel_file(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: str | basemodels.srm.SRMQuery | None = None,
+    srm_query_regex: str | None = None,
 ) -> Response:
 
-    params = _get_srm_params(srm_query, srm_id=srm_id, batch_id=batch_id, lot_id=lot_id)
+    params = _get_srm_params(
+        srm_query,
+        srm_id=srm_id,
+        batch_id=batch_id,
+        lot_id=lot_id,
+        srm_query_regex=srm_query_regex,
+    )
 
     response = client.get("/download-excel", params=params)
 
