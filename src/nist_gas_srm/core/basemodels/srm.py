@@ -18,6 +18,7 @@ from sqlmodel import (
     Field,
     SQLModel,
     UniqueConstraint,
+    col,
 )
 from sqlmodel._compat import SQLModelConfig  # ruff:ignore[import-private-name]
 
@@ -35,6 +36,12 @@ from .utils import (
     OptionalLowerString,
     srm_params_to_srm_query,
 )
+
+
+class Message(SQLModel):
+    """Generic message"""
+
+    message: str
 
 
 class FromSRMQuery(SQLModel):
@@ -101,6 +108,17 @@ class SRMBase(SQLModel):
     def srm_string_id(self) -> str:
         return srm_params_to_srm_query(
             srm_id=self.srm_id, batch_id=self.batch_id, lot_id=self.lot_id
+        )
+
+    @srm_string_id.inplace.expression
+    @classmethod
+    def _srm_string_id_expression(cls) -> Any:
+        from sqlalchemy import String, func
+
+        return func.concat(
+            func.cast(col(cls.srm_id), String),
+            func.coalesce(cls.batch_id, ""),
+            func.concat("-", cls.lot_id),
         )
 
 
