@@ -134,3 +134,4 @@ tuna-loadtime.log
 
 *.db
 .DS_Store
+*.bak

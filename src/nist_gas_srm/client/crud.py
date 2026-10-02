@@ -192,3 +192,24 @@ def download_excel_file(
             _ = f.write(response.content)
 
     return response
+
+
+def delete_srm(
+    client: Client,
+    *,
+    srm_id: int | None = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
+    srm_query: str | basemodels.srm.SRMQuery | None = None,
+    srm_query_regex: str | None = None,
+) -> Response:
+
+    params = _get_srm_params(
+        srm_query,
+        srm_id=srm_id,
+        batch_id=batch_id,
+        lot_id=lot_id,
+        srm_query_regex=srm_query_regex,
+    )
+
+    return client.delete("/srm", params=params)

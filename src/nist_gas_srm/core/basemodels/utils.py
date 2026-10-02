@@ -1,6 +1,12 @@
 from typing import Annotated, Literal
 
-from pydantic import AliasGenerator, BeforeValidator, PlainSerializer, StringConstraints
+from pydantic import (
+    AfterValidator,
+    AliasGenerator,
+    BeforeValidator,
+    PlainSerializer,
+    StringConstraints,
+)
 from pydantic.alias_generators import to_pascal as to_pascal_base
 from sqlmodel import (
     Field,
@@ -21,6 +27,10 @@ def _serialize_test_out(x: bool) -> Literal["OUT"] | None:
     return "OUT" if x else None
 
 
+def _empty_str_to_none(x: str | None) -> str | None:
+    return x or None
+
+
 TestOutAnn = Annotated[
     bool,
     BeforeValidator(validate_test_out),
@@ -33,9 +43,14 @@ TestOutOptionalAnn = Annotated[
     PlainSerializer(_serialize_test_out),
     Field(validation_alias="Test"),
 ]
-LowerString = Annotated[str, StringConstraints(min_length=1, to_lower=True)]
+LowerString = Annotated[
+    str,
+    StringConstraints(min_length=1, to_lower=True),
+]
 OptionalLowerString = Annotated[
-    str | None, StringConstraints(min_length=1, to_lower=True)
+    str | None,
+    StringConstraints(to_lower=True),
+    AfterValidator(_empty_str_to_none),
 ]
 
 
