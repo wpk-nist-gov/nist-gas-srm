@@ -27,6 +27,7 @@ import nist_gas_srm.core.basemodels.rcert as rcert
 import nist_gas_srm.core.basemodels.standard_analysis as stdanal
 from nist_gas_srm.core.utils import JSON_PATTERN, SRM_PATTERN
 from nist_gas_srm.core.validate import (
+    validate_like_string,
     validate_timestamp,
 )
 
@@ -71,24 +72,17 @@ class FromSRMQuery(SQLModel):
         return cls()
 
     @classmethod
-    def validate_srm_query_fuzzy(cls, srm_query: str | Self) -> str | Self:
+    def validate_srm_query_maybe_like(
+        cls, srm_query: str | Self
+    ) -> tuple[bool, str | Self]:
+
         if not isinstance(srm_query, str):
-            return srm_query
+            return False, srm_query
 
         if JSON_PATTERN.match(srm_query) is not None:
-            return cls.model_validate_json(srm_query)
+            return False, cls.model_validate_json(srm_query)
 
-        return (
-            srm_query
-            .replace(r"\*", r"#DUMMYSTAR")
-            .replace(r"\?", r"#DUMMYQUESTION")
-            .replace(r"_", r"\_")
-            .replace(r"%", r"\%")
-            .replace(r"?", r"_")
-            .replace(r"*", r"%")
-            .replace(r"#DUMMYSTAR", "*")
-            .replace(r"#DUMMYQUESTION", "?")
-        )
+        return validate_like_string(srm_query)
 
     @classmethod
     def from_srm_queries(cls, srm_queries: Iterable[str | Self]) -> list[Self]:
@@ -157,6 +151,12 @@ class SRMUpdate(SQLModel):
 
 class SRMQuery(FromSRMQuery):
     srm_id: int | None = None
+    batch_id: OptionalLowerString = None
+    lot_id: OptionalLowerString = None
+
+
+class SRMQueryFuzzy(SQLModel):
+    srm_id: int | str | None = None
     batch_id: OptionalLowerString = None
     lot_id: OptionalLowerString = None
 

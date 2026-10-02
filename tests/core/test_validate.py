@@ -90,3 +90,19 @@ def test_validate_test_out(x: object, expected: object) -> None:
 def test_validate_no_null(x: Any, expected: Any) -> None:
     with expected as e:
         np.testing.assert_allclose(validate.validate_no_null(x), e)
+
+
+@pytest.mark.parametrize(
+    ("query", "is_like", "expected"),
+    [
+        (r"abc", False, r"abc"),
+        (r"a*bc", True, r"a%bc"),
+        (r"a*b_c%", True, r"a%b\_c\%"),
+        (r"a?bc", True, r"a_bc"),
+        (r"a\*bc", False, r"a*bc"),
+        (r"a\?bc", False, r"a?bc"),
+        (r"a\?bc*", True, "a?bc%"),
+    ],
+)
+def test_validate_like_string(query: str, is_like: bool, expected: str) -> None:
+    assert validate.validate_like_string(query) == (is_like, expected)

@@ -77,11 +77,11 @@ def _get_sql_and_from_model_fuzzy(
     model: type[models.SRMTable] = models.SRMTable,
 ) -> ColumnElement[bool] | BinaryExpression[bool]:
 
+    is_like_query, query = basemodels.srm.SRMQuery.validate_srm_query_maybe_like(query)
     if isinstance(query, str):
-        query = basemodels.srm.SRMQuery.validate_srm_query_fuzzy(query)
-
-    if isinstance(query, str):
-        return model.srm_string_id.ilike(query, escape="\\")
+        if is_like_query:
+            return model.srm_string_id.ilike(query, escape="\\")
+        return model.srm_string_id == query
 
     return sql_and_(
         *(
