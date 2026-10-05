@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
-import enum
 import itertools
 import operator
 import re
 from collections.abc import MutableMapping
 from typing import TYPE_CHECKING, cast
 
+from .missing import MISSING
+
 if TYPE_CHECKING:
     from collections.abc import Callable, Hashable, Iterable, Mapping
-    from typing import Any, Literal, TypeAlias, TypeVar
+    from typing import Any, TypeVar
+
+    from .missing import MissingType
 
     T = TypeVar("T")
 
@@ -68,39 +71,11 @@ def unflatten_dict(flat_dict: dict[str, Any], separator: str = ".") -> dict[str,
     return expanded_dict
 
 
-class _Missing(enum.Enum):
-    """
-    Sentinel to indicate the lack of a value when ``None`` is ambiguous.
-
-    If extending attrs, you can use ``typing.Literal[MISSING]`` to show
-    that a value may be ``MISSING``.
-
-    .. versionchanged:: 21.1.0 ``bool(MISSING)`` is now False.
-    .. versionchanged:: 22.2.0 ``MISSING`` is now an ``enum.Enum`` variant.
-    """
-
-    MISSING = enum.auto()
-
-    def __repr__(self) -> str:  # pyright: ignore[reportImplicitOverride]
-        return "MISSING"  # pragma: no cover
-
-    def __bool__(self) -> bool:
-        return False  # pragma: no cover
-
-
-MISSING = _Missing.MISSING
-"""
-Sentinel to indicate the lack of a value when ``None`` is ambiguous.
-"""
-
-MISSING_TYPE: TypeAlias = "Literal[_Missing.MISSING]"
-
-
 def get_in(
     keys: str | Iterable[Hashable],
     nested_dict: Mapping[Any, T],
     split: str | None = ".",
-    default: T | MISSING_TYPE = MISSING,
+    default: T | MissingType = MISSING,
     factory: Callable[[], T] | None = None,
 ) -> T:
     """

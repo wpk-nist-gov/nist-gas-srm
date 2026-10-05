@@ -83,12 +83,10 @@ def _get_sql_and_from_model_fuzzy(
             return model.srm_string_id.ilike(query, escape="\\")
         return model.srm_string_id == query
 
-    return sql_and_(
-        *(
-            getattr(model, attr) == value
-            for attr, value in query.model_dump(exclude_unset=True).items()
-        )
-    )
+    params = query.model_dump(exclude_unset=True)
+    logger.info("params %s", params)
+
+    return sql_and_(*(getattr(model, attr) == value for attr, value in params.items()))
 
 
 def _get_where_from_srm_query_maybe_fuzzy(

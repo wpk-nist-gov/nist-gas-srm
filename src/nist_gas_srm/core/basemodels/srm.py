@@ -25,6 +25,7 @@ from sqlmodel._compat import SQLModelConfig  # ruff:ignore[import-private-name]
 import nist_gas_srm.core.basemodels.measurements as measurements
 import nist_gas_srm.core.basemodels.rcert as rcert
 import nist_gas_srm.core.basemodels.standard_analysis as stdanal
+from nist_gas_srm.core.missing import MISSING
 from nist_gas_srm.core.utils import JSON_PATTERN, SRM_PATTERN
 from nist_gas_srm.core.validate import (
     validate_like_string,
@@ -93,6 +94,11 @@ class FromSRMQuery(SQLModel):
     @classmethod
     def from_params_exclude_none(cls, **kwargs: Any) -> Self:
         kwargs = {k: v for k, v in kwargs.items() if v is not None}
+        return cls.model_validate(kwargs)
+
+    @classmethod
+    def from_params_exclude_missing(cls, **kwargs: Any) -> Self:
+        kwargs = {k: v for k, v in kwargs.items() if v is not MISSING}
         return cls.model_validate(kwargs)
 
 

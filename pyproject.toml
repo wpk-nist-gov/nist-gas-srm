@@ -47,7 +47,7 @@ dependencies = [
     "statsmodels>=0.14.6",
     "streamlit>=1.60.0",
     "streamlit-pydantic>=0.6.0",
-    "typing-extensions; python_version<'3.12'",
+    "typing-extensions>=4.16.0; python_version<'3.15'",
     "uncertainties>=3.2.3",
     "xlrd>=2.0.2",
     "xlutils>=2.0.0",

@@ -49,7 +49,7 @@ srm = st.selectbox(
 
 @st.dialog("Confirm Action")
 def confirm_modal() -> None:
-    st.write("Are you sure you want to proceed with this critical action?")
+    st.write(f"Are you sure you want to delete {srm}?")
 
     col1, col2 = st.columns(2)
     with col1:

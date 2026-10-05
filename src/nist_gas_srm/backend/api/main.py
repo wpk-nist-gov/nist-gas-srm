@@ -62,6 +62,8 @@ SRMTableIDType = Annotated[
 SRMTableIDMultType = Annotated[
     list[uuid.UUID] | None, Query(title="SRM table IDs", validation_alias="id")
 ]
+SRMQueryType = Annotated[str | None, Query(title="General query")]
+SRMQueryMultType = Annotated[list[str] | None, Query(title="General query")]
 SRMQueryRegexType = Annotated[
     str | None,
     Query(
@@ -80,9 +82,9 @@ SRMQueryRegexMultType = Annotated[
 
 def _raise_if_srms_exist(
     session: Session,
-    srm_id: int | None = None,
-    batch_id: str | None = None,
-    lot_id: str | None = None,
+    srm_id: int,
+    batch_id: str | None,
+    lot_id: str | None,
 ) -> None:
     if crud.get_srms(
         session=session,
@@ -127,7 +129,7 @@ def read_srm(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: str | None = None,
+    srm_query: SRMQueryType = None,
     srm_query_regex: SRMQueryRegexType = None,
     srm_table_id: SRMTableIDType = None,
 ) -> models.SRMTable:
@@ -171,7 +173,7 @@ def read_srms(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: Annotated[list[str] | None, Query()] = None,
+    srm_query: SRMQueryMultType = None,
     srm_query_regex: SRMQueryRegexMultType = None,
     srm_table_id: SRMTableIDMultType = None,
 ) -> Sequence[models.SRMTable]:
@@ -196,7 +198,7 @@ def read_rcert(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: str | None = None,
+    srm_query: SRMQueryType = None,
     srm_query_regex: SRMQueryRegexType = None,
     srm_table_id: SRMTableIDType = None,
 ) -> models.RCertTable:
@@ -221,7 +223,7 @@ def read_rcerts(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: Annotated[list[str] | None, Query()] = None,
+    srm_query: SRMQueryMultType = None,
     srm_query_regex: SRMQueryRegexMultType = None,
     srm_table_id: SRMTableIDMultType = None,
 ) -> Sequence[models.RCertTable]:
@@ -249,7 +251,7 @@ def read_meausrement(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: str | None = None,
+    srm_query: SRMQueryType = None,
     srm_query_regex: SRMQueryRegexType = None,
     srm_table_id: SRMTableIDType = None,
 ) -> models.Measurements:
@@ -279,7 +281,7 @@ def read_measurements(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: Annotated[list[str] | None, Query()] = None,
+    srm_query: SRMQueryMultType = None,
     srm_query_regex: SRMQueryRegexMultType = None,
     srm_table_id: SRMTableIDMultType = None,
 ) -> Sequence[models.Measurements]:
@@ -310,7 +312,7 @@ def read_standard_analysis(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: str | None = None,
+    srm_query: SRMQueryType = None,
     srm_query_regex: SRMQueryRegexType = None,
     srm_table_id: SRMTableIDType = None,
 ) -> models.StandardAnalysisTable:
@@ -341,7 +343,7 @@ def read_standard_analyses(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: Annotated[list[str] | None, Query()] = None,
+    srm_query: SRMQueryMultType = None,
     srm_query_regex: SRMQueryRegexMultType = None,
     srm_table_id: SRMTableIDMultType = None,
 ) -> Sequence[models.StandardAnalysisTable]:
@@ -459,7 +461,7 @@ def delete_srm(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: str | None = None,
+    srm_query: SRMQueryType = None,
     srm_query_regex: SRMQueryRegexType = None,
     srm_table_id: SRMTableIDType = None,
 ) -> basemodels.Message:
@@ -544,7 +546,7 @@ async def download_excel(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: str | None = None,
+    srm_query: SRMQueryType = None,
     srm_query_regex: SRMQueryRegexType = None,
     srm_table_id: SRMTableIDType = None,
 ) -> FileResponse:
