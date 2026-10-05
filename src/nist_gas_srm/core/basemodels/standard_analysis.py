@@ -49,6 +49,7 @@ class StandardAnalysisForeignKey(SQLModel):
         nullable=False,
         foreign_key="standard_analysis_table.id",
         ondelete="CASCADE",
+        validation_alias="standard_analysis_id",
     )
 
 
