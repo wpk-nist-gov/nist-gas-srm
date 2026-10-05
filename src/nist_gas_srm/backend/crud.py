@@ -125,20 +125,20 @@ def _get_where_from_srm_table_id(
     )
 
 
-def _get_where_from_srm_query_regex(
-    srm_query_regex: str | Iterable[str],
-    model: type[models.SRMTable] = models.SRMTable,
-    case_insensitive: bool = True,
-) -> ColumnElement[bool] | BinaryExpression[bool]:
+# def _get_where_from_srm_query_regex(
+#     srm_query_regex: str | Iterable[str],
+#     model: type[models.SRMTable] = models.SRMTable,
+#     case_insensitive: bool = True,
+# ) -> ColumnElement[bool] | BinaryExpression[bool]:
 
-    if isinstance(srm_query_regex, str):
-        if case_insensitive:
-            srm_query_regex = rf"(?i){srm_query_regex}"
-        return model.srm_string_id.regexp_match(srm_query_regex)
+#     if isinstance(srm_query_regex, str):
+#         if case_insensitive:
+#             srm_query_regex = rf"(?i){srm_query_regex}"
+#         return model.srm_string_id.regexp_match(srm_query_regex)
 
-    return sql_or_(
-        *(_get_where_from_srm_query_regex(obj, model=model) for obj in srm_query_regex)
-    )
+#     return sql_or_(
+#         *(_get_where_from_srm_query_regex(obj, model=model) for obj in srm_query_regex)
+#     )
 
 
 def _get_srm_result(
@@ -151,7 +151,6 @@ def _get_srm_result(
     | basemodels.srm.SRMQuery
     | Sequence[str | basemodels.srm.SRMQuery]
     | None = None,
-    srm_query_regex: str | Sequence[str] | None = None,
     srm_table_id: uuid.UUID | Sequence[uuid.UUID] | None = None,
 ) -> ScalarResult[models.SRMTable]:
 
@@ -163,11 +162,6 @@ def _get_srm_result(
 
     if srm_query is not None:
         where_ = _get_where_from_srm_query_maybe_fuzzy(srm_query)
-        query = query.where(where_)
-        return session.exec(query)
-
-    if srm_query_regex is not None:
-        where_ = _get_where_from_srm_query_regex(srm_query_regex)
         query = query.where(where_)
         return session.exec(query)
 
@@ -188,7 +182,6 @@ def get_srm(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: str | basemodels.srm.SRMQuery | None = None,
-    srm_query_regex: str | None = None,
     srm_table_id: uuid.UUID | None = None,
 ) -> models.SRMTable:
     """Get single srm"""
@@ -199,7 +192,6 @@ def get_srm(
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
-        srm_query_regex=srm_query_regex,
         srm_table_id=srm_table_id,
     ).one()
 
@@ -211,7 +203,6 @@ def get_srms(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: Sequence[str | basemodels.srm.SRMQuery] | None = None,
-    srm_query_regex: Sequence[str] | None = None,
     srm_table_id: Sequence[uuid.UUID] | None = None,
 ) -> Sequence[models.SRMTable]:
     """Get multiple srm"""
@@ -221,7 +212,6 @@ def get_srms(
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
-        srm_query_regex=srm_query_regex,
         srm_table_id=srm_table_id,
     ).all()
 
@@ -233,7 +223,6 @@ def get_rcert(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: str | basemodels.srm.SRMQuery | None = None,
-    srm_query_regex: str | None = None,
     srm_table_id: uuid.UUID | None = None,
 ) -> models.RCertTable:
 
@@ -243,7 +232,6 @@ def get_rcert(
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
-        srm_query_regex=srm_query_regex,
         srm_table_id=srm_table_id,
     ).rcert
 
@@ -255,7 +243,6 @@ def get_rcerts(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: Sequence[str | basemodels.srm.SRMQuery] | None = None,
-    srm_query_regex: Sequence[str] | None = None,
     srm_table_id: Sequence[uuid.UUID] | None = None,
 ) -> Sequence[models.RCertTable]:
 
@@ -267,7 +254,6 @@ def get_rcerts(
             batch_id=batch_id,
             lot_id=lot_id,
             srm_query=srm_query,
-            srm_query_regex=srm_query_regex,
             srm_table_id=srm_table_id,
         )
     ]
@@ -280,7 +266,6 @@ def get_measurement(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: str | basemodels.srm.SRMQuery | None = None,
-    srm_query_regex: str | None = None,
     srm_table_id: uuid.UUID | None = None,
 ) -> models.Measurements:
 
@@ -290,7 +275,6 @@ def get_measurement(
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
-        srm_query_regex=srm_query_regex,
         srm_table_id=srm_table_id,
     ).measurements
 
@@ -302,7 +286,6 @@ def get_measurements(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: Sequence[str | basemodels.srm.SRMQuery] | None = None,
-    srm_query_regex: Sequence[str] | None = None,
     srm_table_id: Sequence[uuid.UUID] | None = None,
 ) -> Sequence[models.Measurements]:
 
@@ -314,7 +297,6 @@ def get_measurements(
             batch_id=batch_id,
             lot_id=lot_id,
             srm_query=srm_query,
-            srm_query_regex=srm_query_regex,
             srm_table_id=srm_table_id,
         )
     ]
@@ -327,7 +309,6 @@ def get_standard_analysis(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: str | basemodels.srm.SRMQuery | None = None,
-    srm_query_regex: str | None = None,
     srm_table_id: uuid.UUID | None = None,
 ) -> models.StandardAnalysisTable:
 
@@ -337,7 +318,6 @@ def get_standard_analysis(
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
-        srm_query_regex=srm_query_regex,
         srm_table_id=srm_table_id,
     ).standard_analysis
 
@@ -349,7 +329,6 @@ def get_standard_analyses(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: Sequence[str | basemodels.srm.SRMQuery] | None = None,
-    srm_query_regex: Sequence[str] | None = None,
     srm_table_id: Sequence[uuid.UUID] | None = None,
 ) -> Sequence[models.StandardAnalysisTable]:
 
@@ -361,7 +340,6 @@ def get_standard_analyses(
             batch_id=batch_id,
             lot_id=lot_id,
             srm_query=srm_query,
-            srm_query_regex=srm_query_regex,
             srm_table_id=srm_table_id,
         )
     ]

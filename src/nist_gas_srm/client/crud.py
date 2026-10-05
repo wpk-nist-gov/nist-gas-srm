@@ -23,7 +23,6 @@ def _get_srm_params(
     srm_id: int | MissingType = MISSING,
     batch_id: str | MissingType | None = MISSING,
     lot_id: str | MissingType | None = MISSING,
-    srm_query_regex: str | MissingType = MISSING,
     srm_table_id: str | UUID | MissingType = MISSING,
 ) -> dict[str, Any]:
 
@@ -38,9 +37,6 @@ def _get_srm_params(
             if isinstance(srm_query, str)
             else srm_query.model_dump_json(exclude_unset=True)
         )
-
-    if srm_query_regex is not MISSING:
-        params["query_regex"] = srm_query_regex
 
     params.update(
         basemodels.srm.SRMQuery.from_params_exclude_missing(
@@ -59,7 +55,6 @@ def _get_multiple(
     batch_id: str | MissingType | None = MISSING,
     lot_id: str | MissingType | None = MISSING,
     srm_query: Sequence[str | basemodels.srm.SRMQuery] | MissingType = MISSING,
-    srm_query_regex: Sequence[str] | MissingType = MISSING,
     srm_table_id: Sequence[str | UUID] | MissingType = MISSING,
     subtable: str | MissingType = MISSING,
     complete: bool = False,
@@ -79,9 +74,6 @@ def _get_multiple(
             q if isinstance(q, str) else q.model_dump_json(exclude_unset=True)
             for q in srm_query
         ]
-
-    if srm_query_regex is not MISSING:
-        params["query_regex"] = srm_query_regex
 
     params.update(
         basemodels.srm.SRMQuery.from_params_exclude_missing(
@@ -180,7 +172,6 @@ def download_excel_file(
     batch_id: str | MissingType | None = MISSING,
     lot_id: str | MissingType | None = MISSING,
     srm_query: str | basemodels.srm.SRMQuery | MissingType = MISSING,
-    srm_query_regex: str | MissingType = MISSING,
 ) -> Response:
 
     params = _get_srm_params(
@@ -188,7 +179,6 @@ def download_excel_file(
         srm_id=srm_id,
         batch_id=batch_id,
         lot_id=lot_id,
-        srm_query_regex=srm_query_regex,
     )
 
     response = client.get("/download-excel", params=params)
@@ -207,7 +197,6 @@ def delete_srm(
     batch_id: str | MissingType | None = MISSING,
     lot_id: str | MissingType | None = MISSING,
     srm_query: str | basemodels.srm.SRMQuery | MissingType = MISSING,
-    srm_query_regex: str | MissingType = MISSING,
 ) -> Response:
 
     params = _get_srm_params(
@@ -215,7 +204,6 @@ def delete_srm(
         srm_id=srm_id,
         batch_id=batch_id,
         lot_id=lot_id,
-        srm_query_regex=srm_query_regex,
     )
 
     return client.delete("/srm", params=params)

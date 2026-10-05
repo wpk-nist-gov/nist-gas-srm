@@ -64,20 +64,6 @@ SRMTableIDMultType = Annotated[
 ]
 SRMQueryType = Annotated[str | None, Query(title="General query")]
 SRMQueryMultType = Annotated[list[str] | None, Query(title="General query")]
-SRMQueryRegexType = Annotated[
-    str | None,
-    Query(
-        title="Regular expression to parse srm string id",
-        validation_alias="query_regex",
-    ),
-]
-SRMQueryRegexMultType = Annotated[
-    list[str] | None,
-    Query(
-        title="Regular expressions to parse srm string ids",
-        validation_alias="query_regex",
-    ),
-]
 
 
 def _raise_if_srms_exist(
@@ -130,7 +116,6 @@ def read_srm(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: SRMQueryType = None,
-    srm_query_regex: SRMQueryRegexType = None,
     srm_table_id: SRMTableIDType = None,
 ) -> models.SRMTable:
     """Get list of srms"""
@@ -141,7 +126,6 @@ def read_srm(
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
-        srm_query_regex=srm_query_regex,
         srm_table_id=srm_table_id,
     )
 
@@ -174,7 +158,6 @@ def read_srms(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: SRMQueryMultType = None,
-    srm_query_regex: SRMQueryRegexMultType = None,
     srm_table_id: SRMTableIDMultType = None,
 ) -> Sequence[models.SRMTable]:
     """Get list of srms"""
@@ -185,7 +168,6 @@ def read_srms(
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
-        srm_query_regex=srm_query_regex,
         srm_table_id=srm_table_id,
     )
 
@@ -199,7 +181,6 @@ def read_rcert(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: SRMQueryType = None,
-    srm_query_regex: SRMQueryRegexType = None,
     srm_table_id: SRMTableIDType = None,
 ) -> models.RCertTable:
     """Get list of srms"""
@@ -210,7 +191,6 @@ def read_rcert(
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
-        srm_query_regex=srm_query_regex,
         srm_table_id=srm_table_id,
     )
 
@@ -224,7 +204,6 @@ def read_rcerts(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: SRMQueryMultType = None,
-    srm_query_regex: SRMQueryRegexMultType = None,
     srm_table_id: SRMTableIDMultType = None,
 ) -> Sequence[models.RCertTable]:
     """Get list of srms"""
@@ -235,7 +214,6 @@ def read_rcerts(
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
-        srm_query_regex=srm_query_regex,
         srm_table_id=srm_table_id,
     )
 
@@ -252,7 +230,6 @@ def read_meausrement(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: SRMQueryType = None,
-    srm_query_regex: SRMQueryRegexType = None,
     srm_table_id: SRMTableIDType = None,
 ) -> models.Measurements:
     """Get list of srms"""
@@ -263,7 +240,6 @@ def read_meausrement(
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
-        srm_query_regex=srm_query_regex,
         srm_table_id=srm_table_id,
     )
 
@@ -282,7 +258,6 @@ def read_measurements(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: SRMQueryMultType = None,
-    srm_query_regex: SRMQueryRegexMultType = None,
     srm_table_id: SRMTableIDMultType = None,
 ) -> Sequence[models.Measurements]:
     """Get list of srms"""
@@ -293,7 +268,6 @@ def read_measurements(
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
-        srm_query_regex=srm_query_regex,
         srm_table_id=srm_table_id,
     )
 
@@ -313,7 +287,6 @@ def read_standard_analysis(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: SRMQueryType = None,
-    srm_query_regex: SRMQueryRegexType = None,
     srm_table_id: SRMTableIDType = None,
 ) -> models.StandardAnalysisTable:
     """Get list of srms"""
@@ -324,7 +297,6 @@ def read_standard_analysis(
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
-        srm_query_regex=srm_query_regex,
         srm_table_id=srm_table_id,
     )
 
@@ -344,7 +316,6 @@ def read_standard_analyses(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: SRMQueryMultType = None,
-    srm_query_regex: SRMQueryRegexMultType = None,
     srm_table_id: SRMTableIDMultType = None,
 ) -> Sequence[models.StandardAnalysisTable]:
     """Get list of srms"""
@@ -355,7 +326,6 @@ def read_standard_analyses(
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
-        srm_query_regex=srm_query_regex,
         srm_table_id=srm_table_id,
     )
 
@@ -462,7 +432,6 @@ def delete_srm(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: SRMQueryType = None,
-    srm_query_regex: SRMQueryRegexType = None,
     srm_table_id: SRMTableIDType = None,
 ) -> basemodels.Message:
 
@@ -472,7 +441,6 @@ def delete_srm(
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
-        srm_query_regex=srm_query_regex,
         srm_table_id=srm_table_id,
     )
 
@@ -547,7 +515,6 @@ async def download_excel(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: SRMQueryType = None,
-    srm_query_regex: SRMQueryRegexType = None,
     srm_table_id: SRMTableIDType = None,
 ) -> FileResponse:
 
@@ -558,7 +525,6 @@ async def download_excel(
             batch_id=batch_id,
             lot_id=lot_id,
             srm_query=srm_query,
-            srm_query_regex=srm_query_regex,
             srm_table_id=srm_table_id,
         )
     )
