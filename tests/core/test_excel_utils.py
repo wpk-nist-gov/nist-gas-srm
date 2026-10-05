@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nist_gas_srm.core import excel_utils as mod
+from nist_gas_srm.core.excel import utils as mod
 
 if TYPE_CHECKING:
     from pathlib import Path

@@ -12,7 +12,7 @@ from nist_gas_srm.app._utils import (
     get_all_srms,
 )
 from nist_gas_srm.client import crud
-from nist_gas_srm.core import basemodels, excel_interface
+from nist_gas_srm.core import basemodels, excel
 
 if TYPE_CHECKING:
     from typing import Any
@@ -25,12 +25,12 @@ def get_data(srm_query: list[str]) -> dict[str, Any]:
             srm_query=srm_query,
             complete=True,
         )
-        dataframes = excel_interface.json_to_dict_of_dataframes(
+        dataframes = excel.interface.json_to_dict_of_dataframes(
             response.json(),
             model=basemodels.srm.SRMMeasurementsCompleteCreate,
             normalize=True,
         )
-        return excel_interface.clean_normalized_dataframe(dataframes)
+        return excel.interface.clean_normalized_dataframe(dataframes)
 
 
 srms = st.multiselect(

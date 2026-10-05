@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import streamlit as st
 
 from nist_gas_srm.core import basemodels
+from nist_gas_srm.core.excel.utils import parse_excel_filename_to_metadata
 
 if TYPE_CHECKING:
     from typing import Any
@@ -67,8 +68,6 @@ upload_file = st.file_uploader("Excel file to upload", type=".xls")
 
 def _get_metadata_from_filename() -> None:
     if upload_file is not None:
-        from nist_gas_srm.core.excel_utils import parse_excel_filename_to_metadata
-
         values = parse_excel_filename_to_metadata(upload_file.name)
         values["srm_id"] = int(values["srm_id"])
         for k, v in values.items():

@@ -13,7 +13,7 @@ import pandas as pd
 import streamlit as st
 
 from nist_gas_srm.app._utils import TABLEGROUP_DBNAMES_TABLENAMES_MAPPING
-from nist_gas_srm.core import basemodels, excel_interface
+from nist_gas_srm.core import basemodels, excel
 from nist_gas_srm.core.typing_compat import override
 
 if TYPE_CHECKING:
@@ -67,7 +67,7 @@ class EditableTableSRM(EditableTableBase):
         self, obj: pd.ExcelFile, **kwargs: Any
     ) -> pd.DataFrame | None:
         return super().editable_table_widget(
-            excel_interface.excel_to_dataframe_by_name(
+            excel.interface.excel_to_dataframe_by_name(
                 self.attr,
                 obj,
                 model=basemodels.srm.SRMCompleteCreate,
@@ -131,11 +131,9 @@ if upload_file is not None:
 
 def _get_metadata_from_filename() -> None:
     if upload_file is not None:
-        from nist_gas_srm.core.excel_utils import parse_excel_filename_to_metadata
-
-        new = pd.DataFrame([parse_excel_filename_to_metadata(upload_file.name)]).astype({
-            "srm_id": int
-        })
+        new = pd.DataFrame([
+            excel.utils.parse_excel_filename_to_metadata(upload_file.name)
+        ]).astype({"srm_id": int})
         st.session_state.srm_metadata.update(new)
         metadata_table.update_key()
 

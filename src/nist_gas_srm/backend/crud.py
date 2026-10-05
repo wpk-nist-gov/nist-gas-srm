@@ -10,7 +10,8 @@ from sqlalchemy.engine.result import ScalarResult
 from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
 from sqlmodel import Session, and_ as sql_and_, or_ as sql_or_, select
 
-from nist_gas_srm.core import basemodels, excel_interface  # , read_excel
+from nist_gas_srm.core import basemodels
+from nist_gas_srm.core.excel.interface import excel_to_json
 
 from . import models
 
@@ -432,7 +433,7 @@ def add_srm_from_excel_obj(
     excelfile: pd.ExcelFile,
 ) -> models.SRMTable:
 
-    data = excel_interface.excel_to_json(
+    data = excel_to_json(
         excelfile,
         model=basemodels.srm.SRMCompleteCreate,
     )

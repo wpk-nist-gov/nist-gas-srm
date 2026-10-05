@@ -23,13 +23,8 @@ from sqlmodel import Session
 
 from nist_gas_srm.backend import crud, models
 from nist_gas_srm.backend.core.db import engine, init_db
-from nist_gas_srm.core import basemodels
+from nist_gas_srm.core import basemodels, excel
 from nist_gas_srm.core.basemodels.utils import srm_params_to_srm_query
-from nist_gas_srm.core.excel_interface import (
-    dict_of_dataframes_to_workbook,
-    model_to_dict_of_dataframes,
-)
-from nist_gas_srm.core.excel_utils import as_excelfile
 
 FORMAT = "[%(name)s - %(levelname)s] %(message)s"
 logging.basicConfig(level=logging.INFO, format=FORMAT)
@@ -485,7 +480,7 @@ async def create_upload_file(
 
     try:  # pylint: disable=too-many-try-statements
         # 3. Load the byte stream into a Pandas DataFrame
-        with as_excelfile(BytesIO(contents)) as excelfile:
+        with excel.utils.as_excelfile(BytesIO(contents)) as excelfile:
             return crud.add_srm_from_excel_obj(
                 session=session,
                 srmdata_create=srmdata_create,
@@ -530,7 +525,7 @@ async def download_excel(
     )
 
     # convert to dict of dataframes
-    data = model_to_dict_of_dataframes(
+    data = excel.interface.model_to_dict_of_dataframes(
         srmdata,
         drop_dbnames=[
             "srm_table_id",
@@ -547,16 +542,14 @@ async def download_excel(
     )
 
     # convert to excel file
-    from nist_gas_srm.core.excel_template import template_xlsx
-    from nist_gas_srm.core.excel_utils import xlsx_manager
 
     with TemporaryDirectory(delete=False) as d:
         file_path = Path(d) / filename
 
         logger.info("hello %s", file_path)
 
-        with xlsx_manager(template_xlsx) as workbook:
-            dict_of_dataframes_to_workbook(
+        with excel.utils.xlsx_manager(excel.template.template_xlsx) as workbook:
+            excel.interface.dict_of_dataframes_to_workbook(
                 data,
                 workbook,
                 model=basemodels.srm.SRMCompleteCreate,

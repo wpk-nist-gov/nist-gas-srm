@@ -16,7 +16,7 @@ from sqlmodel import (
 
 from nist_gas_srm.core import basemodels
 from nist_gas_srm.core.basemodels.keys import SRMForeignKey
-from nist_gas_srm.core.excel_utils import parse_excel_filename_to_metadata
+from nist_gas_srm.core.excel.utils import parse_excel_filename_to_metadata
 
 from . import crud, models
 from .core.db import engine, init_db

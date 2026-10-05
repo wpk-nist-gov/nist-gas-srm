@@ -14,7 +14,7 @@ import pandas as pd
 from openpyxl.workbook.workbook import Workbook
 from sqlmodel import SQLModel
 
-from .excel_utils import (
+from .utils import (
     get_frame,
     get_frame_with_len_check,
     optional_dataframe_func_wrapper,
