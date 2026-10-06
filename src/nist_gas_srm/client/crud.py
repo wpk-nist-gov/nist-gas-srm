@@ -3,18 +3,20 @@ from __future__ import annotations
 from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from nist_gas_srm.core import basemodels
 from nist_gas_srm.core.missing import MISSING
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from typing import Any, BinaryIO
-    from uuid import UUID
+    from typing import Any, BinaryIO, Literal
 
     from httpx import Client, Response
 
     from nist_gas_srm.core.missing import MissingType
+
+    SubTable = Literal["measurements", "standard-analysis", "rcert"]
 
 
 def _get_srm_params(
@@ -24,6 +26,7 @@ def _get_srm_params(
     batch_id: str | MissingType | None = MISSING,
     lot_id: str | MissingType | None = MISSING,
     srm_table_id: str | UUID | MissingType = MISSING,
+    raise_if_empty: bool = False,
 ) -> dict[str, Any]:
 
     params: dict[str, Any] = {}
@@ -44,19 +47,61 @@ def _get_srm_params(
         ).model_dump(exclude_unset=True)
     )
 
+    if raise_if_empty and not params:
+        msg = "No parameters to query"
+        raise ValueError(msg)
+
     return params
 
 
-def _get_multiple(
+def get_single_table(
     client: Client,
     *,
     url: str,
     srm_id: int | MissingType = MISSING,
     batch_id: str | MissingType | None = MISSING,
     lot_id: str | MissingType | None = MISSING,
-    srm_query: Sequence[str | basemodels.srm.SRMQuery] | MissingType = MISSING,
-    srm_table_id: Sequence[str | UUID] | MissingType = MISSING,
-    subtable: str | MissingType = MISSING,
+    srm_query: str | basemodels.srm.SRMQuery | MissingType = MISSING,
+    srm_table_id: str | UUID | MissingType = MISSING,
+    complete: bool = False,
+    subtable: SubTable | MissingType = MISSING,
+) -> Response:
+    if subtable is not MISSING:
+        url = f"{url}/{subtable}"
+    if complete:
+        url = f"{url}/complete"
+
+    params = _get_srm_params(
+        srm_query,
+        srm_id=srm_id,
+        batch_id=batch_id,
+        lot_id=lot_id,
+        srm_table_id=srm_table_id,
+        raise_if_empty=True,
+    )
+    return client.get(url, params=params)
+
+
+get_srm = partial(get_single_table, url="/srm")
+
+get_measurement = partial(get_single_table, url="/measurement")
+get_standard_analysis = partial(get_single_table, url="/standard-analysis")
+get_rcert = partial(get_single_table, url="/rcert")
+
+
+def get_multiple_tables(
+    client: Client,
+    *,
+    url: str,
+    srm_id: int | MissingType = MISSING,
+    batch_id: str | MissingType | None = MISSING,
+    lot_id: str | MissingType | None = MISSING,
+    srm_query: str
+    | basemodels.srm.SRMQuery
+    | Sequence[str | basemodels.srm.SRMQuery]
+    | MissingType = MISSING,
+    srm_table_id: str | UUID | Sequence[str | UUID] | MissingType = MISSING,
+    subtable: SubTable | MissingType = MISSING,
     complete: bool = False,
 ) -> Response:
     if subtable is not MISSING:
@@ -67,9 +112,13 @@ def _get_multiple(
     params: dict[str, Any] = {}
 
     if srm_table_id is not MISSING:
+        if isinstance(srm_table_id, str | UUID):
+            srm_table_id = [srm_table_id]
         params["id"] = srm_table_id
 
     if srm_query is not MISSING:
+        if isinstance(srm_query, str | basemodels.srm.SRMQuery):
+            srm_query = [srm_query]
         params["srm_query"] = [
             q if isinstance(q, str) else q.model_dump_json(exclude_unset=True)
             for q in srm_query
@@ -84,43 +133,11 @@ def _get_multiple(
     return client.get(url, params=params)
 
 
-get_srms = partial(_get_multiple, url="/srms")
-get_measurements = partial(_get_multiple, url="/measurements")
-get_standard_analyses = partial(_get_multiple, url="/standard-analyses")
-get_rcerts = partial(_get_multiple, url="/rcerts")
+get_srms = partial(get_multiple_tables, url="/srms")
 
-
-def _get_single(
-    client: Client,
-    *,
-    url: str,
-    srm_id: int | MissingType = MISSING,
-    batch_id: str | MissingType | None = MISSING,
-    lot_id: str | MissingType | None = MISSING,
-    srm_query: str | basemodels.srm.SRMQuery | MissingType = MISSING,
-    srm_table_id: str | UUID | MissingType = MISSING,
-    complete: bool = False,
-    subtable: str | MissingType = MISSING,
-) -> Response:
-    if subtable is not MISSING:
-        url = f"{url}/{subtable}"
-    if complete:
-        url = f"{url}/complete"
-
-    params = _get_srm_params(
-        srm_query,
-        srm_id=srm_id,
-        batch_id=batch_id,
-        lot_id=lot_id,
-        srm_table_id=srm_table_id,
-    )
-    return client.get(url, params=params)
-
-
-get_srm = partial(_get_single, url="/srm")
-get_measurements = partial(_get_single, url="/measurement")
-get_standard_analysis = partial(_get_single, url="/standard-analysis")
-get_rcerts = partial(_get_single, url="/rcert")
+get_measurements = partial(get_multiple_tables, url="/measurements")
+get_standard_analyses = partial(get_multiple_tables, url="/standard-analyses")
+get_rcerts = partial(get_multiple_tables, url="/rcerts")
 
 
 def upload_excel_file(

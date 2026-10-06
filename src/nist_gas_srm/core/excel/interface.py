@@ -222,15 +222,50 @@ def json_to_dict_of_models(
     return out
 
 
-def json_to_dict_of_dataframes(  # ruff: ignore[complex-structure, too-many-branches]
+def json_to_dict_of_dataframes(  # ruff: ignore[complex-structure]
     data: dict[str, Any],
     model: type[SQLModel],
     normalize: bool = True,
     prefix: Sequence[str] | None = None,
     rename_columns: bool = True,
+    # include_root: bool = False,  # ruff: ignore[commented-out-code]
     meta: str | Sequence[Any] | None = ("srm_id", "batch_id", "lot_id"),
     **kwargs: Any,
 ) -> dict[str, Any]:
+    """
+    Convert json data (dict) to dict of dataframes
+
+    Parameters
+    ----------
+    data : dict
+        json data.
+    model :  SQLModel
+        Model to convert from json data to dataframes. The model should contain
+        :class:`~.excel.interface.SQLDataFromInterface` objects.
+    normalize : bool, default=True
+        If ``True``, use :func:`pandas.json_normalize` to create dataframes.
+        Otherwise, use
+        :meth:`~.excel.interface.SQLDataFromInterface.dicts_to_dataframe`
+        method.
+    prefix : sequence of string, optional
+        Use ``record=[*prefix, name]``, where ``name`` is the field name in
+        :func:`pandas.json_normalize`.
+    rename_columns : bool, default=True
+        If True, rename dataframe columns using
+        :meth:`~.excel.interface.SQLDataFromInterface.dbnames_to_colnames`.
+    include_root : bool, default=False
+        If true, try to convert the root ``model`` to a dataframe if possible.
+
+    meta : string or sequence of string, optional
+        ``meta`` parameter to :func:`pandas.json_normalize`.
+    **kwargs
+        Keyword arguments to :func:`pandas.json_normalize`
+
+    Returns
+    -------
+    dict
+        Dictionary (possibly nested) of name to dataframes.
+    """
 
     if meta is not None and not isinstance(meta, str):
         meta = list(meta)
@@ -245,7 +280,26 @@ def json_to_dict_of_dataframes(  # ruff: ignore[complex-structure, too-many-bran
     out: dict[str, Any] = {}
     key: Sequence[str] | None
 
-    for name, field in model.model_fields.items():  # ruff: ignore[too-many-nested-blocks]
+    def _get_dataframe_from_inner_model(
+        data: dict[str, Any], name: str, inner_model: type[SQLDataFrameInterface]
+    ) -> pd.DataFrame | None:
+        if normalize:
+            key = name if prefix is None else [*prefix, name]
+
+            with contextlib.suppress(KeyError):
+                df = pd.json_normalize(
+                    data,
+                    key,
+                    meta=meta,
+                    **kwargs,
+                )
+                if rename_columns:
+                    return df.rename(columns=inner_model.dbnames_to_colnames())
+                return df
+
+        return inner_model.dicts_to_dataframe(data[name])
+
+    for name, field in model.model_fields.items():
         if not normalize and name not in data:
             continue
 
@@ -256,21 +310,9 @@ def json_to_dict_of_dataframes(  # ruff: ignore[complex-structure, too-many-bran
             # list
             inner_model = _annotation_to_model(annotation, name)
             if issubclass(inner_model, SQLDataFrameInterface):
-                if normalize:
-                    key = name if prefix is None else [*prefix, name]
-
-                    with contextlib.suppress(KeyError):
-                        df = pd.json_normalize(
-                            data,
-                            key,
-                            meta=meta,
-                            **kwargs,
-                        )
-                        if rename_columns:
-                            df = df.rename(columns=inner_model.dbnames_to_colnames())
-                        out[name] = df
-                elif name in data:
-                    out[name] = inner_model.dicts_to_dataframe(data[name])
+                out[name] = _get_dataframe_from_inner_model(
+                    data=data, name=name, inner_model=inner_model
+                )
 
         elif issubclass(annotation, SQLModel):  # pylint: disable=confusing-consecutive-elif
             # Recursive

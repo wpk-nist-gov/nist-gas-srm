@@ -73,11 +73,11 @@ def unflatten_dict(flat_dict: dict[str, Any], separator: str = ".") -> dict[str,
 
 def get_in(
     keys: str | Iterable[Hashable],
-    nested_dict: Mapping[Any, T],
+    nested_dict: Mapping[Any, Any],
     split: str | None = ".",
-    default: T | MissingType = MISSING,
-    factory: Callable[[], T] | None = None,
-) -> T:
+    default: Any | MissingType = MISSING,
+    factory: Callable[[], Any] | None = None,
+) -> Any:
     """
     >>> foo = {"a": {"b": {"c": 1}}}
     >>> get_in(["a", "b"], foo)
@@ -98,13 +98,10 @@ def get_in(
         )
 
     try:
-        return cast(
-            "T",
-            reduce(
-                cast("Callable[..., Any]", operator.getitem),
-                keys,
-                nested_dict,
-            ),
+        return reduce(
+            cast("Callable[..., Any]", operator.getitem),
+            keys,
+            nested_dict,
         )
     except (KeyError, IndexError, TypeError):
         if factory is not None:
@@ -112,5 +109,5 @@ def get_in(
         if default is not MISSING:
             return default
 
-    msg = f"Keys {keys} not found and not default or factory"
+    msg = f"Keys {keys} not found and no default or factory"
     raise ValueError(msg)

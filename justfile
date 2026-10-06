@@ -392,5 +392,9 @@ run-initial-data:
     {{ UVRUN }} -m nist_gas_srm.backend.initial_data
 
 [group("run")]
+run-initial-data-test *options="--help":
+    {{ UVRUN }} -m nist_gas_srm.backend.initial_data_test {{ options }}
+
+[group("run")]
 run-initial-data-from-files *options="--help":
     {{ UVRUN }} -m nist_gas_srm.backend.initial_data_from_files {{ options }}
