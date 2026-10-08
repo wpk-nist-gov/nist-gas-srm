@@ -34,11 +34,14 @@ classifiers = [
 ]
 dependencies = [
     "fastapi[standard]>=0.136.3",
+    "numpy>=2.4.6",
     "openpyxl>=3.1.5",
     "pandas>=2.3.3",
     "plotly-express>=0.4.1",
+    "pydantic>=2.13.5",
     "pydantic-settings>=2.14.2",
     "python-calamine>=0.6.2",
+    "sqlalchemy>=2.0.54",
     "sqlmodel>=0.0.38",
     "statsmodels>=0.14.6",
     "streamlit>=1.60.0",
@@ -234,7 +237,17 @@ toplevel = [ "nist_gas_srm" ]
 known_first_party = [ "nist_gas_srm" ]
 # Group: ignores
 per_rule_ignores.DEP001 = [ "pkginfo" ]
+per_rule_ignores.DEP002 = [
+    "openpyxl",
+    "python-calamine",
+    "statsmodels",
+    "streamlit-pydantic",
+    "xlrd",
+    "xlutils",
+    "xlwt"
+]
 per_rule_ignores.DEP004 = [ "nox", "pytest" ]
+package_module_name_map.plotly-express = "plotly"
 
 [tool.pyproject-fmt]
 indent = 4
