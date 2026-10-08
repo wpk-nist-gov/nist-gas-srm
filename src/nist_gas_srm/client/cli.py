@@ -1,4 +1,5 @@
 """CLI program to interact with web-API"""
+# ruff: file-ignore[commented-out-code]
 
 from __future__ import annotations
 
@@ -230,85 +231,85 @@ def _get_dict_drop_drop_none(**kwargs: Any) -> dict[str, Any]:
     return {k: v for k, v in kwargs.items() if v is not None}
 
 
-def _get_single(
-    *,
-    srm_id: SRM_ID_OPTION = None,
-    batch_id: BATCH_ID_OPTION = None,
-    lot_id: LOT_ID_OPTION = None,
-    srm_query: SRM_QUERY_OPTIONAL_ARGUMENT = None,
-    srm_table_id: SRM_TABLE_ID_OPTION = None,
-    complete: COMPLETE_OPTION = False,
-    pretty: PRETTY_OPTION = False,
-    subtable: SUBTABLE_OPTION = None,
-    verbose: VERBOSE_OPTIONS = None,  # ruff: ignore[unused-function-argument]
-    url: str | None = "/srm",
-) -> None:
+# def _get_single(
+#     *,
+#     srm_id: SRM_ID_OPTION = None,
+#     batch_id: BATCH_ID_OPTION = None,
+#     lot_id: LOT_ID_OPTION = None,
+#     srm_query: SRM_QUERY_OPTIONAL_ARGUMENT = None,
+#     srm_table_id: SRM_TABLE_ID_OPTION = None,
+#     complete: COMPLETE_OPTION = False,
+#     pretty: PRETTY_OPTION = False,
+#     subtable: SUBTABLE_OPTION = None,
+#     verbose: VERBOSE_OPTIONS = None,
+#     url: str | None = "/srm",
+# ) -> None:
 
-    params: dict[str, Any] = _get_dict_drop_drop_none(
-        srm_id=srm_id,
-        batch_id=batch_id,
-        lot_id=lot_id,
-        srm_query=srm_query,
-        srm_table_id=srm_table_id,
-        complete=complete,
-        subtable=subtable,
-        url=url,
-    )
+#     params: dict[str, Any] = _get_dict_drop_drop_none(
+#         srm_id=srm_id,
+#         batch_id=batch_id,
+#         lot_id=lot_id,
+#         srm_query=srm_query,
+#         srm_table_id=srm_table_id,
+#         complete=complete,
+#         subtable=subtable,
+#         url=url,
+#     )
 
-    logger.info("params %s", params)
+#     logger.info("params %s", params)
 
-    with _get_client() as client:
-        response = crud.get_single_table(client=client, **params)
+#     with _get_client() as client:
+#         response = crud.get_single_table(client=client, **params)
 
-        _ = response.raise_for_status()
+#         _ = response.raise_for_status()
 
-        typer.echo(_get_json_string_from_response(response, pretty=pretty))
+#         typer.echo(_get_json_string_from_response(response, pretty=pretty))
 
 
-get_srm = app_get.command(
-    "srm",
-    no_args_is_help=True,
-    help="Get data for single SRM.",
-)(
-    partial(
-        _get_single,
-        url="/srm",
-    )
-)
+# get_srm = app_get.command(
+#     "srm",
+#     no_args_is_help=True,
+#     help="Get data for single SRM.",
+# )(
+#     partial(
+#         _get_single,
+#         url="/srm",
+#     )
+# )
 
-get_measurement = app_get.command(
-    "measurement",
-    no_args_is_help=True,
-    help="Get measurements data for single SRM",
-)(
-    partial(
-        _get_single,
-        url="/measurement",
-        subtable=None,
-    )
-)
-get_standard_analysis = app_get.command(
-    "standard-analysis",
-    no_args_is_help=True,
-    help="Get standard analysis data for single SRM",
-)(
-    partial(
-        _get_single,
-        url="/standard-analysis",
-        subtable=None,
-    )
-)
-get_rcert = app_get.command(
-    "rcert",
-    no_args_is_help=True,
-    help="Get R certification data for single SRM",
-)(
-    partial(
-        _get_single,
-        url="/rcert",
-        subtable=None,
-    )
-)
+# get_measurement = app_get.command(
+#     "measurement",
+#     no_args_is_help=True,
+#     help="Get measurements data for single SRM",
+# )(
+#     partial(
+#         _get_single,
+#         url="/measurement",
+#         subtable=None,
+#     )
+# )
+# get_standard_analysis = app_get.command(
+#     "standard-analysis",
+#     no_args_is_help=True,
+#     help="Get standard analysis data for single SRM",
+# )(
+#     partial(
+#         _get_single,
+#         url="/standard-analysis",
+#         subtable=None,
+#     )
+# )
+# get_rcert = app_get.command(
+#     "rcert",
+#     no_args_is_help=True,
+#     help="Get R certification data for single SRM",
+# )(
+#     partial(
+#         _get_single,
+#         url="/rcert",
+#         subtable=None,
+#     )
+# )
 
 
 def _get_multiple(

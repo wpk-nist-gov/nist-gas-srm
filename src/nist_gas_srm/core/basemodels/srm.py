@@ -8,6 +8,7 @@ from typing import (
     Annotated,
     Any,
     Self,
+    TypeAlias,
 )
 
 from pydantic import BeforeValidator
@@ -26,6 +27,7 @@ import nist_gas_srm.core.basemodels.measurements as measurements
 import nist_gas_srm.core.basemodels.rcert as rcert
 import nist_gas_srm.core.basemodels.standard_analysis as stdanal
 from nist_gas_srm.core.missing import MISSING
+from nist_gas_srm.core.typing import SubTableType
 from nist_gas_srm.core.utils import JSON_PATTERN, SRM_PATTERN
 from nist_gas_srm.core.validate import (
     validate_like_string,
@@ -237,3 +239,29 @@ class SRMStandardAnalysisCreate(SRMCreate):
 
 class SRMRCertCreate(SRMCreate):
     rcert: rcert.RCertCreate
+
+
+SRMPublicTypes: TypeAlias = (
+    SRMPublic
+    | SRMCompletePublic
+    | SRMMeasurementsPublic
+    | SRMMeasurementsCompletePublic
+    | SRMStandardAnalysisPublic
+    | SRMStandardAnalysisCompletePublic
+    | SRMRCertPublic
+    | SRMRCertCompletePublic
+)
+
+
+PUBLIC_TYPES_COMPLETE_SUBTABLE_MAPPING: dict[
+    tuple[SubTableType, bool], type[SRMPublicTypes]
+] = {
+    (None, False): SRMPublic,
+    (None, True): SRMCompletePublic,
+    ("measurements", False): SRMMeasurementsPublic,
+    ("measurements", True): SRMMeasurementsCompletePublic,
+    ("standard-analysis", False): SRMStandardAnalysisPublic,
+    ("standard-analysis", True): SRMStandardAnalysisCompletePublic,
+    ("rcert", False): SRMRCertPublic,
+    ("rcert", True): SRMRCertCompletePublic,
+}

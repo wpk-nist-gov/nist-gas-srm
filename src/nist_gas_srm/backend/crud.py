@@ -205,16 +205,22 @@ def get_srms(
     lot_id: str | None = None,
     srm_query: Sequence[str | basemodels.srm.SRMQuery] | None = None,
     srm_table_id: Sequence[uuid.UUID] | None = None,
+    one: bool = False,
 ) -> Sequence[models.SRMTable]:
     """Get multiple srm"""
-    return _get_srm_result(
+
+    result = _get_srm_result(
         session=session,
         srm_id=srm_id,
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
         srm_table_id=srm_table_id,
-    ).all()
+    )
+
+    if one:
+        return [result.one()]
+    return result.all()
 
 
 def get_rcert(
@@ -245,6 +251,7 @@ def get_rcerts(
     lot_id: str | None = None,
     srm_query: Sequence[str | basemodels.srm.SRMQuery] | None = None,
     srm_table_id: Sequence[uuid.UUID] | None = None,
+    one: bool = False,
 ) -> Sequence[models.RCertTable]:
 
     return [
@@ -256,6 +263,7 @@ def get_rcerts(
             lot_id=lot_id,
             srm_query=srm_query,
             srm_table_id=srm_table_id,
+            one=one,
         )
     ]
 
@@ -288,6 +296,7 @@ def get_measurements(
     lot_id: str | None = None,
     srm_query: Sequence[str | basemodels.srm.SRMQuery] | None = None,
     srm_table_id: Sequence[uuid.UUID] | None = None,
+    one: bool = False,
 ) -> Sequence[models.Measurements]:
 
     return [
@@ -299,6 +308,7 @@ def get_measurements(
             lot_id=lot_id,
             srm_query=srm_query,
             srm_table_id=srm_table_id,
+            one=one,
         )
     ]
 
@@ -331,6 +341,7 @@ def get_standard_analyses(
     lot_id: str | None = None,
     srm_query: Sequence[str | basemodels.srm.SRMQuery] | None = None,
     srm_table_id: Sequence[uuid.UUID] | None = None,
+    one: bool = False,
 ) -> Sequence[models.StandardAnalysisTable]:
 
     return [
@@ -342,6 +353,7 @@ def get_standard_analyses(
             lot_id=lot_id,
             srm_query=srm_query,
             srm_table_id=srm_table_id,
+            one=one,
         )
     ]
 
