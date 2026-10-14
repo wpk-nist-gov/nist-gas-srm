@@ -291,7 +291,7 @@ RCERTDATA_NAME_CALLER_CLS = [
 ]
 
 
-# * Utils ---------------------------------------------------------------------
+# * Utils ------------------------------------------------------------------------------
 def select_columns(*columns: Any) -> Select[Any] | SelectOfScalar[Any]:
     """For typing purposes"""
     return cast("Select[Any] | SelectOfScalar[Any]", select(*columns))

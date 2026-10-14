@@ -60,7 +60,7 @@ OptionalLowerString = Annotated[
 ]
 
 
-# * Common --------------------------------------------------------------------
+# * Common -----------------------------------------------------------------------------
 class IDPrimaryKey(SQLModel):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
 
@@ -98,7 +98,7 @@ class _SRMDataForeignKeyUpdate(SQLModel):
     # srmdata_id: uuid.UUID
 
 
-# * Top level data (per worksheet) --------------------------------------------
+# * Top level data (per worksheet) -----------------------------------------------------
 class SRMDataBase(SQLModel):
     """Metadata base class"""
 
@@ -155,8 +155,8 @@ class SRMDataQuery(SQLModel):
         return cls.model_validate(kwargs)
 
 
-# * Tables --------------------------------------------------------------------
-# ** Ratio Data ---------------------------------------------------------------
+# * Tables -----------------------------------------------------------------------------
+# ** Ratio Data ------------------------------------------------------------------------
 class RatioDataBase(_SampleIDAndNumber, SRMDataForeignKey):
     """Ratio data base class"""
 
@@ -210,7 +210,7 @@ class RatioDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpdate):
     test_out: TestOutOptionalAnn = None
 
 
-# ** Vendor Data --------------------------------------------------------------
+# ** Vendor Data -----------------------------------------------------------------------
 class VendorDataBase(_SampleIDAndNumber, SRMDataForeignKey):
     """Vendor data"""
 
@@ -242,7 +242,7 @@ class VendorDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpdate):
     ratio: float | None = None
 
 
-# ** Standards Data -----------------------------------------------------------
+# ** Standards Data --------------------------------------------------------------------
 class StandardsDataBase(SRMDataForeignKey):
     """Standards Data"""
 
@@ -282,7 +282,7 @@ class StandardsDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpdate):
     uncert: float | None = None
 
 
-# ** Past lot standards -------------------------------------------------------
+# ** Past lot standards ----------------------------------------------------------------
 class PastLotStandardsDataBase(SRMDataForeignKey):
     """Past lot standards"""
 
@@ -320,7 +320,7 @@ class PastLotStandardsDataUpdate(_SampleIDAndNumberUpdate, _SRMDataForeignKeyUpd
     pred_conc: float | None = None
 
 
-# ** Additional lot standards -------------------------------------------------
+# ** Additional lot standards ----------------------------------------------------------
 class AdditionalLotStandardsDataBase(SRMDataForeignKey):
     """AdditionalLotStandards"""
 
@@ -361,7 +361,7 @@ class AdditionalLotStandardsDataUpdate(
     ratio: float | None = None
 
 
-# ** Ratio Analysis -----------------------------------------------------------
+# ** Ratio Analysis --------------------------------------------------------------------
 class RatioAnalysisRandomEffectsDataBase(SRMDataForeignKey):
     model_config = SQLModelConfig(
         alias_generator=to_pascal,
@@ -446,7 +446,7 @@ class RatioAnalysisFixedEffectsDataUpdate(_SRMDataForeignKeyUpdate):
     t_value: float | None
 
 
-# * RCertification -----------------------------------------------------------
+# * RCertification ---------------------------------------------------------------------
 class RCertForeignKey(SQLModel):
     rcert_id: uuid.UUID = Field(
         default_factory=uuid.uuid4,

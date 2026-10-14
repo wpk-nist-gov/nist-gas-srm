@@ -94,14 +94,7 @@ jobs:
 
   publish-testpypi:
     name: Publish package to testpypi
-<<<<<<< before updating
-    if:
-      false && (github.event_name == 'release' && github.event.action ==
-      'published') || (github.event_name == 'workflow_dispatch' &&
-      inputs.deploy)
-=======
-    if: (github.event_name == 'release' && github.event.action == 'published') || (github.event_name == 'workflow_dispatch' && inputs.deploy)
->>>>>>> after updating
+    if: false && (github.event_name == 'release' && github.event.action == 'published') || (github.event_name == 'workflow_dispatch' && inputs.deploy)
     needs:
       - dist
       - smoke-test
@@ -123,14 +116,7 @@ jobs:
 
   publish-pypi:
     name: Publish package to pypi
-<<<<<<< before updating
-    if:
-      false && (github.event_name == 'release' && github.event.action ==
-      'published') || (github.event_name == 'workflow_dispatch' &&
-      inputs.deploy)
-=======
-    if: (github.event_name == 'release' && github.event.action == 'published') || (github.event_name == 'workflow_dispatch' && inputs.deploy)
->>>>>>> after updating
+    if: false && (github.event_name == 'release' && github.event.action == 'published') || (github.event_name == 'workflow_dispatch' && inputs.deploy)
     needs:
       - dist
       - smoke-test

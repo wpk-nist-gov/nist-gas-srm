@@ -3,11 +3,7 @@
 [build-system]
 build-backend = "uv_build"
 requires = [
-<<<<<<< before updating
-    "uv-build>=0.12.22,<0.13.0",
-=======
     "uv-build>=0.12.23,<0.13.0",
->>>>>>> after updating
 ]
 
 [project]
@@ -143,15 +139,11 @@ mypy.requires-python = ">=3.14"
 notebook.requires-python = ">=3.14"
 nox.requires-python = ">=3.14"
 
-<<<<<<< before updating
 [tool.uv.sources]
 # pandas-stubs = { git = "https://github.com/pandas-dev/pandas-stubs", branch = "main" }
 streamlit-pydantic = { git = "https://github.com/lukasmasuch/streamlit-pydantic", branch = "main" }
 
-# * ruff -----------------------------------------------------------------------
-=======
 # * ruff -------------------------------------------------------------------------------------------
->>>>>>> after updating
 [tool.ruff]
 extend-include = [
     "*.ipynb",
