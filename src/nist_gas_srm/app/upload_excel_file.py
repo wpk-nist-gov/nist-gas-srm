@@ -82,7 +82,7 @@ def refresh_tables(tables: Iterable[EditableTableSRM]) -> None:
         table.update_key()
 
 
-# * Initialize an empty starting template -------------------------------------
+# * Initialize an empty starting template ----------------------------------------------
 DBNAMES_TABLENAMES_MAPPING = {
     "ratios": "Ratio data",
     "vendors": "Vendor data",
@@ -124,7 +124,7 @@ if "srm_metadata" not in st.session_state:
     )
 
 
-# * Input widgets -------------------------------------------------------------
+# * Input widgets ----------------------------------------------------------------------
 upload_file = st.file_uploader("Excel file to upload", type=".xls")
 
 
