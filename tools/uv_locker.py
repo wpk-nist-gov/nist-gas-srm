@@ -20,6 +20,11 @@ from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+<<<<<<< before updating
+=======
+import tomllib  # deptry: ignore[DEP001]
+
+>>>>>>> after updating
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
     from typing import Any
