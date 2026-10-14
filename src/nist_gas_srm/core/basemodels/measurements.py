@@ -67,7 +67,7 @@ class MeasurementsUpdate(SRMForeignKeyUpdate):
     pass
 
 
-# * Subtables -----------------------------------------------------------------
+# * Subtables --------------------------------------------------------------------------
 # ** Utils
 class SampleIDAndNumber(SQLModel):
     model_config = SQLModelConfig(populate_by_name=True)
@@ -132,7 +132,7 @@ class MeasurementsRatiosUpdate(SampleIDAndNumberUpdate, _MeasurementsForeignKeyU
     port: int | None = None
 
 
-# ** Vendor Data --------------------------------------------------------------
+# ** Vendor Data -----------------------------------------------------------------------
 class MeasurementsVendorsBase(SampleIDAndNumber, MeasurementsForeignKey):
     """Vendor data"""
 
@@ -166,7 +166,7 @@ class MeasurementsVendorsUpdate(SampleIDAndNumberUpdate, _MeasurementsForeignKey
     ratio: float | None = None
 
 
-# ** Standards Data -----------------------------------------------------------
+# ** Standards Data --------------------------------------------------------------------
 class MeasurementsStandardsBase(MeasurementsForeignKey):
     """Standards Data"""
 
@@ -295,7 +295,7 @@ class MeasurementsStandardsUpdate(
     uncert: float | None = None
 
 
-# ** Past lot standards -------------------------------------------------------
+# ** Past lot standards ----------------------------------------------------------------
 class MeasurementsPastLotStandardsBase(MeasurementsForeignKey):
     """Past lot standards"""
 
@@ -351,7 +351,7 @@ class MeasurementsPastLotStandardsUpdate(
     pred_conc: float | None = None
 
 
-# ** Additional lot standards -------------------------------------------------
+# ** Additional lot standards ----------------------------------------------------------
 class MeasurementsAdditionalLotStandardsBase(MeasurementsForeignKey):
     """MeasurementsAdditionalLotStandards"""
 
@@ -404,7 +404,7 @@ class MeasurementsAdditionalLotStandardsUpdate(
     ratio: float | None = None
 
 
-# ** Ratio Analysis -----------------------------------------------------------
+# ** Ratio Analysis --------------------------------------------------------------------
 class MeasurementsRatioAnalysisRandomEffectsBase(MeasurementsForeignKey):
     model_config = SQLModelConfig(
         alias_generator=to_pascal,
@@ -539,7 +539,7 @@ MeasurementsSubTableCreateType: TypeAlias = (
 )
 
 
-# * Complete ------------------------------------------------------------------
+# * Complete ---------------------------------------------------------------------------
 class MeasurementsCompletePublic(MeasurementsPublic):
     ratios: list[MeasurementsRatiosPublic] = []
     vendors: list[MeasurementsVendorsPublic] = []

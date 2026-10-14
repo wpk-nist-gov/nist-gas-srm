@@ -39,7 +39,7 @@ class EditableWidget:
         st.session_state[self.keyname] = value
 
 
-# * Basic entry ---------------------------------------------------------------
+# * Basic entry ------------------------------------------------------------------------
 st.subheader("Enter SRM metadata")
 
 
@@ -63,7 +63,7 @@ params["timestamp"] = st.datetime_input("timestamp", value="now")
 
 upload_file = st.file_uploader("Excel file to upload", type=".xls")
 
-# * Update metadata from file -------------------------------------------------
+# * Update metadata from file ----------------------------------------------------------
 
 
 def _get_metadata_from_filename() -> None:
@@ -78,7 +78,7 @@ metadata_from_filename = st.button(
     "Parse filename for metadata", on_click=_get_metadata_from_filename
 )
 
-# * Submit to database --------------------------------------------------------
+# * Submit to database -----------------------------------------------------------------
 submit_to_database = st.button("Submit data")
 
 

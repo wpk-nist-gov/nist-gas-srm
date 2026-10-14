@@ -37,7 +37,7 @@ from .utils import (
 )
 
 
-# * RCertification -----------------------------------------------------------
+# * RCertification ---------------------------------------------------------------------
 class RCertForeignKey(SQLModel):
     rcert_id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
@@ -492,7 +492,7 @@ RCertSubTableCreateType: TypeAlias = (
 )
 
 
-# * Complete ------------------------------------------------------------------
+# * Complete ---------------------------------------------------------------------------
 class RCertCompletePublic(RCertPublic):
     srm_values: list[RCertSRMValuesPublic] = []
     standards_values: list[RCertStandardsValuesPublic] = []

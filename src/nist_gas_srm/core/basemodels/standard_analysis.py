@@ -42,7 +42,7 @@ from .utils import (
 )
 
 
-# * Keys ----------------------------------------------------------------------
+# * Keys -------------------------------------------------------------------------------
 class StandardAnalysisForeignKey(SQLModel):
     standard_analysis_id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
@@ -57,7 +57,7 @@ class _StandardAnalysisForeignKeyUpdate(SQLModel):
     pass
 
 
-# * StandardAnalysis ----------------------------------------------------------
+# * StandardAnalysis -------------------------------------------------------------------
 # * root table
 
 

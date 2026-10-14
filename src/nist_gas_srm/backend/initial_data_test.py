@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-# * Options -------------------------------------------------------------------
+# * Options ----------------------------------------------------------------------------
 def init() -> None:
     with Session(engine) as session:
         init_db(session)

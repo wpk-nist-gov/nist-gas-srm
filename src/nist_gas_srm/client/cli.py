@@ -110,7 +110,7 @@ def main(
     return
 
 
-# * Parameters ----------------------------------------------------------------
+# * Parameters -------------------------------------------------------------------------
 class SubTable(StrEnum):
     MEASUREMENTS = auto()
     STANDARD_ANALYSIS = "standard-analysis"

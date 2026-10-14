@@ -84,7 +84,7 @@ pg = st.navigation([
     download_excel_file,
     view,
     # certified_page,
-])  # ty: ignore[call-non-callable]
+])
 pg.run()
 
 

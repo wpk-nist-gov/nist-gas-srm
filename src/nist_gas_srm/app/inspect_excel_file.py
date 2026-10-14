@@ -86,7 +86,7 @@ def refresh_tables(tables: Iterable[EditableTableSRM]) -> None:
         table.update_key()
 
 
-# * Initialize an empty starting template -------------------------------------
+# * Initialize an empty starting template ----------------------------------------------
 TABLES = {
     table_group: [
         EditableTableSRM(attr=attr, name=name)
