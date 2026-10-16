@@ -5,7 +5,7 @@ from __future__ import annotations
 import plotly.express as px
 import streamlit as st
 
-from nist_gas_srm.core import basemodels, excel_interface
+from nist_gas_srm.core import basemodels, excel
 
 st.title("Certified values")
 
@@ -17,14 +17,16 @@ DBNAMES_TABLENAMES_MAPPING = {
     "cylinder_results": "Cylinder results",
     "analysis_function_coefficients": "Analysis function coefficients",
     "correlation_coefficients": "Correlation coefficients",
-    "outliers": "Outliers",
+    "outliers": "RCertOutliers",
 }
 
 if (excelfile := st.session_state.get("srm_file")) is not None:
     tabs = st.tabs(list(DBNAMES_TABLENAMES_MAPPING.values()))
     for tab, name in zip(tabs, DBNAMES_TABLENAMES_MAPPING, strict=True):
-        data_ = excel_interface.excel_to_dataframe_by_name(
-            name, excelfile, model=basemodels.RCertCreateComplete
+        data_ = excel.interface.excel_to_dataframe_by_name(
+            name,
+            excelfile,
+            model=basemodels.rcert.RCertCompleteCreate,
         )
 
         with tab:

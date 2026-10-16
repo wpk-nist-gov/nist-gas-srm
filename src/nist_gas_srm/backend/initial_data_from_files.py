@@ -15,7 +15,8 @@ from sqlmodel import (
 )
 
 from nist_gas_srm.core import basemodels
-from nist_gas_srm.core.excel_utils import parse_excel_filename_to_metadata
+from nist_gas_srm.core.basemodels.keys import SRMForeignKey
+from nist_gas_srm.core.excel.utils import parse_excel_filename_to_metadata
 
 from . import crud, models
 from .core.db import engine, init_db
@@ -38,7 +39,7 @@ def add_srm(
 
     # do this to circumvent issues covered
     # here: https://github.com/fastapi/sqlmodel/issues/453
-    srm_metadata = basemodels.SRMDataCreate(
+    srm_metadata = basemodels.srm.SRMCreate(
         name=path.name,
         **parse_excel_filename_to_metadata(path.name),
     )
@@ -50,13 +51,15 @@ def add_srm(
     )
 
 
-def get_srm_by_name(session: Session, srm: str | models.SRMData) -> models.SRMData:
-    if isinstance(srm, models.SRMData):
+def get_srm_by_name(session: Session, srm: str | models.SRMTable) -> models.SRMTable:
+    if isinstance(srm, models.SRMTable):
         return srm
-    return session.exec(select(models.SRMData).where(models.SRMData.name == srm)).one()
+    return session.exec(
+        select(models.SRMTable).where(models.SRMTable.name == srm)
+    ).one()
 
 
-def delete_srm(session: Session, srm: str | models.SRMData) -> None:
+def delete_srm(session: Session, srm: str | models.SRMTable) -> None:
     srm = get_srm_by_name(session, srm)
     session.delete(srm)
     session.commit()
@@ -64,18 +67,18 @@ def delete_srm(session: Session, srm: str | models.SRMData) -> None:
 
 def delete_subtable(
     session: Session,
-    srm: str | models.SRMData,
-    table: type[basemodels.SRMDataForeignKey],
+    srm: str | models.SRMTable,
+    table: type[SRMForeignKey],
 ) -> None:
     srm = get_srm_by_name(session, srm)
-    _ = session.exec(delete(table).where(col(table.srmdata_id) == srm.id))
+    _ = session.exec(delete(table).where(col(table.srm_table_id) == srm.id))
     session.commit()
 
 
 def add_srm_subtable_row(
     session: Session,
-    srm: str | models.SRMData,
-    obj: models.SRMSubTable,
+    srm: str | models.SRMTable,
+    obj: models.measurements.MeasurementsSubTableType,
 ) -> None:
     srm = get_srm_by_name(session, srm)
     obj.srmdata = srm
@@ -109,15 +112,15 @@ def get_dataframe(session: Session, statement: Any, **kwargs: Any) -> pd.DataFra
 # def get_standards_data_stats(session: Session, srm_name: str) -> None:
 #     statement = (
 #         select(
-#             StandardsData.name,
-#             StandardsData.number,
-#             func.avg(StandardsData.ratio),
-#             (func.avg(col(StandardsData.ratio)) / func.count(col(StandardsData.ratio))),
-#             # func.stddev(StandardsData.ratio),
+#             MeasurementsStandards.name,
+#             MeasurementsStandards.number,
+#             func.avg(MeasurementsStandards.ratio),
+#             (func.avg(col(MeasurementsStandards.ratio)) / func.count(col(MeasurementsStandards.ratio))),
+#             # func.stddev(MeasurementsStandards.ratio),
 #         )
-#         .join(models.SRMData)
-#         .where(models.SRMData.name == srm_name)
-#         .group_by(StandardsData.name)
+#         .join(models.SRMTable)
+#         .where(models.SRMTable.name == srm_name)
+#         .group_by(MeasurementsStandards.name)
 #     )
 
 
@@ -146,7 +149,7 @@ def main(argv: Sequence[str] | None = None) -> bool:
                 logger.info("Path: %s", path)
                 add_srm(session, path)
 
-    #     new_ratio = models.RatioData.model_validate({
+    #     new_ratio = models.MeasurementsRatios.model_validate({
     #         "name": "abc",
     #         "number": "100",
     #         "ratio": 0.5,
@@ -162,7 +165,7 @@ def main(argv: Sequence[str] | None = None) -> bool:
 
     # # delete a subtable
     # with Session(engine) as session:
-    #     delete_subtable(session, paths[0].name, models.RatioAnalysisFixedEffectsData)
+    #     delete_subtable(session, paths[0].name, models.MeasurementsRatioAnalysisFixedEffects)
 
     # with Session(engine) as session:
     #     delete_srm(session, paths[0].name)
@@ -171,18 +174,18 @@ def main(argv: Sequence[str] | None = None) -> bool:
     #     print(
     #         get_dataframe(
     #             session=session,
-    #             statement=select(RatioData)
-    #             .join(models.SRMData)
-    #             .where(models.SRMData.name == paths[0].name),
+    #             statement=select(MeasurementsRatios)
+    #             .join(models.SRMTable)
+    #             .where(models.SRMTable.name == paths[0].name),
     #         )
     #     )
 
     #     print(
     #         get_dataframe(
     #             session=session,
-    #             statement=select(VendorData)
-    #             .join(models.SRMData)
-    #             .where(models.SRMData.name == paths[0].name),
+    #             statement=select(MeasurementsVendors)
+    #             .join(models.SRMTable)
+    #             .where(models.SRMTable.name == paths[0].name),
     #         )
     #     )
 
@@ -193,14 +196,14 @@ def main(argv: Sequence[str] | None = None) -> bool:
     #     df = get_dataframe(
     #         session=session,
     #         statement=select_columns(
-    #             StandardsData.name,
-    #             StandardsData.number,
-    #             StandardsData.ratio,
-    #             StandardsData.concentration,
-    #             StandardsData.unc,
+    #             MeasurementsStandards.name,
+    #             MeasurementsStandards.number,
+    #             MeasurementsStandards.ratio,
+    #             MeasurementsStandards.concentration,
+    #             MeasurementsStandards.unc,
     #         )
-    #         .join(models.SRMData)
-    #         .where(models.SRMData.name == paths[0].name),
+    #         .join(models.SRMTable)
+    #         .where(models.SRMTable.name == paths[0].name),
     #     )
 
     #     from .stats import get_standards_data_stats_table
@@ -211,10 +214,10 @@ def main(argv: Sequence[str] | None = None) -> bool:
     #     df = get_dataframe(
     #         session=session,
     #         statement=select(
-    #             RatioData,
+    #             MeasurementsRatios,
     #         )
-    #         .join(models.SRMData)
-    #         .where(models.SRMData.name == paths[0].name),
+    #         .join(models.SRMTable)
+    #         .where(models.SRMTable.name == paths[0].name),
     #     )
     #     df = df.query("number != 100")
     #     factors = [None, "number", "port", "break_set", "day"]
@@ -228,7 +231,7 @@ def main(argv: Sequence[str] | None = None) -> bool:
 
     # with Session(engine) as session:
     #     data = session.exec(
-    #         select(models.SRMData).where(col(models.SRMData.srm_id) == 2627)
+    #         select(models.SRMTable).where(col(models.SRMTable.srm_id) == 2627)
     #     ).all()
     #     logger.info("data %s", data)
 

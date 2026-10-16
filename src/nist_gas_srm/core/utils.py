@@ -2,12 +2,19 @@
 
 from __future__ import annotations
 
+import itertools
+import operator
 import re
 from collections.abc import MutableMapping
 from typing import TYPE_CHECKING, cast
 
+from .missing import MISSING
+
 if TYPE_CHECKING:
+    from collections.abc import Callable, Hashable, Iterable, Mapping
     from typing import Any, TypeVar
+
+    from .missing import MissingType
 
     T = TypeVar("T")
 
@@ -17,6 +24,8 @@ SRM_PATTERN = re.compile(
     r"(?P<srm_id>\d+)(?P<batch_id>\w+)?(:?-(?P<lot_id>\w*))?",
     flags=re.IGNORECASE,
 )
+
+JSON_PATTERN = re.compile(r".*\{.*\}.*", flags=re.DOTALL)
 
 
 def flatten_dict(
@@ -60,3 +69,45 @@ def unflatten_dict(flat_dict: dict[str, Any], separator: str = ".") -> dict[str,
         current_level[keys[-1]] = value
 
     return expanded_dict
+
+
+def get_in(
+    keys: str | Iterable[Hashable],
+    nested_dict: Mapping[Any, Any],
+    split: str | None = ".",
+    default: Any | MissingType = MISSING,
+    factory: Callable[[], Any] | None = None,
+) -> Any:
+    """
+    >>> foo = {"a": {"b": {"c": 1}}}
+    >>> get_in(["a", "b"], foo)
+    {'c': 1}
+
+    """
+    from functools import reduce
+
+    if isinstance(keys, str):
+        keys = [keys]
+
+    if split is not None:
+        keys = itertools.chain.from_iterable(
+            cast(
+                "Iterable[Hashable]", key.split(split) if isinstance(key, str) else key
+            )
+            for key in keys
+        )
+
+    try:
+        return reduce(
+            cast("Callable[..., Any]", operator.getitem),
+            keys,
+            nested_dict,
+        )
+    except (KeyError, IndexError, TypeError):
+        if factory is not None:
+            return factory()
+        if default is not MISSING:
+            return default
+
+    msg = f"Keys {keys} not found and no default or factory"
+    raise ValueError(msg)

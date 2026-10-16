@@ -1,21 +1,29 @@
 """Basic crud operations"""
 
+import logging
+import uuid
 from collections.abc import Iterable, Sequence
+from typing import overload
 
 import pandas as pd
 from sqlalchemy.engine.result import ScalarResult
-from sqlalchemy.sql.elements import ColumnElement
-from sqlmodel import Session, SQLModel, and_ as sql_and_, or_ as sql_or_, select
+from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
+from sqlmodel import Session, and_ as sql_and_, or_ as sql_or_, select
 
-from nist_gas_srm.core import basemodels, excel_interface  # , read_excel
+from nist_gas_srm.core import basemodels
+from nist_gas_srm.core.excel.interface import excel_to_json
 
 from . import models
 
+FORMAT = "[%(name)s - %(levelname)s] %(message)s"
+logging.basicConfig(level=logging.INFO, format=FORMAT)
+logger = logging.getLogger(__name__)
+
 
 def create_srm(
-    *, session: Session, srmdata_create: basemodels.SRMDataCreate
-) -> models.SRMData:
-    obj = models.SRMData.model_validate(srmdata_create)
+    *, session: Session, srmdata_create: basemodels.srm.SRMCreate
+) -> models.SRMTable:
+    obj = models.SRMTable.model_validate(srmdata_create)
     session.add(obj)
     session.commit()
     session.refresh(obj)
@@ -25,9 +33,9 @@ def create_srm(
 def update_srm(
     *,
     session: Session,
-    db_srmdata: models.SRMData,
-    srmdata_in: basemodels.SRMDataUpdate,
-) -> models.SRMData:
+    db_srmdata: models.SRMTable,
+    srmdata_in: basemodels.srm.SRMUpdate,
+) -> models.SRMTable:
     srmdata_data = srmdata_in.model_dump(exclude_unset=True)
 
     _ = db_srmdata.sqlmodel_update(srmdata_data)
@@ -37,47 +45,101 @@ def update_srm(
     return db_srmdata
 
 
-def _validate_srm_query(
-    srm_query: basemodels.SRMDataQuery | str,
-) -> basemodels.SRMDataQuery:
-    if isinstance(srm_query, basemodels.SRMDataQuery):
-        return srm_query
-    return basemodels.SRMDataQuery.from_string(srm_query)
+# def _get_sql_and_from_model(
+#     query: basemodels.srm.SRMQuery,
+#     model: type[SQLModel] = models.SRMTable,
+# ) -> ColumnElement[bool]:
+#     return sql_and_(
+#         *(
+#             getattr(model, attr) == value
+#             for attr, value in query.model_dump(exclude_unset=True).items()
+#         )
+#     )
+
+# def _get_where_from_srm_query(
+#     srm_query: str | basemodels.srm.SRMQuery | Iterable[str | basemodels.srm.SRMQuery],
+#     model: type[SQLModel] = models.SRMTable,
+# ) -> ColumnElement[bool]:
+
+#     if isinstance(srm_query, str):
+#         srm_query = basemodels.srm.SRMQuery.from_srm_query(srm_query)
+
+#     if isinstance(srm_query, basemodels.srm.SRMQuery):
+#         return  _get_sql_and_from_model(srm_query, model=model)
+
+#     srm_query = basemodels.srm.SRMQuery.from_srm_queries(srm_query)
+#     return sql_or_(
+#         *(_get_sql_and_from_model(obj, model=model) for obj in srm_query)
+#     )
 
 
-def _validate_srm_queries(
-    srm_queries: Iterable[basemodels.SRMDataQuery | str],
-) -> list[basemodels.SRMDataQuery]:
+def _get_sql_and_from_model_fuzzy(
+    query: str | basemodels.srm.SRMQuery,
+    model: type[models.SRMTable] = models.SRMTable,
+) -> ColumnElement[bool] | BinaryExpression[bool]:
 
-    return [_validate_srm_query(s) for s in srm_queries]
+    is_like_query, query = basemodels.srm.SRMQuery.validate_srm_query_maybe_like(query)
+    if isinstance(query, str):
+        if is_like_query:
+            return model.srm_string_id.ilike(query, escape="\\")
+        return model.srm_string_id == query
+
+    params = query.model_dump(exclude_unset=True)
+    logger.info("params %s", params)
+
+    return sql_and_(*(getattr(model, attr) == value for attr, value in params.items()))
 
 
-def _get_sql_and_from_model(
-    query: basemodels.SRMDataQuery,
-    model: type[SQLModel] = models.SRMData,
-) -> ColumnElement[bool]:
-    return sql_and_(
-        *(
-            getattr(model, attr) == value
-            for attr, value in query.model_dump(exclude_unset=True).items()
-        )
+def _get_where_from_srm_query_maybe_fuzzy(
+    srm_query: str | basemodels.srm.SRMQuery | Iterable[str | basemodels.srm.SRMQuery],
+    model: type[models.SRMTable] = models.SRMTable,
+) -> ColumnElement[bool] | BinaryExpression[bool]:
+
+    if isinstance(srm_query, str | basemodels.srm.SRMQuery):
+        return _get_sql_and_from_model_fuzzy(srm_query)
+
+    return sql_or_(
+        *(_get_sql_and_from_model_fuzzy(obj, model=model) for obj in srm_query)
     )
 
 
-def _get_where_from_srm_query(
-    srm_query: str | basemodels.SRMDataQuery | Iterable[basemodels.SRMDataQuery | str],
-) -> ColumnElement[bool]:
+@overload
+def _get_where_from_srm_table_id(
+    srm_table_id: uuid.UUID,
+    model: type[models.SRMTable] = models.SRMTable,
+) -> bool: ...
+@overload
+def _get_where_from_srm_table_id(
+    srm_table_id: Sequence[uuid.UUID],
+    model: type[models.SRMTable] = models.SRMTable,
+) -> ColumnElement[bool]: ...
 
-    if isinstance(srm_query, str):
-        srm_query = basemodels.SRMDataQuery.from_string(srm_query)
 
-    if isinstance(srm_query, basemodels.SRMDataQuery):
-        where_ = _get_sql_and_from_model(srm_query)
+def _get_where_from_srm_table_id(
+    srm_table_id: uuid.UUID | Sequence[uuid.UUID],
+    model: type[models.SRMTable] = models.SRMTable,
+) -> bool | ColumnElement[bool]:
+    if isinstance(srm_table_id, uuid.UUID):
+        return model.id == srm_table_id
+    return sql_or_(
+        *(_get_where_from_srm_table_id(obj, model=model) for obj in srm_table_id)
+    )
 
-    else:
-        srm_query = _validate_srm_queries(srm_query)
-        where_ = sql_or_(*(_get_sql_and_from_model(obj) for obj in srm_query))
-    return where_
+
+# def _get_where_from_srm_query_regex(
+#     srm_query_regex: str | Iterable[str],
+#     model: type[models.SRMTable] = models.SRMTable,
+#     case_insensitive: bool = True,
+# ) -> ColumnElement[bool] | BinaryExpression[bool]:
+
+#     if isinstance(srm_query_regex, str):
+#         if case_insensitive:
+#             srm_query_regex = rf"(?i){srm_query_regex}"
+#         return model.srm_string_id.regexp_match(srm_query_regex)
+
+#     return sql_or_(
+#         *(_get_where_from_srm_query_regex(obj, model=model) for obj in srm_query_regex)
+#     )
 
 
 def _get_srm_result(
@@ -87,21 +149,28 @@ def _get_srm_result(
     batch_id: str | None = None,
     lot_id: str | None = None,
     srm_query: str
-    | basemodels.SRMDataQuery
-    | Sequence[basemodels.SRMDataQuery | str]
+    | basemodels.srm.SRMQuery
+    | Sequence[str | basemodels.srm.SRMQuery]
     | None = None,
-) -> ScalarResult[models.SRMData]:
+    srm_table_id: uuid.UUID | Sequence[uuid.UUID] | None = None,
+) -> ScalarResult[models.SRMTable]:
 
-    query = select(models.SRMData)
-    if srm_query is not None:
-        where_ = _get_where_from_srm_query(srm_query)
+    query = select(models.SRMTable)
+    if srm_table_id is not None:
+        where_ = _get_where_from_srm_table_id(srm_table_id)
         query = query.where(where_)
         return session.exec(query)
-    srm_query = basemodels.SRMDataQuery.from_params_exclude_none(
+
+    if srm_query is not None:
+        where_ = _get_where_from_srm_query_maybe_fuzzy(srm_query)
+        query = query.where(where_)
+        return session.exec(query)
+
+    srm_query = basemodels.srm.SRMQuery.from_params_exclude_none(
         srm_id=srm_id, batch_id=batch_id, lot_id=lot_id
     )
     if srm_query.model_dump(exclude_unset=True):
-        where_ = _get_where_from_srm_query(srm_query)
+        where_ = _get_where_from_srm_query_maybe_fuzzy(srm_query)
         query = query.where(where_)
 
     return session.exec(query)
@@ -113,8 +182,9 @@ def get_srm(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: basemodels.SRMDataQuery | str | None = None,
-) -> models.SRMData:
+    srm_query: str | basemodels.srm.SRMQuery | None = None,
+    srm_table_id: uuid.UUID | None = None,
+) -> models.SRMTable:
     """Get single srm"""
 
     return _get_srm_result(
@@ -123,6 +193,7 @@ def get_srm(
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
+        srm_table_id=srm_table_id,
     ).one()
 
 
@@ -132,16 +203,24 @@ def get_srms(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: Sequence[basemodels.SRMDataQuery | str] | None = None,
-) -> Sequence[models.SRMData]:
+    srm_query: Sequence[str | basemodels.srm.SRMQuery] | None = None,
+    srm_table_id: Sequence[uuid.UUID] | None = None,
+    one: bool = False,
+) -> Sequence[models.SRMTable]:
     """Get multiple srm"""
-    return _get_srm_result(
+
+    result = _get_srm_result(
         session=session,
         srm_id=srm_id,
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
-    ).all()
+        srm_table_id=srm_table_id,
+    )
+
+    if one:
+        return [result.one()]
+    return result.all()
 
 
 def get_rcert(
@@ -150,8 +229,9 @@ def get_rcert(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: basemodels.SRMDataQuery | str | None = None,
-) -> models.RCertData:
+    srm_query: str | basemodels.srm.SRMQuery | None = None,
+    srm_table_id: uuid.UUID | None = None,
+) -> models.RCertTable:
 
     return get_srm(
         session=session,
@@ -159,6 +239,7 @@ def get_rcert(
         batch_id=batch_id,
         lot_id=lot_id,
         srm_query=srm_query,
+        srm_table_id=srm_table_id,
     ).rcert
 
 
@@ -168,8 +249,10 @@ def get_rcerts(
     srm_id: int | None = None,
     batch_id: str | None = None,
     lot_id: str | None = None,
-    srm_query: Sequence[basemodels.SRMDataQuery | str] | None = None,
-) -> Sequence[models.RCertData]:
+    srm_query: Sequence[str | basemodels.srm.SRMQuery] | None = None,
+    srm_table_id: Sequence[uuid.UUID] | None = None,
+    one: bool = False,
+) -> Sequence[models.RCertTable]:
 
     return [
         _.rcert
@@ -179,6 +262,98 @@ def get_rcerts(
             batch_id=batch_id,
             lot_id=lot_id,
             srm_query=srm_query,
+            srm_table_id=srm_table_id,
+            one=one,
+        )
+    ]
+
+
+def get_measurement(
+    *,
+    session: Session,
+    srm_id: int | None = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
+    srm_query: str | basemodels.srm.SRMQuery | None = None,
+    srm_table_id: uuid.UUID | None = None,
+) -> models.Measurements:
+
+    return get_srm(
+        session=session,
+        srm_id=srm_id,
+        batch_id=batch_id,
+        lot_id=lot_id,
+        srm_query=srm_query,
+        srm_table_id=srm_table_id,
+    ).measurements
+
+
+def get_measurements(
+    *,
+    session: Session,
+    srm_id: int | None = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
+    srm_query: Sequence[str | basemodels.srm.SRMQuery] | None = None,
+    srm_table_id: Sequence[uuid.UUID] | None = None,
+    one: bool = False,
+) -> Sequence[models.Measurements]:
+
+    return [
+        _.measurements
+        for _ in get_srms(
+            session=session,
+            srm_id=srm_id,
+            batch_id=batch_id,
+            lot_id=lot_id,
+            srm_query=srm_query,
+            srm_table_id=srm_table_id,
+            one=one,
+        )
+    ]
+
+
+def get_standard_analysis(
+    *,
+    session: Session,
+    srm_id: int | None = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
+    srm_query: str | basemodels.srm.SRMQuery | None = None,
+    srm_table_id: uuid.UUID | None = None,
+) -> models.StandardAnalysisTable:
+
+    return get_srm(
+        session=session,
+        srm_id=srm_id,
+        batch_id=batch_id,
+        lot_id=lot_id,
+        srm_query=srm_query,
+        srm_table_id=srm_table_id,
+    ).standard_analysis
+
+
+def get_standard_analyses(
+    *,
+    session: Session,
+    srm_id: int | None = None,
+    batch_id: str | None = None,
+    lot_id: str | None = None,
+    srm_query: Sequence[str | basemodels.srm.SRMQuery] | None = None,
+    srm_table_id: Sequence[uuid.UUID] | None = None,
+    one: bool = False,
+) -> Sequence[models.StandardAnalysisTable]:
+
+    return [
+        _.standard_analysis
+        for _ in get_srms(
+            session=session,
+            srm_id=srm_id,
+            batch_id=batch_id,
+            lot_id=lot_id,
+            srm_query=srm_query,
+            srm_table_id=srm_table_id,
+            one=one,
         )
     ]
 
@@ -186,8 +361,8 @@ def get_rcerts(
 def add_srm_item(
     *,
     session: Session,
-    srm: models.SRMData,
-    obj: models.SRMSubTable,
+    srm: models.SRMTable,
+    obj: models.measurements.MeasurementsSubTableType,
 ) -> None:
     """Add raw data item (row)."""
     obj.srmdata = srm
@@ -198,8 +373,8 @@ def add_srm_item(
 def add_rcert_item(
     *,
     session: Session,
-    srm: models.SRMData,
-    obj: models.RCertSubTable,
+    srm: models.SRMTable,
+    obj: models.rcert.RCertSubTableType,
 ) -> None:
     """Add rcert item (row)."""
     obj.rcertdata = srm.rcert
@@ -211,9 +386,9 @@ def create_srm_item(
     *,
     session: Session,
     srmdata_id: int,
-    item_in: basemodels.SRMSubTableCreate,
-    cls: type[models.SRMSubTable],
-) -> models.SRMSubTable:
+    item_in: basemodels.measurements.MeasurementsSubTableCreateType,
+    cls: type[models.measurements.MeasurementsSubTableType],
+) -> models.measurements.MeasurementsSubTableType:
 
     db_item = cls.model_validate(item_in, update={"srmdata_id": srmdata_id})
     session.add(db_item)
@@ -226,9 +401,9 @@ def create_rcert_item(
     *,
     session: Session,
     rcert_id: int,
-    item_in: basemodels.RCertSubTableCreate,
-    cls: type[models.RCertSubTable],
-) -> models.RCertSubTable:
+    item_in: basemodels.rcert.RCertSubTableCreateType,
+    cls: type[models.rcert.RCertSubTableType],
+) -> models.rcert.RCertSubTableType:
     db_item = cls.model_validate(item_in, update={"rcert_id": rcert_id})
     session.add(db_item)
     session.refresh(db_item)
@@ -240,9 +415,9 @@ def create_rcert_item(
 # def add_srm_from_excel_obj(
 #     *,
 #     session: Session,
-#     srmdata_create: basemodels.SRMDataCreate,
+#     srmdata_create: basemodels.srm.SRMCreate,
 #     srmxls: read_excel.SRMExcelFile,
-# ) -> models.SRMData:
+# ) -> models.SRMTable:
 
 #     data: dict[str, Any] = {
 #         name: list(read_excel.frame_to_list_of_models(caller(srmxls), cls))
@@ -254,9 +429,9 @@ def create_rcert_item(
 #         for name, caller, cls in models.RCERTDATA_NAME_CALLER_CLS
 #     }
 
-#     data["rcert"] = models.RCertData(**data_rcert)
+#     data["rcert"] = models.RCertTable(**data_rcert)
 
-#     srm = models.SRMData(**srmdata_create.model_dump(), **data)
+#     srm = models.SRMTable(**srmdata_create.model_dump(), **data)
 #     session.add(srm)
 #     session.commit()
 #     session.refresh(srm)
@@ -266,34 +441,36 @@ def create_rcert_item(
 def add_srm_from_excel_obj(
     *,
     session: Session,
-    srmdata_create: basemodels.SRMDataCreate,
+    srmdata_create: basemodels.srm.SRMCreate,
     excelfile: pd.ExcelFile,
-) -> models.SRMData:
+) -> models.SRMTable:
 
-    data = excel_interface.excel_to_json(
-        excelfile, model=basemodels.SRMRCertCreateComplete
+    data = excel_to_json(
+        excelfile,
+        model=basemodels.srm.SRMCompleteCreate,
     )
     data.update(srmdata_create.model_dump())
 
-    srmdata_in = basemodels.SRMRCertCreateComplete.model_validate(data)
+    srmdata_in = basemodels.srm.SRMCompleteCreate.model_validate(data)
+
     return add_srm_from_create(session=session, srmdata_in=srmdata_in)
 
 
 def add_srm_from_create(
     *,
     session: Session,
-    srmdata_in: basemodels.SRMDataCreate,
-) -> models.SRMData:
+    srmdata_in: basemodels.srm.SRMCreate,
+) -> models.SRMTable:
 
     # NOTE: this only works with the _FixMixin in models.py
     # see https://github.com/fastapi/sqlmodel/issues/293
-    srm = models.SRMData.model_validate(srmdata_in)
+    srm = models.SRMTable.model_validate(srmdata_in)
     session.add(srm)
     session.commit()
     session.refresh(srm)
     return srm
 
 
-def delete_srm(*, session: Session, srm: models.SRMData) -> None:
+def delete_srm(*, session: Session, srm: models.SRMTable) -> None:
     session.delete(srm)
     session.commit()

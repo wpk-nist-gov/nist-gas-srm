@@ -3,7 +3,7 @@
 
 import contextlib
 import re
-from collections.abc import Callable, Hashable
+from collections.abc import Callable, Hashable, Sequence
 from enum import StrEnum
 from functools import cache
 from operator import methodcaller
@@ -11,16 +11,19 @@ from types import UnionType
 from typing import Any, ClassVar, Self, cast, get_args, get_origin
 
 import pandas as pd
+from openpyxl.workbook.workbook import Workbook
 from sqlmodel import SQLModel
 
-from .excel_utils import (
+from .utils import (
     get_frame,
     get_frame_with_len_check,
     optional_dataframe_func_wrapper,
+    simple_write_to_excel,
     strip_trailing_numbers as func_strip_trailing_numbers,
 )
 
 RCERT_PATTERN = re.compile(r"^rcert\.")
+STANDARD_ANALYSIS_PATTERN = re.compile(r"^standard_analysis\.")
 
 
 class SheetNames(StrEnum):
@@ -29,6 +32,7 @@ class SheetNames(StrEnum):
     standards = "Standards Data"
     lot_standards = "Past LS"
     ratio_analysis = "Ratio Analysis"
+    standard_analysis = "Std Analysis"
     rcert = "RCertification"
 
 
@@ -114,8 +118,10 @@ class SQLDataFrameInterface(SQLModel):
         raise NotImplementedError
 
     @classmethod
-    def dataframe_to_excel(cls, obj: pd.DataFrame, excelfile: pd.ExcelFile) -> None:
-        raise NotImplementedError
+    def dataframe_to_excel(cls, obj: pd.DataFrame, workbook: Workbook) -> None:
+        """Simplest case"""
+        worksheet = workbook[cls.sheet_name]
+        return simple_write_to_excel(obj, worksheet=worksheet)
 
     @classmethod
     def dataframe_to_dicts(cls, obj: pd.DataFrame | None) -> list[dict[Hashable, Any]]:
@@ -139,17 +145,35 @@ class SQLDataFrameInterface(SQLModel):
         return cls.dataframe_to_models(cls.excel_to_dataframe(excelfile))
 
     @classmethod
-    def dicts_to_dataframe(cls, data: list[dict[Hashable, Any]]) -> pd.DataFrame | None:
+    def dicts_to_dataframe(
+        cls,
+        data: list[dict[str, Any]],
+        drop_colnames: list[str] | None = None,
+        drop_dbnames: list[str] | None = None,
+    ) -> pd.DataFrame | None:
         if not data:
             return None
-        return pd.DataFrame(data).rename(columns=cls.dbnames_to_colnames())
+        out = pd.DataFrame(data)
+        if drop_dbnames:
+            out = out.drop(drop_dbnames, axis=1, errors="ignore")
+        out = out.rename(columns=cls.dbnames_to_colnames())
+        if drop_colnames:
+            return out.drop(drop_colnames, axis=1, errors="ignore")
+        return out
 
     @classmethod
-    def models_to_dataframe(cls, models: list[Self]) -> pd.DataFrame | None:
+    def models_to_dataframe(
+        cls,
+        models: list[Self],
+        drop_colnames: list[str] | None = None,
+        drop_dbnames: list[str] | None = None,
+    ) -> pd.DataFrame | None:
         if not models:
             return None
-        return pd.DataFrame([m.model_dump() for m in models]).rename(
-            columns=cls.dbnames_to_colnames()
+        return cls.dicts_to_dataframe(
+            [m.model_dump() for m in models],
+            drop_colnames=drop_colnames,
+            drop_dbnames=drop_dbnames,
         )
 
 
@@ -198,13 +222,79 @@ def json_to_dict_of_models(
     return out
 
 
-def json_to_dict_of_dataframes(
+def json_to_dict_of_dataframes(  # ruff: ignore[complex-structure]
     data: dict[str, Any],
     model: type[SQLModel],
     normalize: bool = True,
+    prefix: Sequence[str] | None = None,
+    rename_columns: bool = True,
+    meta: str | Sequence[Any] | None = ("srm_id", "batch_id", "lot_id"),
+    **kwargs: Any,
 ) -> dict[str, Any]:
+    """
+    Convert json data (dict) to dict of dataframes
+
+    Parameters
+    ----------
+    data : dict
+        json data.
+    model :  SQLModel
+        Model to convert from json data to dataframes. The model should contain
+        :class:`~.excel.interface.SQLDataFromInterface` objects.
+    normalize : bool, default=True
+        If ``True``, use :func:`pandas.json_normalize` to create dataframes.
+        Otherwise, use
+        :meth:`~.excel.interface.SQLDataFromInterface.dicts_to_dataframe`
+        method.
+    prefix : sequence of string, optional
+        Use ``record=[*prefix, name]``, where ``name`` is the field name in
+        :func:`pandas.json_normalize`.
+    rename_columns : bool, default=True
+        If True, rename dataframe columns using
+        :meth:`~.excel.interface.SQLDataFromInterface.dbnames_to_colnames`.
+    meta : string or sequence of string, optional
+        ``meta`` parameter to :func:`pandas.json_normalize`.
+    **kwargs
+        Keyword arguments to :func:`pandas.json_normalize`
+
+    Returns
+    -------
+    dict
+        Dictionary (possibly nested) of name to dataframes.
+    """
+
+    if meta is not None and not isinstance(meta, str):
+        meta = list(meta)
+
+    other_params: dict[str, Any] = {
+        "normalize": normalize,
+        "rename_columns": rename_columns,
+        "meta": meta,
+        **kwargs,
+    }
 
     out: dict[str, Any] = {}
+    key: Sequence[str] | None
+
+    def _get_dataframe_from_inner_model(
+        data: dict[str, Any], name: str, inner_model: type[SQLDataFrameInterface]
+    ) -> pd.DataFrame | None:
+        if normalize:
+            key = name if prefix is None else [*prefix, name]
+
+            with contextlib.suppress(KeyError):
+                df = pd.json_normalize(
+                    data,
+                    key,
+                    meta=meta,
+                    **kwargs,
+                )
+                if rename_columns:
+                    return df.rename(columns=inner_model.dbnames_to_colnames())
+                return df
+
+        return inner_model.dicts_to_dataframe(data[name])
+
     for name, field in model.model_fields.items():
         if not normalize and name not in data:
             continue
@@ -216,20 +306,65 @@ def json_to_dict_of_dataframes(
             # list
             inner_model = _annotation_to_model(annotation, name)
             if issubclass(inner_model, SQLDataFrameInterface):
-                if normalize:
-                    with contextlib.suppress(KeyError):
-                        out[name] = pd.json_normalize(
-                            data, name, ["srm_id", "batch_id", "lot_id"]
-                        ).rename(columns=inner_model.dbnames_to_colnames())
-                elif name in data:
-                    out[name] = inner_model.dicts_to_dataframe(data[name])
+                out[name] = _get_dataframe_from_inner_model(
+                    data=data, name=name, inner_model=inner_model
+                )
+
         elif issubclass(annotation, SQLModel):  # pylint: disable=confusing-consecutive-elif
             # Recursive
             inner_model = annotation
+            if normalize:
+                data_ = data
+                key = [name] if prefix is None else [*prefix, name]
+            else:
+                data_ = data[name]
+                key = prefix
+
             if v := json_to_dict_of_dataframes(
-                data if normalize else data[name], inner_model, normalize
+                data=data_,
+                model=inner_model,
+                prefix=key,
+                **other_params,
             ):
                 out[name] = v
+    return out
+
+
+def clean_normalized_dataframe(
+    data: dict[str, Any],
+    drop: Sequence[str] = (
+        "id",
+        "srm_id",
+        "batch_id",
+        "lot_id",
+        "rcert_id",
+        "standard_analysis_id",
+        "measurements_id",
+    ),
+    srm_name: str | None = "srm_name",
+) -> dict[str, Any]:
+
+    drop = [drop] if isinstance(drop, str) else list(drop)
+
+    out: dict[str, Any] = {}
+    for key, value in data.items():
+        if isinstance(value, pd.DataFrame):
+            if value.empty:
+                continue
+
+            df = value.drop(drop, axis=1, errors="ignore") if drop else value.copy()
+            srm_name_value = (
+                value.srm_id.astype(str)
+                + value.batch_id.where(lambda x: ~x.isnull(), "")
+                + "-"
+                + value.lot_id.astype(str)
+            )
+            df.insert(0, srm_name, srm_name_value)
+
+            out[key] = df
+        else:
+            out[key] = clean_normalized_dataframe(value, drop=drop, srm_name=srm_name)
+
     return out
 
 
@@ -290,23 +425,61 @@ def excel_to_json(
     )
 
 
+def dict_of_dataframes_to_workbook(
+    data: dict[str, Any],
+    workbook: Workbook,
+    model: type[SQLModel],
+) -> None:
+
+    for name, field in model.model_fields.items():
+        annotation: Any = field.annotation
+        if annotation is None or isinstance(annotation, UnionType):
+            pass
+        elif get_origin(annotation) is list:
+            # list
+            inner_model = _annotation_to_model(annotation, name)
+            if (
+                issubclass(inner_model, SQLDataFrameInterface)
+                and (df := data.get(name)) is not None
+            ):
+                inner_model.dataframe_to_excel(df, workbook)
+        elif issubclass(annotation, SQLModel):  # pylint: disable=confusing-consecutive-elif
+            # Recursive
+            inner_model = annotation
+            dict_of_dataframes_to_workbook(data[name], workbook, inner_model)
+
+
 def excel_to_dataframe_by_name(
     name: str,
     excelfile: pd.ExcelFile,
     model: type[SQLModel],
 ) -> pd.DataFrame | None:
+    """
+    Extract dataframe from excelfile by name
 
-    annotation: Any
-    if name.startswith("rcert."):
-        if (obj := model.model_fields.get("rcert")) is None:
-            msg = "model does not contain rcert"
+    Parameters
+    ----------
+    name : str
+        Name of dataframe to extract.
+    excelfile : pd.ExcelFile,
+    model : SQLModel
+
+    Returns
+    pd.DataFrame, optional
+        DataFrame.
+    """
+
+    prefix, sep, root = name.partition(".")
+
+    if sep == ".":
+        if (obj := model.model_fields.get(prefix)) is None:
+            msg = f"model does not contain {prefix}"
             raise ValueError(msg)
         model_: Any = obj.annotation
         assert issubclass(model_, SQLModel)
-        return excel_to_dataframe_by_name(
-            RCERT_PATTERN.sub("", name), excelfile=excelfile, model=model_
-        )
+        return excel_to_dataframe_by_name(root, excelfile=excelfile, model=model_)
 
+    annotation: Any
     annotation = model.model_fields[name].annotation
     if (origin := get_origin(annotation)) is not list:
         msg = f"{name} is not a list field.  Got {origin}."
@@ -321,15 +494,19 @@ def excel_to_dataframe_by_name(
 
 def model_to_dict_of_dataframes(
     obj: SQLModel,
+    **kwargs: Any,
 ) -> dict[str, Any]:
     out: dict[str, Any] = {}
     for name, value in obj:
         if isinstance(value, list):
             if value and isinstance(v0 := value[0], SQLDataFrameInterface):  # pyright: ignore[reportUnknownVariableType]
                 out[name] = v0.models_to_dataframe(
-                    cast("list[SQLDataFrameInterface]", value)
+                    cast("list[SQLDataFrameInterface]", value),
+                    **kwargs,
                 )
 
-        elif isinstance(value, SQLModel) and (v := model_to_dict_of_dataframes(value)):  # pylint: disable=confusing-consecutive-elif
+        elif isinstance(value, SQLModel) and (  # pylint: disable=confusing-consecutive-elif
+            v := model_to_dict_of_dataframes(value, **kwargs)
+        ):
             out[name] = v
     return out
