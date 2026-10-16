@@ -30,7 +30,7 @@ def get_data(srm_query: list[str]) -> dict[str, Any]:
             complete=True,
         )
 
-        json = response.json()
+        json = response.json().get("data", [])
 
         dataframes = excel.interface.json_to_dict_of_dataframes(
             json,

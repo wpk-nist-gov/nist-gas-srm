@@ -69,7 +69,9 @@ home_page = st.Page("home.py", title="Gas SRM Analysis", icon="👋")
 upload_excel_file = st.Page("upload_excel_file_to_database.py", title="Upload file")
 inspect_excel_file_page = st.Page("inspect_excel_file.py", title="Inspect excel file")
 view = st.Page("view.py", title="View data")
-download_excel_file = st.Page("download_excel_file.py", title="Download excel file")
+download_excel_file = st.Page(
+    "download_excel_file.py", title="Download or delete record"
+)
 
 
 # certified_page = st.Page("certified.py", title="Certified data")
@@ -81,8 +83,8 @@ pg = st.navigation([
     # table_entry_page,
     upload_excel_file,
     inspect_excel_file_page,
-    download_excel_file,
     view,
+    download_excel_file,
     # certified_page,
 ])
 pg.run()

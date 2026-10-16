@@ -41,7 +41,10 @@ TABLEGROUP_DBNAMES_TABLENAMES_MAPPING = {
 def get_all_srms(include_subtypes: bool = True) -> list[str]:
     with httpx.Client(base_url=FASTAPI_URL) as client:
         response = crud.get_srms(client)
-    models = [basemodels.srm.SRMPublic.model_validate(x) for x in response.json()]
+    models = [
+        basemodels.srm.SRMPublic.model_validate(x)
+        for x in response.json().get("data", [])
+    ]
 
     out = {model.srm_string_id for model in models}
 

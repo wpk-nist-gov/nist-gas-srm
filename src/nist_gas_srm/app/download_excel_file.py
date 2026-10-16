@@ -69,7 +69,7 @@ if srm:
         mime="application/vnd.ms-excel",
     )
 
-    if st.button("delete file"):
+    if st.button("Delete record"):
         confirm_modal()
 
     if st.session_state.delete_confirmed:
