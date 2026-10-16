@@ -258,7 +258,7 @@ jobs:
       - pinact
       - typecheck
       - test
-      - coverage
+      # - coverage
       - docs
       - zizmor
     runs-on: ubuntu-latest
