@@ -49,7 +49,7 @@ def cov_beta(degree: int) -> NDArrayFloat64:
 def test__polynomial_func(beta: NDArray1DFloat64, x: NDArrayFloat64) -> None:
     np.testing.assert_allclose(
         np.polynomial.Polynomial(beta)(x),
-        standard_analysis._polynomial_func(x, beta),
+        standard_analysis._polynomial_func(x, beta),  # pylint: disable=protected-access
     )
 
 

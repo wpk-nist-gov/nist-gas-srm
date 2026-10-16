@@ -228,7 +228,6 @@ def json_to_dict_of_dataframes(  # ruff: ignore[complex-structure]
     normalize: bool = True,
     prefix: Sequence[str] | None = None,
     rename_columns: bool = True,
-    # include_root: bool = False,  # ruff: ignore[commented-out-code]
     meta: str | Sequence[Any] | None = ("srm_id", "batch_id", "lot_id"),
     **kwargs: Any,
 ) -> dict[str, Any]:
@@ -253,9 +252,6 @@ def json_to_dict_of_dataframes(  # ruff: ignore[complex-structure]
     rename_columns : bool, default=True
         If True, rename dataframe columns using
         :meth:`~.excel.interface.SQLDataFromInterface.dbnames_to_colnames`.
-    include_root : bool, default=False
-        If true, try to convert the root ``model`` to a dataframe if possible.
-
     meta : string or sequence of string, optional
         ``meta`` parameter to :func:`pandas.json_normalize`.
     **kwargs
@@ -509,7 +505,7 @@ def model_to_dict_of_dataframes(
                     **kwargs,
                 )
 
-        elif isinstance(value, SQLModel) and (
+        elif isinstance(value, SQLModel) and (  # pylint: disable=confusing-consecutive-elif
             v := model_to_dict_of_dataframes(value, **kwargs)
         ):
             out[name] = v

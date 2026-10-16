@@ -1,3 +1,4 @@
+# pylint: disable=consider-alternative-union-syntax
 import logging
 from typing import TYPE_CHECKING, Optional, TypeAlias, cast  # pyright: ignore[reportDeprecated]
 

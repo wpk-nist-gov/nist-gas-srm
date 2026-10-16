@@ -1,4 +1,5 @@
 """Create initial data from files"""
+# pylint: disable=duplicate-code
 
 import json
 import logging
@@ -63,7 +64,7 @@ def main(argv: Sequence[str] | None = None) -> bool:
 
     if options.clean or options.force_add:
         with Session(engine) as session:
-            for srm_query in [
+            for srm_query in (
                 "2627-I",
                 "26271-J",
                 "22A-a",
@@ -76,7 +77,7 @@ def main(argv: Sequence[str] | None = None) -> bool:
                     "units": "ppb",
                     "note": "other",
                 }),
-            ]:
+            ):
                 logger.info("Path: %s", path)
                 add_srm(session, srm_query=srm_query, path=path)
 

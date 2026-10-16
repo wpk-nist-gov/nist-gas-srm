@@ -1,6 +1,5 @@
 """srm models"""
 # ruff:file-ignore[manual-from-import]
-# pylint: disable=abstract-method
 
 from collections.abc import Iterable
 from datetime import UTC, datetime
@@ -23,6 +22,7 @@ from sqlmodel import (
 )
 from sqlmodel._compat import SQLModelConfig  # ruff:ignore[import-private-name]
 
+# pylint: disable=consider-using-from-import
 import nist_gas_srm.core.basemodels.measurements as measurements
 import nist_gas_srm.core.basemodels.rcert as rcert
 import nist_gas_srm.core.basemodels.standard_analysis as stdanal

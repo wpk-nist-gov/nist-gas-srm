@@ -1,6 +1,5 @@
 """RCertification model"""
 # ruff:file-ignore[commented-out-code,missing-todo-link,line-contains-todo]
-# pylint: disable=abstract-method
 
 import uuid
 from typing import Annotated, TypeAlias, cast

@@ -130,7 +130,7 @@ exclude-newer = "7 days"
 # Needed until prek>=0.5.0 is 7 days old
 exclude-newer-package = { prek = "0 days" }
 managed = true
-build-backend.source-exclude = [ ".*cache" ]
+build-backend.source-exclude = [ ".*cache", "**/app/_static" ]
 build-backend.source-include = [ "tests/**" ]
 pip.annotation-style = "line"
 pip.generate-hashes = true

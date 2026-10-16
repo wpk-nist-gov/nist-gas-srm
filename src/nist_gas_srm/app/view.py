@@ -79,28 +79,26 @@ tablegroup_plot_mapping: dict[str, dict[str, Callable[[pd.DataFrame], None]]] = 
 }
 
 
-if srms:
-    data = get_data(srms)
-    if data:
-        for table_group, tables in tablegroup_dbnames_tablenames_mapping.items():
-            with st.expander(table_group, expanded=False):
-                tabs = st.tabs(list(tables.values()))
+if srms and (data := get_data(srms)):
+    for table_group, tables in tablegroup_dbnames_tablenames_mapping.items():
+        with st.expander(table_group, expanded=False):
+            tabs = st.tabs(list(tables.values()))
 
-                for tab, name in zip(tabs, tables, strict=True):
-                    if (data_ := get_in(name, data, default=None)) is not None:
-                        with tab:
-                            st.dataframe(  # pyright: ignore[reportUnknownMemberType]
-                                cast("pd.DataFrame", data_),
-                                width="content",
-                                hide_index=True,
+            for tab, name in zip(tabs, tables, strict=True):
+                if (data_ := get_in(name, data, default=None)) is not None:
+                    with tab:
+                        st.dataframe(  # pyright: ignore[reportUnknownMemberType]
+                            cast("pd.DataFrame", data_),
+                            width="content",
+                            hide_index=True,
+                        )
+
+                        if (
+                            plot_func := get_in(
+                                (table_group, name),
+                                tablegroup_plot_mapping,
+                                split=None,
+                                default=None,
                             )
-
-                            if (
-                                plot_func := get_in(
-                                    (table_group, name),
-                                    tablegroup_plot_mapping,
-                                    split=None,
-                                    default=None,
-                                )
-                            ) is not None:
-                                plot_func(data_)
+                        ) is not None:
+                            plot_func(data_)

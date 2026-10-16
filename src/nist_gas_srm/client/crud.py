@@ -119,7 +119,7 @@ def upload_excel_file(
     | MissingType = MISSING,
     upload_name: str | MissingType = MISSING,
 ) -> Response:
-    if srm_query is not MISSING:
+    if srm_query is not MISSING:  # pylint: disable=consider-ternary-expression
         srm_query_str = (
             basemodels.srm.SRMCreate.from_srm_query(srm_query)
             if isinstance(srm_query, str)

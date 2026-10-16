@@ -1,4 +1,5 @@
 # ruff:file-ignore[commented-out-code]
+# pylint: disable=duplicate-code
 
 import logging
 import uuid

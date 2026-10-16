@@ -136,7 +136,6 @@ def eval_polynomial_error(
 def _polynomial_func(
     x: NDArrayFloat64, beta: Sequence[Any] | NDArray1DFloat64
 ) -> NDArrayFloat64:
-    """"""
     result: NDArrayFloat64 = np.zeros_like(x)
     for coefficient in reversed(beta):
         result = result * x + coefficient

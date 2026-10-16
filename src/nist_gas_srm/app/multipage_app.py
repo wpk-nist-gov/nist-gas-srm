@@ -64,6 +64,7 @@ import streamlit as st
 
 home_page = st.Page("home.py", title="Gas SRM Analysis", icon="👋")
 
+
 # basic_entry_page = st.Page("basic_data_entry.py", title="Basic data entry")
 # table_entry_page = st.Page("basic_data_entry_table.py", title="Basic data entry table")
 upload_excel_file = st.Page("upload_excel_file_to_database.py", title="Upload file")

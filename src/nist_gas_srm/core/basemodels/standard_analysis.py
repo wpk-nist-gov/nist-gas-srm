@@ -1,5 +1,4 @@
 """standard analysis models"""
-# pylint: disable=abstract-method
 
 import uuid
 from functools import partial
@@ -411,10 +410,10 @@ class StandardAnalysisGenLineEvalCreate(
             fill_from=(23, "T"),
         )
 
-        for col, target_col in [
+        for col, target_col in (
             (12, "V"),
             (13, "W"),
-        ]:
+        ):
             cell = cast("Cell", worksheet.cell(row=5, column=col))
             cell.value = f"={target_col}{new_start + 1}"
 
