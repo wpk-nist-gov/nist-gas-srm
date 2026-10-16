@@ -159,12 +159,11 @@ repos:
     hooks:
       - id: uv-lock
         alias: requirements
-        args: [--locked]
       - id: pip-compile
         alias: requirements
         entry: uv run tools/uv_locker.py
         pass_filenames: true
-        files: ^requirements/[^/]*\.txt$|^tools/*\.py$
+        files: ^requirements/[^/]*\.txt$|^tools/.*\.py$
 
   # * Commit message
   - repo: https://github.com/commitizen-tools/commitizen
@@ -225,6 +224,7 @@ repos:
       # Run the linter.
       - id: zizmor
         alias: actions
+        args: [--pedantic]
 
   # * Notebook specific ----------------------------------------------------------------------------
   # * Strip out metadata from notebooks
