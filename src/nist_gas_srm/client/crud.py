@@ -1,11 +1,11 @@
-# ruff:file-ignore[commented-out-code]
-
 from __future__ import annotations
 
 from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING
 from uuid import UUID
+
+import httpx
 
 from nist_gas_srm.core import basemodels
 from nist_gas_srm.core.missing import MISSING
@@ -18,6 +18,10 @@ if TYPE_CHECKING:
 
     from nist_gas_srm.core.missing import MissingType
     from nist_gas_srm.core.typing import SubTableType
+
+FASTAPI_URL = "http://127.0.0.1:8000"
+
+_get_client = partial(httpx.Client, base_url=FASTAPI_URL)
 
 
 def _get_srm_params(
@@ -56,7 +60,7 @@ def _get_srm_params(
 
 
 def get_multiple_tables(
-    client: Client,
+    client: Client | None = None,
     *,
     url: str,
     srm_id: int | MissingType = MISSING,
@@ -71,6 +75,22 @@ def get_multiple_tables(
     complete: bool = False,
     one: bool = False,
 ) -> Response:
+
+    if client is None:
+        with _get_client() as client_:
+            return get_multiple_tables(
+                client=client_,
+                url=url,
+                srm_id=srm_id,
+                batch_id=batch_id,
+                lot_id=lot_id,
+                srm_query=srm_query,
+                srm_table_id=srm_table_id,
+                subtable=subtable,
+                complete=complete,
+                one=one,
+            )
+
     params: dict[str, Any] = {"one": one, "complete": complete}
     if subtable is not None:
         params.update(subtable=subtable)
@@ -99,16 +119,49 @@ def get_multiple_tables(
 
 get_srms = partial(get_multiple_tables, url="/srms")
 
-# get_measurements = partial(get_multiple_tables, url="/measurements", complete=False)
-# get_standard_analyses = partial(
-#     get_multiple_tables, url="/standard-analyses", complete=False
-# )
-# get_rcerts = partial(get_multiple_tables, url="/rcerts", complete=False)
+
+def download_excel_file(
+    path: Path | MissingType = MISSING,
+    client: Client | None = None,
+    *,
+    srm_id: int | MissingType = MISSING,
+    batch_id: str | MissingType | None = MISSING,
+    lot_id: str | MissingType | None = MISSING,
+    srm_query: str | basemodels.srm.SRMQuery | MissingType = MISSING,
+    srm_table_id: str | UUID | MissingType = MISSING,
+) -> Response:
+    if client is None:
+        with _get_client() as client_:
+            return download_excel_file(
+                path=path,
+                client=client_,
+                srm_id=srm_id,
+                batch_id=batch_id,
+                lot_id=lot_id,
+                srm_query=srm_query,
+                srm_table_id=srm_table_id,
+            )
+
+    params = _get_srm_params(
+        srm_query,
+        srm_id=srm_id,
+        batch_id=batch_id,
+        lot_id=lot_id,
+        srm_table_id=srm_table_id,
+    )
+
+    response = client.get("/srms/files", params=params)
+
+    if path is not MISSING:
+        with path.open("wb") as f:
+            _ = f.write(response.content)
+
+    return response
 
 
 def upload_excel_file(
-    client: Client,
     path_or_buffer: Path | BinaryIO,
+    client: Client | None = None,
     *,
     srm_id: int | MissingType = MISSING,
     batch_id: str | MissingType | None = MISSING,
@@ -119,6 +172,18 @@ def upload_excel_file(
     | MissingType = MISSING,
     upload_name: str | MissingType = MISSING,
 ) -> Response:
+    if client is None:
+        with _get_client() as client_:
+            return upload_excel_file(
+                client=client_,
+                path_or_buffer=path_or_buffer,
+                srm_id=srm_id,
+                batch_id=batch_id,
+                lot_id=lot_id,
+                srm_query=srm_query,
+                upload_name=upload_name,
+            )
+
     if srm_query is not MISSING:  # pylint: disable=consider-ternary-expression
         srm_query_str = (
             basemodels.srm.SRMCreate.from_srm_query(srm_query)
@@ -147,36 +212,8 @@ def upload_excel_file(
     return func(files={"file": (upload_name, path_or_buffer, mime_type)})
 
 
-def download_excel_file(
-    client: Client,
-    path: Path | MissingType = MISSING,
-    *,
-    srm_id: int | MissingType = MISSING,
-    batch_id: str | MissingType | None = MISSING,
-    lot_id: str | MissingType | None = MISSING,
-    srm_query: str | basemodels.srm.SRMQuery | MissingType = MISSING,
-    srm_table_id: str | UUID | MissingType = MISSING,
-) -> Response:
-
-    params = _get_srm_params(
-        srm_query,
-        srm_id=srm_id,
-        batch_id=batch_id,
-        lot_id=lot_id,
-        srm_table_id=srm_table_id,
-    )
-
-    response = client.get("/srms/files", params=params)
-
-    if path is not MISSING:
-        with path.open("wb") as f:
-            _ = f.write(response.content)
-
-    return response
-
-
 def delete_srm(
-    client: Client,
+    client: Client | None = None,
     *,
     srm_id: int | MissingType = MISSING,
     batch_id: str | MissingType | None = MISSING,
@@ -184,6 +221,16 @@ def delete_srm(
     srm_query: str | basemodels.srm.SRMQuery | MissingType = MISSING,
     srm_table_id: str | UUID | MissingType = MISSING,
 ) -> Response:
+    if client is None:
+        with _get_client() as client_:
+            return delete_srm(
+                client=client_,
+                srm_id=srm_id,
+                batch_id=batch_id,
+                lot_id=lot_id,
+                srm_query=srm_query,
+                srm_table_id=srm_table_id,
+            )
 
     params = _get_srm_params(
         srm_query,

@@ -66,6 +66,7 @@ def main(argv: Sequence[str] | None = None) -> bool:
         with Session(engine) as session:
             for srm_query in (
                 "2627-I",
+                "2627a-I",
                 "26271-J",
                 "22A-a",
                 "22A-b",

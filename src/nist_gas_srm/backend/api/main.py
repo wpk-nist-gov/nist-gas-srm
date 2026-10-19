@@ -690,16 +690,17 @@ async def download_excel(
     srm_table_id: SRMTableIDType = None,
 ) -> FileResponse:
 
-    srmdata = basemodels.srm.SRMCompleteCreate.model_validate(
-        crud.get_srm(
-            session=session,
-            srm_id=srm_id,
-            batch_id=batch_id,
-            lot_id=lot_id,
-            srm_query=srm_query,
-            srm_table_id=srm_table_id,
+    with catch_single_record_errors():
+        srmdata = basemodels.srm.SRMCompleteCreate.model_validate(
+            crud.get_srm(
+                session=session,
+                srm_id=srm_id,
+                batch_id=batch_id,
+                lot_id=lot_id,
+                srm_query=srm_query,
+                srm_table_id=srm_table_id,
+            )
         )
-    )
 
     # convert to dict of dataframes
     data = excel.interface.model_to_dict_of_dataframes(

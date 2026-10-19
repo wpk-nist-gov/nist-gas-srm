@@ -1,5 +1,4 @@
 """CLI program to interact with web-API"""
-# ruff: file-ignore[commented-out-code]
 
 from __future__ import annotations
 
@@ -7,6 +6,7 @@ import json
 import logging
 from enum import StrEnum, auto
 from functools import partial
+from pathlib import Path
 from typing import TYPE_CHECKING, Annotated
 
 import httpx
@@ -94,7 +94,9 @@ class _AliasedGroup(TyperGroup):
 app: typer.Typer = typer.Typer(cls=_AliasedGroup, no_args_is_help=True)
 
 app_get = typer.Typer(help="Get", no_args_is_help=True)
+app_post = typer.Typer(help="Post", no_args_is_help=True)
 app.add_typer(app_get, name="get")
+app.add_typer(app_post, name="post")
 
 
 @app.callback()
@@ -190,7 +192,6 @@ ALL_OPTION = Annotated[
     ),
 ]
 
-
 SRM_QUERY_OPTIONAL_ARGUMENT = Annotated[
     str | None,
     typer.Argument(
@@ -226,93 +227,22 @@ SRM_TABLE_ID_MULT_OPTION = Annotated[
     ),
 ]
 
+OUTPUT_FILE_OPTION = Annotated[
+    Path,
+    typer.Option(
+        "-o",
+        "--output-file",
+        help="output file",
+    ),
+]
+
 
 def _get_dict_drop_drop_none(**kwargs: Any) -> dict[str, Any]:
     return {k: v for k, v in kwargs.items() if v is not None}
 
 
-# def _get_single(
-#     *,
-#     srm_id: SRM_ID_OPTION = None,
-#     batch_id: BATCH_ID_OPTION = None,
-#     lot_id: LOT_ID_OPTION = None,
-#     srm_query: SRM_QUERY_OPTIONAL_ARGUMENT = None,
-#     srm_table_id: SRM_TABLE_ID_OPTION = None,
-#     complete: COMPLETE_OPTION = False,
-#     pretty: PRETTY_OPTION = False,
-#     subtable: SUBTABLE_OPTION = None,
-#     verbose: VERBOSE_OPTIONS = None,
-#     url: str | None = "/srm",
-# ) -> None:
-
-#     params: dict[str, Any] = _get_dict_drop_drop_none(
-#         srm_id=srm_id,
-#         batch_id=batch_id,
-#         lot_id=lot_id,
-#         srm_query=srm_query,
-#         srm_table_id=srm_table_id,
-#         complete=complete,
-#         subtable=subtable,
-#         url=url,
-#     )
-
-#     logger.info("params %s", params)
-
-#     with _get_client() as client:
-#         response = crud.get_single_table(client=client, **params)
-
-#         _ = response.raise_for_status()
-
-#         typer.echo(_get_json_string_from_response(response, pretty=pretty))
-
-
-# get_srm = app_get.command(
-#     "srm",
-#     no_args_is_help=True,
-#     help="Get data for single SRM.",
-# )(
-#     partial(
-#         _get_single,
-#         url="/srm",
-#     )
-# )
-
-# get_measurement = app_get.command(
-#     "measurement",
-#     no_args_is_help=True,
-#     help="Get measurements data for single SRM",
-# )(
-#     partial(
-#         _get_single,
-#         url="/measurement",
-#         subtable=None,
-#     )
-# )
-# get_standard_analysis = app_get.command(
-#     "standard-analysis",
-#     no_args_is_help=True,
-#     help="Get standard analysis data for single SRM",
-# )(
-#     partial(
-#         _get_single,
-#         url="/standard-analysis",
-#         subtable=None,
-#     )
-# )
-# get_rcert = app_get.command(
-#     "rcert",
-#     no_args_is_help=True,
-#     help="Get R certification data for single SRM",
-# )(
-#     partial(
-#         _get_single,
-#         url="/rcert",
-#         subtable=None,
-#     )
-# )
-
-
-def _get_multiple(
+@app_get.command("json", no_args_is_help=True, help="Get srm data")
+def get_srm(
     *,
     srm_id: SRM_ID_OPTION = None,
     batch_id: BATCH_ID_OPTION = None,
@@ -323,7 +253,7 @@ def _get_multiple(
     pretty: PRETTY_OPTION = False,
     subtable: SUBTABLE_OPTION = None,
     verbose: VERBOSE_OPTIONS = None,  # ruff: ignore[unused-function-argument]
-    url: str | None = "/srm",
+    url: str | None = "/srms",
     all_: ALL_OPTION = False,  # ruff: ignore[unused-function-argument]
 ) -> None:
 
@@ -340,55 +270,46 @@ def _get_multiple(
 
     logger.info("params %s", params)
 
-    with _get_client() as client:
-        response = crud.get_multiple_tables(client=client, **params)
+    response = crud.get_srms(**params)
 
-        _ = response.raise_for_status()
+    _ = response.raise_for_status()
 
-        typer.echo(_get_json_string_from_response(response, pretty=pretty))
+    typer.echo(_get_json_string_from_response(response, pretty=pretty))
 
 
-get_srms = app_get.command(
-    "srms",
-    no_args_is_help=True,
-    help="Get data for multiple SRMs",
-)(
-    partial(
-        _get_multiple,
-        url="/srms",
+@app_get.command("excel", no_args_is_help=True, help="Get excel file")
+def get_excel(
+    path: OUTPUT_FILE_OPTION,
+    srm_id: SRM_ID_OPTION = None,
+    batch_id: BATCH_ID_OPTION = None,
+    lot_id: LOT_ID_OPTION = None,
+    srm_query: SRM_QUERY_OPTIONAL_ARGUMENT = None,
+    srm_table_id: SRM_TABLE_ID_MULT_OPTION = None,
+    subtable: SUBTABLE_OPTION = None,
+    verbose: VERBOSE_OPTIONS = None,  # ruff: ignore[unused-function-argument]
+    all_: ALL_OPTION = False,  # ruff: ignore[unused-function-argument]
+) -> None:
+
+    params: dict[str, Any] = _get_dict_drop_drop_none(
+        path=path,
+        srm_id=srm_id,
+        batch_id=batch_id,
+        lot_id=lot_id,
+        srm_query=srm_query,
+        srm_table_id=srm_table_id,
+        subtable=subtable,
     )
-)
 
-get_measurements = app_get.command(
-    "measurements",
-    no_args_is_help=True,
-    help="Get measurements data for multiple SRMs",
-)(
-    partial(
-        _get_multiple,
-        url="/measurements",
-        subtable=None,
-    )
-)
-get_standard_analyses = app_get.command(
-    "standard-analyses",
-    no_args_is_help=True,
-    help="Get standard analysis data for multiple SRMs",
-)(
-    partial(
-        _get_multiple,
-        url="/standard-analyses",
-        subtable=None,
-    )
-)
-get_rcerts = app_get.command(
-    "rcerts",
-    no_args_is_help=True,
-    help="Get R certification data for multiple SRMs",
-)(
-    partial(
-        _get_multiple,
-        url="/rcerts",
-        subtable=None,
-    )
-)
+    logger.info("params %s", params)
+    response = crud.download_excel_file(**params)
+
+    _ = response.raise_for_status()
+
+
+# @app_post.command("excel", no_args_is_help=True, help="Post excel file")
+# def post_excel(
+#     *,
+#         srm_id: SRM_ID_OPTION = None,  # ruff: ignore[commented-out-code]
+#     batch_id: BATCH_ID_OPTION = None  # ruff: ignore[commented-out-code]
+#     lot_id:
+# ) -> None:

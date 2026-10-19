@@ -2,15 +2,44 @@
 
 ## Polish web api
 
-- [ ] SRM's by multiple SRMQuery
-- [ ] Better updating
 - [ ] Output of xls files (this will require some effort and some compromise)
+- [ ] Posting of individual subtables/rows?
 
 ## Frontend
 
-- [ ] Multiple select
 - [ ] Visualization
+- [ ] Editing rows?
+
+## CLI
+
+- [ ] Delete records?
+- [ ] Better batch support?
 
 ## Authentication
 
 - [ ] Okta authentication
+
+## Style
+
+- [ ] Better nist branding on webpage
+
+  - Add revision field
+  - Add final field
+
+  Bullet proof testing...
+
+  QA data...
+
+  Backend to SRM Values...
+
+  Draft ROA download....
+
+  Connect to the SRM database....
+
+## Right now
+
+- [ ] Get data
+- [ ] Testing
+- [ ] Plotting
+- [ ] ROA
+- [ ] Connect to SRM
