@@ -38,9 +38,9 @@ def test_validate_nan_to_none(x: object, expected: object) -> None:
     ],
 )
 def test_validate_timestamp(x: str, expected: str) -> None:
-    import datetime
+    import datetime as dt
 
-    with patch.object(datetime, "datetime", autospec=True) as mock:
+    with patch.object(dt, "datetime", autospec=True) as mock:
         mock.now.return_value = "bar"
         assert validate.validate_timestamp(x) == expected
 
