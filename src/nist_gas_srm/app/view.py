@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 def get_data(srm_query: list[str]) -> dict[str, Any]:
     with httpx.Client(base_url=FASTAPI_URL) as client:
         response = crud.get_srms(
-            client,
+            client=client,
             srm_query=srm_query,
             complete=True,
         )

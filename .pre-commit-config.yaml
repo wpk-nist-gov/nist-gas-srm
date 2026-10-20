@@ -234,44 +234,44 @@ repos:
 
   # * Notebook specific ----------------------------------------------------------------------------
   # * Strip out metadata from notebooks
-  # - repo: https://github.com/kynan/nbstripout
-  #   rev: 0.9.1
-  #   hooks:
-  #     - id: nbstripout
-  #       args:
-  #         - "--keep-output"
-  #         - "--keep-count"
-  #         - "--extra-keys"
-  #         - "metadata.kernelspec metadata.kernel_spec"
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.9.1
+    hooks:
+      - id: nbstripout
+        args:
+          - "--keep-output"
+          - "--keep-count"
+          - "--extra-keys"
+          - "metadata.kernelspec metadata.kernel_spec"
 
-  # - repo: https://github.com/nbQA-dev/nbQA
-  #   rev: 1.9.1
-  #   hooks:
-  #     # ** typos
-  #     - id: nbqa
-  #       name: nbqa-typos
-  #       alias: typos
-  #       additional_dependencies: &typos-deps
-  #         - typos==1.48.0
-  #       args:
-  #         - typos
-  #         - --force-exclude
-  #         - --no-check-filenames
-  #         - --write-changes
-  #         - --nbqa-shell
-  #     - id: nbqa
-  #       name: nbqa-typos-markdown
-  #       alias: typos
-  #       additional_dependencies: *typos-deps
-  #       args:
-  #         - typos
-  #         - --force-exclude
-  #         - --no-check-filenames
-  #         - --write-changes
-  #         - --nbqa-shell
-  #         - --nbqa-md
+  - repo: https://github.com/nbQA-dev/nbQA
+    rev: 1.9.1
+    hooks:
+      # ** typos
+      - id: nbqa
+        name: nbqa-typos
+        alias: typos
+        additional_dependencies: &typos-deps
+          - typos==1.51.1
+        args:
+          - typos
+          - --force-exclude
+          - --no-check-filenames
+          - --write-changes
+          - --nbqa-shell
+      - id: nbqa
+        name: nbqa-typos-markdown
+        alias: typos
+        additional_dependencies: *typos-deps
+        args:
+          - typos
+          - --force-exclude
+          - --no-check-filenames
+          - --write-changes
+          - --nbqa-shell
+          - --nbqa-md
 
-  # # ** symlink in notebooks from example/usage to docs/example/usage
+  # ** symlink in notebooks from example/usage to docs/example/usage
   # - repo: local
   #   hooks:
   #     - id: symlink-docs-examples-notebooks

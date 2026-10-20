@@ -14,7 +14,7 @@ from nist_gas_srm.client import crud
 
 def download_file(srm_query: str) -> httpx.Response:
     with httpx.Client(base_url=FASTAPI_URL) as client:
-        return crud.download_excel_file(client, srm_query=srm_query)
+        return crud.download_excel_file(client=client, srm_query=srm_query)
 
 
 def delete_srm_query(srm_query: str) -> httpx.Response:
