@@ -63,6 +63,7 @@ nist-gas-srm = "nist_gas_srm.client.cli:app"
 [dependency-groups]
 dev = [
     "matplotlib",
+    "nist-gas-srm-backend",
     { include-group = "mypy" },
     { include-group = "notebook" },
     { include-group = "nox" },
@@ -148,6 +149,13 @@ nox.requires-python = ">=3.14"
 [tool.uv.sources]
 # pandas-stubs = { git = "https://github.com/pandas-dev/pandas-stubs", branch = "main" }
 streamlit-pydantic = { git = "https://github.com/lukasmasuch/streamlit-pydantic", branch = "main" }
+nist-gas-srm-backend = { workspace=true }
+
+[tool.uv.workspace]
+members = [
+    "packages/nist-gas-srm-backend",
+    "packages/nist-gas-srm-frontend",
+]
 
 # * ruff -------------------------------------------------------------------------------------------
 [tool.ruff]
@@ -171,6 +179,8 @@ docstring-code-format = true
     "D",
     "PD",
 ]
+"packages/*/src/**" = ["D", "PD"]
+
 "tests/**" = [
     "assert",                # - Assert is fine with tests
     "D",
@@ -251,31 +261,6 @@ per_rule_ignores.DEP002 = [
 per_rule_ignores.DEP004 = [ "nox", "pytest" ]
 package_module_name_map.plotly-express = "plotly"
 
-[tool.pyproject-fmt]
-indent = 4
-keep_full_version = true
-max_supported_python = "3.14"
-expand_tables = [
-    "project.entry-points",
-    "project.optional-dependencies",
-    "project.scripts",
-    "project.urls",
-    "tool.mypy.overrides",
-    "tool.pyproject2conda",
-    "tool.pyrefly",
-    "tool.pyright.executionEnvironments",
-    "tool.pytest",
-    "tool.ruff.format",
-    "tool.ruff.lint",
-    "tool.ruff.lint.per-file-ignores",
-    "tool.ty.overrides",
-    "tool.ty.rules",
-    "tool.typos",
-    "tool.uv.dependency-groups",
-    "tool.uv.exclude-newer-package",
-    "tool.uv.sources",
-]
-
 [tool.typos.default]
 # nbqa generated
 extend-ignore-re = [ "# %%NBQA-.*" ]
@@ -296,6 +281,7 @@ files = [
     "src",
     "tests",
     "tools",
+    "packages/nist-gas-srm-backend/src",
 ]
 # options
 check_untyped_defs = true
@@ -322,6 +308,7 @@ project-includes = [
     "src",
     "tests",
     "tools",
+    "packages/nist-gas-srm-backend/src",
 ]
 search-path = [ "." ]
 enabled-ignores = [ "pyrefly" ]
@@ -355,6 +342,7 @@ include = [
     "src",
     "tests",
     "tools",
+    "packages/nist-gas-srm-backend/src",
 ]
 exclude = [
     "**/.mypy_cache",
@@ -394,6 +382,13 @@ root = "tests"
 reportUnusedCallResult = false
 
 [[tool.pyright.executionEnvironments]]
+root = "packages/nist-gas-srm-backend/src/nist_gas_srm_backend/models"
+# reportArgumentType = false
+# reportCallIssue = false
+# reportMissingImports = false
+reportImportCycles = false
+
+[[tool.pyright.executionEnvironments]]
 root = "src/nist_gas_srm/backend/models"
 # reportArgumentType = false
 # reportCallIssue = false
@@ -411,6 +406,7 @@ src.include = [
     "src",
     "tests",
     "tools",
+    "packages/nist-gas-srm-backend/src",
 ]
 analysis.respect-type-ignore-comments = false
 
@@ -554,4 +550,4 @@ section-labels.Internal = [ "internal" ]
 section-labels."Other changes" = [ "__unknown__" ]
 
 [tool.fastapi]
-entrypoint = "nist_gas_srm.backend.main:app"
+entrypoint = "nist_gas_srm_backend.main:app"
