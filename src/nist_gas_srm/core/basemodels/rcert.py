@@ -149,6 +149,73 @@ class RCertSRMValuesUpdate(_RCertForeignKeyUpdate):
     ls_uncert_ci95: float | None = None
 
 
+# ** Historical values
+class RCertHistoricalValuesBase(RCertForeignKey):
+    model_config = SQLModelConfig(populate_by_name=True)
+
+    value: float = Field(validation_alias="Value")
+    uncert: float = Field(validation_alias="u(Value)")
+    uncert_ci95: float = Field(validation_alias="U95(Value)")
+
+
+class RCertHistoricalValuesPublic(RCertHistoricalValuesBase, IDPrimaryKeyPublic):
+    pass
+
+
+class RCertHistoricalValuesCreate(RCertHistoricalValuesBase, SQLDataFrameInterface):
+    dataframe_name = "rcert.historical_values"
+    sheet_name = SheetNames.rcert
+
+    @classmethod
+    def excel_to_dataframe_transposed(
+        cls, excelfile: pd.ExcelFile
+    ) -> pd.DataFrame | None:
+        return cls._get_optional_frame(
+            excelfile,
+            usecols="G:H",
+            header=None,
+            skiprows=skipper(include={79, 80, 81}),
+            names=["name", "value"],
+        )
+
+    @override
+    @classmethod
+    def excel_to_dataframe(cls, excelfile: pd.ExcelFile) -> pd.DataFrame | None:
+        if (df := cls.excel_to_dataframe_transposed(excelfile)) is None:
+            return df
+        new = cast(
+            "pd.DataFrame",
+            pd.pivot(df.assign(dummy=0).set_index("dummy"), columns="name")["value"],
+        )
+        new = new.rename_axis(columns=None, index=None).dropna(how="all")
+        if len(new) > 0:
+            return new
+        return None
+
+    @override
+    @classmethod
+    def dataframe_to_excel(cls, obj: pd.DataFrame, workbook: Workbook) -> None:
+        """Simplest case"""
+        if obj.empty:
+            return
+        keys = [k for k in cls.colnames_to_dbnames() if k != "rcert_id"]
+        df = obj[keys].T.reset_index()
+        simple_write_to_excel(
+            df,
+            worksheet=workbook[cls.sheet_name],
+            start=(80, "G"),
+            fill_from=(79, "G"),
+            header=False,
+            rows=[80, 81, 82],
+        )
+
+
+class RCertHistoricalValuesUpdate(_RCertForeignKeyUpdate):
+    value: float | None = None
+    uncert: float | None = None
+    uncert_ci95: float | None = None
+
+
 # ** Standard Values
 class RCertStandardsValuesBase(RCertForeignKey):
     """Rcert.standards_values"""
@@ -496,6 +563,7 @@ class RCertCompletePublic(RCertPublic):
     srm_values: list[RCertSRMValuesPublic] = []
     standards_values: list[RCertStandardsValuesPublic] = []
     additional_lot_standards: list[RCertAdditionalLotStandardsPublic] = []
+    historical_values: list[RCertHistoricalValuesPublic] = []
     cylinder_results: list[RCertCylinderResultsPublic] = []
     analysis_function_coefficients: list[RCertAnalysisFunctionCoefficientsPublic] = []
     correlation_coefficients: list[RCertCorrelationCoefficientsPublic] = []
@@ -506,6 +574,7 @@ class RCertCompleteCreate(RCertCreate):
     srm_values: list[RCertSRMValuesCreate] = []
     standards_values: list[RCertStandardsValuesCreate] = []
     additional_lot_standards: list[RCertAdditionalLotStandardsCreate] = []
+    historical_values: list[RCertHistoricalValuesCreate] = []
     cylinder_results: list[RCertCylinderResultsCreate] = []
     analysis_function_coefficients: list[RCertAnalysisFunctionCoefficientsCreate] = []
     correlation_coefficients: list[RCertCorrelationCoefficientsCreate] = []
