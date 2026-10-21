@@ -43,3 +43,6 @@
 - [ ] Plotting
 - [ ] ROA
 - [ ] Connect to SRM
+
+- [ ] Talk to angela about connecting to SRM database/web-api
+- [ ]

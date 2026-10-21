@@ -47,7 +47,6 @@ def get_all_srms(include_subtypes: bool = True) -> list[str]:
     ]
 
     out = {model.srm_string_id for model in models}
-
     if include_subtypes:
         # which srm_id is repeated?
         for value, count in Counter(str(model.srm_id) for model in models).items():

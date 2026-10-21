@@ -1,0 +1,22 @@
+update:
+  cooldown_days: 7
+ci:
+  autoupdate_commit_msg: "chore(deps): update pre-commit hooks"
+  autofix_commit_msg: "style: pre-commit fixes"
+  autoupdate_schedule: "quarterly"
+  skip:
+    - uv-lock
+    - pip-compile
+    - sync-pyproject-min-versions
+default_install_hook_types:
+  - pre-commit
+  - commit-msg
+default_language_version:
+  python: "3.14"
+repos:
+  # ** deptry (dependency analysis)
+  - repo: https://github.com/francescorubbo/deptry-pre-commit
+    rev: "v0.25.1"
+    hooks:
+      - id: deptry
+        stages: [manual]

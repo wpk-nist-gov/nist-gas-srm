@@ -1,0 +1,41 @@
+[build-system]
+build-backend = "uv_build"
+requires = [
+    "uv-build>=0.13,<0.14",
+]
+
+[project]
+name = "nist-gas-srm-backend"
+version = "0.0.0"
+description = "Gas SRM database backend"
+readme = "README.md"
+license = "NIST-PD"
+license-files = [ "LICENSE" ]
+authors = [
+    { name = "William P. Krekelberg", email = "wpk@nist.gov" },
+]
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "fastapi[standard]>=0.136.3",
+    "nist-gas-srm",
+    "pandas>=2.3.3",
+    "pydantic>=2.13.5",
+    "pydantic-settings>=2.14.2",
+    "sqlalchemy>=2.0.54",
+    "sqlmodel>=0.0.38",
+]
+
+[tool.uv.sources]
+nist-gas-srm = { workspace = true }

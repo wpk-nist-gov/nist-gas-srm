@@ -25,7 +25,7 @@ def init_db(session: Session) -> None:  # ruff:ignore[unused-function-argument]
     # from sqlmodel import SQLModel
 
     # This works because the models are already imported and registered from app.models
-    from nist_gas_srm.backend import models  # ruff:ignore[unused-import]
+    from .. import models  # ruff:ignore[unused-import]
 
     SQLModel.metadata.create_all(engine)
 

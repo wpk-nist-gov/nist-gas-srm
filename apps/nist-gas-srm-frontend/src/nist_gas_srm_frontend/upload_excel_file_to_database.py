@@ -85,8 +85,8 @@ submit_to_database = st.button("Submit data")
 def _submit_data_to_database() -> None:
     import httpx
 
-    from nist_gas_srm.app._utils import FASTAPI_URL
     from nist_gas_srm.client import crud
+    from nist_gas_srm_frontend._utils import FASTAPI_URL
 
     srm_query = basemodels.srm.SRMCreate.model_validate(params)
 

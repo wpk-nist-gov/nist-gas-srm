@@ -25,11 +25,12 @@ from pydantic import ValidationError
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 from sqlmodel import Session, SQLModel
 
-from nist_gas_srm.backend import crud, models
-from nist_gas_srm.backend.core.db import engine, init_db
 from nist_gas_srm.core import basemodels, excel
 from nist_gas_srm.core.basemodels.utils import srm_params_to_srm_query
 from nist_gas_srm.core.typing import SubTableType
+
+from .. import crud, models
+from ..core.db import engine, init_db
 
 FORMAT = "[%(name)s - %(levelname)s] %(message)s"
 logging.basicConfig(level=logging.INFO, format=FORMAT)

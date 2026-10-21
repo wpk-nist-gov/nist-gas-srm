@@ -8,7 +8,7 @@ requires = [
 
 [project]
 name = "nist-gas-srm"
-version = "0.1.0"
+version = "0.0.0"
 description = "Demo of gas SRM database"
 readme = "README.md"
 keywords = [
@@ -33,20 +33,16 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
-    "fastapi[standard]>=0.136.3",
     "httpx>=0.28.1",
     "numpy>=2.4.6",
     "odrpack>=0.6.1",
     "openpyxl>=3.1.5",
     "pandas>=2.3.3",
-    "plotly-express>=0.4.1",
     "pydantic>=2.13.5",
-    "pydantic-settings>=2.14.2",
     "python-calamine>=0.6.2",
     "sqlalchemy>=2.0.54",
     "sqlmodel>=0.0.38",
     "statsmodels>=0.14.6",
-    "streamlit>=1.60.0",
     "typer>=0.27.2",
     "typing-extensions>=4.16.0; python_version<'3.15'",
     "uncertainties>=3.2.3",
@@ -63,6 +59,7 @@ nist-gas-srm = "nist_gas_srm.client.cli:app"
 [dependency-groups]
 dev = [
     "matplotlib",
+    { include-group = "apps" },
     { include-group = "mypy" },
     { include-group = "notebook" },
     { include-group = "nox" },
@@ -81,6 +78,7 @@ type = [
     "pandas-stubs",
     "plotly-stubs",
     "types-openpyxl",
+    { include-group = "apps" },
     { include-group = "nox" },
     { include-group = "pylint" },
     { include-group = "pytest" },
@@ -95,6 +93,10 @@ docs = [
     "sphinx-copybutton",
 ]
 # other groups
+apps = [
+    "nist-gas-srm-backend",
+    "nist-gas-srm-frontend",
+]
 basedpyright = [ "basedpyright>=1.40.2" ]
 docs-live = [
     "sphinx-autobuild",
@@ -130,6 +132,10 @@ exclude-newer = "7 days"
 # Needed until prek>=0.5.0 is 7 days old
 exclude-newer-package = { prek = "0 days" }
 managed = true
+workspace.members = [
+    "apps/nist-gas-srm-backend",
+    "apps/nist-gas-srm-frontend",
+]
 build-backend.source-exclude = [ ".*cache" ]
 build-backend.source-include = [ "tests/**" ]
 pip.annotation-style = "line"
@@ -146,6 +152,8 @@ notebook.requires-python = ">=3.14"
 nox.requires-python = ">=3.14"
 
 [tool.uv.sources]
+nist-gas-srm-backend = { workspace = true }
+nist-gas-srm-frontend = { workspace = true }
 # pandas-stubs = { git = "https://github.com/pandas-dev/pandas-stubs", branch = "main" }
 streamlit-pydantic = { git = "https://github.com/lukasmasuch/streamlit-pydantic", branch = "main" }
 
@@ -171,6 +179,8 @@ docstring-code-format = true
     "D",
     "PD",
 ]
+"apps/*/src/**" = [ "D", "PD" ]
+
 "tests/**" = [
     "assert",                # - Assert is fine with tests
     "D",
@@ -241,6 +251,7 @@ src_dir = [ "src" ]
 toplevel = [ "nist_gas_srm" ]
 
 [tool.deptry]
+extend_exclude = [ "apps/.*" ]
 known_first_party = [ "nist_gas_srm" ]
 # Group: ignores
 per_rule_ignores.DEP001 = [ "pkginfo" ]
@@ -250,31 +261,6 @@ per_rule_ignores.DEP002 = [
 ]
 per_rule_ignores.DEP004 = [ "nox", "pytest" ]
 package_module_name_map.plotly-express = "plotly"
-
-[tool.pyproject-fmt]
-indent = 4
-keep_full_version = true
-max_supported_python = "3.14"
-expand_tables = [
-    "project.entry-points",
-    "project.optional-dependencies",
-    "project.scripts",
-    "project.urls",
-    "tool.mypy.overrides",
-    "tool.pyproject2conda",
-    "tool.pyrefly",
-    "tool.pyright.executionEnvironments",
-    "tool.pytest",
-    "tool.ruff.format",
-    "tool.ruff.lint",
-    "tool.ruff.lint.per-file-ignores",
-    "tool.ty.overrides",
-    "tool.ty.rules",
-    "tool.typos",
-    "tool.uv.dependency-groups",
-    "tool.uv.exclude-newer-package",
-    "tool.uv.sources",
-]
 
 [tool.typos.default]
 # nbqa generated
@@ -292,6 +278,7 @@ check-file = false
 # * typecheck --------------------------------------------------------------------------------------
 [tool.mypy]
 files = [
+    "apps/**/src",
     "noxfile.py",
     "src",
     "tests",
@@ -316,14 +303,9 @@ ignore_missing_imports = true
 ignore_errors = true
 
 [tool.pyrefly]
-project-includes = [
-    "examples/usage/*.ipynb",
-    "noxfile.py",
-    "src",
-    "tests",
-    "tools",
-]
+project-includes = [ "apps/**/src", "examples/usage/*.ipynb", "noxfile.py", "src", "tests", "tools" ]
 search-path = [ "." ]
+disable-project-excludes-heuristics = true
 enabled-ignores = [ "pyrefly" ]
 min-severity = "warn"
 preset = "strict"
@@ -351,6 +333,7 @@ errors.open-unpacking = "ignore"
 [tool.pyright]
 typeCheckingMode = "strict"
 include = [
+    "apps/**/src",
     "noxfile.py",
     "src",
     "tests",
@@ -388,24 +371,23 @@ enableReachabilityAnalysis = false
 
 [[tool.pyright.executionEnvironments]]
 root = "tests"
-# reportArgumentType = false
-# reportCallIssue = false
-# reportMissingImports = false
 reportUnusedCallResult = false
 
 [[tool.pyright.executionEnvironments]]
-root = "src/nist_gas_srm/backend/models"
-# reportArgumentType = false
-# reportCallIssue = false
-# reportMissingImports = false
+root = "apps/nist-gas-srm-backend/src/nist_gas_srm_backend/models"
 reportImportCycles = false
 
 [[tool.pyright.executionEnvironments]]
-root = "src/nist_gas_srm/app"
+root = "src/nist_gas_srm/backend/models"
+reportImportCycles = false
+
+[[tool.pyright.executionEnvironments]]
+root = "apps/nist-gas-srm-frontend/src/nist_gas_srm_frontend"
 reportUnusedCallResult = false
 
 [tool.ty]
 src.include = [
+    "apps/*/src",
     "examples/usage/*.ipynb",
     "noxfile.py",
     "src",
@@ -544,6 +526,8 @@ ignore-labels = [ "internal" ]
 require-labels = [ "breaking", "bug", "documentation", "enhancement" ]
 version_files = [
     "pyproject.toml",
+    "apps/nist-gas-srm-backend/pyproject.toml",
+    "apps/nist-gas-srm-frontend/pyproject.toml",
 ]
 # sections
 section-labels."Breaking changes" = [ "breaking" ]
@@ -554,4 +538,4 @@ section-labels.Internal = [ "internal" ]
 section-labels."Other changes" = [ "__unknown__" ]
 
 [tool.fastapi]
-entrypoint = "nist_gas_srm.backend.main:app"
+entrypoint = "nist_gas_srm_backend.main:app"

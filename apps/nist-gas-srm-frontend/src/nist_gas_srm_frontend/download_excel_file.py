@@ -5,11 +5,11 @@ from __future__ import annotations
 import httpx
 import streamlit as st
 
-from nist_gas_srm.app._utils import (
+from nist_gas_srm.client import crud
+from nist_gas_srm_frontend._utils import (
     FASTAPI_URL,
     get_all_srms,
 )
-from nist_gas_srm.client import crud
 
 
 def download_file(srm_query: str) -> httpx.Response:

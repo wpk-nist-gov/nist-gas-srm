@@ -186,7 +186,6 @@ def get_srm(
     srm_table_id: uuid.UUID | None = None,
 ) -> models.SRMTable:
     """Get single srm"""
-
     return _get_srm_result(
         session=session,
         srm_id=srm_id,
@@ -208,7 +207,6 @@ def get_srms(
     one: bool = False,
 ) -> Sequence[models.SRMTable]:
     """Get multiple srm"""
-
     result = _get_srm_result(
         session=session,
         srm_id=srm_id,

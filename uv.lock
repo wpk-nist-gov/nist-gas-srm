@@ -3,16 +3,16 @@ revision = 5
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform == 'win32'",
-    "python_full_version == '3.14.*' and sys_platform == 'win32'",
     "python_full_version >= '3.15' and sys_platform == 'emscripten'",
-    "python_full_version == '3.14.*' and sys_platform == 'emscripten'",
     "python_full_version >= '3.15' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.14.*' and sys_platform == 'win32'",
+    "python_full_version == '3.14.*' and sys_platform == 'emscripten'",
     "python_full_version == '3.14.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version == '3.13.*' and sys_platform == 'win32'",
-    "python_full_version == '3.12.*' and sys_platform == 'win32'",
     "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten'",
     "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.12.*' and sys_platform == 'win32'",
+    "python_full_version == '3.12.*' and sys_platform == 'emscripten'",
     "python_full_version == '3.12.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version < '3.12' and sys_platform == 'win32'",
     "python_full_version < '3.12' and sys_platform == 'emscripten'",
@@ -25,6 +25,13 @@ exclude-newer-span = "P7D"
 
 [options.exclude-newer-package]
 prek = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+
+[manifest]
+members = [
+    "nist-gas-srm",
+    "nist-gas-srm-backend",
+    "nist-gas-srm-frontend",
+]
 
 [[package]]
 name = "accessible-pygments"
@@ -2294,24 +2301,20 @@ wheels = [
 
 [[package]]
 name = "nist-gas-srm"
-version = "0.1.0"
+version = "0.0.0"
 source = { editable = "." }
 dependencies = [
-    { name = "fastapi", extra = ["standard"] },
     { name = "httpx" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "2.5.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "odrpack" },
     { name = "openpyxl" },
     { name = "pandas" },
-    { name = "plotly-express" },
     { name = "pydantic" },
-    { name = "pydantic-settings" },
     { name = "python-calamine" },
     { name = "sqlalchemy" },
     { name = "sqlmodel" },
     { name = "statsmodels" },
-    { name = "streamlit" },
     { name = "typer" },
     { name = "typing-extensions", marker = "python_full_version < '3.15'" },
     { name = "uncertainties" },
@@ -2319,6 +2322,10 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
+apps = [
+    { name = "nist-gas-srm-backend" },
+    { name = "nist-gas-srm-frontend" },
+]
 basedpyright = [
     { name = "basedpyright" },
 ]
@@ -2328,6 +2335,8 @@ dev = [
     { name = "mypy", extra = ["faster-cache"], marker = "python_full_version >= '3.14'" },
     { name = "nbclient", marker = "python_full_version >= '3.14'" },
     { name = "nbval", marker = "python_full_version >= '3.14'" },
+    { name = "nist-gas-srm-backend", marker = "python_full_version >= '3.14'" },
+    { name = "nist-gas-srm-frontend", marker = "python_full_version >= '3.14'" },
     { name = "nox", marker = "python_full_version >= '3.14'" },
     { name = "pandas-stubs", marker = "python_full_version >= '3.14'" },
     { name = "plotly-stubs", marker = "python_full_version >= '3.14'" },
@@ -2406,6 +2415,8 @@ test-notebook = [
     { name = "pytest-xdist" },
 ]
 type = [
+    { name = "nist-gas-srm-backend" },
+    { name = "nist-gas-srm-frontend" },
     { name = "nox", marker = "python_full_version >= '3.14'" },
     { name = "pandas-stubs" },
     { name = "plotly-stubs" },
@@ -2431,20 +2442,16 @@ type = ">=3.14"
 
 [package.metadata]
 requires-dist = [
-    { name = "fastapi", extras = ["standard"], specifier = ">=0.136.3" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "numpy", specifier = ">=2.4.6" },
     { name = "odrpack", specifier = ">=0.6.1" },
     { name = "openpyxl", specifier = ">=3.1.5" },
     { name = "pandas", specifier = ">=2.3.3" },
-    { name = "plotly-express", specifier = ">=0.4.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
-    { name = "pydantic-settings", specifier = ">=2.14.2" },
     { name = "python-calamine", specifier = ">=0.6.2" },
     { name = "sqlalchemy", specifier = ">=2.0.54" },
     { name = "sqlmodel", specifier = ">=0.0.38" },
     { name = "statsmodels", specifier = ">=0.14.6" },
-    { name = "streamlit", specifier = ">=1.60.0" },
     { name = "typer", specifier = ">=0.27.2" },
     { name = "typing-extensions", marker = "python_full_version < '3.15'", specifier = ">=4.16.0" },
     { name = "uncertainties", specifier = ">=3.2.3" },
@@ -2452,6 +2459,10 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
+apps = [
+    { name = "nist-gas-srm-backend", editable = "apps/nist-gas-srm-backend" },
+    { name = "nist-gas-srm-frontend", editable = "apps/nist-gas-srm-frontend" },
+]
 basedpyright = [{ name = "basedpyright", specifier = ">=1.40.2" }]
 dev = [
     { name = "ipykernel", marker = "python_full_version >= '3.14'" },
@@ -2459,6 +2470,8 @@ dev = [
     { name = "mypy", extras = ["faster-cache"], marker = "python_full_version >= '3.14'", specifier = ">=2.4.0" },
     { name = "nbclient", marker = "python_full_version >= '3.14'" },
     { name = "nbval", marker = "python_full_version >= '3.14'" },
+    { name = "nist-gas-srm-backend", marker = "python_full_version >= '3.14'", editable = "apps/nist-gas-srm-backend" },
+    { name = "nist-gas-srm-frontend", marker = "python_full_version >= '3.14'", editable = "apps/nist-gas-srm-frontend" },
     { name = "nox", marker = "python_full_version >= '3.14'", specifier = ">=2026.8.17" },
     { name = "pandas-stubs", marker = "python_full_version >= '3.14'" },
     { name = "plotly-stubs", marker = "python_full_version >= '3.14'" },
@@ -2525,6 +2538,8 @@ test-notebook = [
     { name = "pytest-xdist" },
 ]
 type = [
+    { name = "nist-gas-srm-backend", editable = "apps/nist-gas-srm-backend" },
+    { name = "nist-gas-srm-frontend", editable = "apps/nist-gas-srm-frontend" },
     { name = "nox", marker = "python_full_version >= '3.14'", specifier = ">=2026.8.17" },
     { name = "pandas-stubs" },
     { name = "plotly-stubs" },
@@ -2534,6 +2549,52 @@ type = [
     { name = "types-openpyxl" },
 ]
 typecheck-runner = [{ name = "typecheck-runner", marker = "python_full_version >= '3.10'", specifier = ">=0.2.0" }]
+
+[[package]]
+name = "nist-gas-srm-backend"
+version = "0.0.0"
+source = { editable = "apps/nist-gas-srm-backend" }
+dependencies = [
+    { name = "fastapi", extra = ["standard"] },
+    { name = "nist-gas-srm" },
+    { name = "pandas" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "sqlalchemy" },
+    { name = "sqlmodel" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", extras = ["standard"], specifier = ">=0.136.3" },
+    { name = "nist-gas-srm", editable = "." },
+    { name = "pandas", specifier = ">=2.3.3" },
+    { name = "pydantic", specifier = ">=2.13.5" },
+    { name = "pydantic-settings", specifier = ">=2.14.2" },
+    { name = "sqlalchemy", specifier = ">=2.0.54" },
+    { name = "sqlmodel", specifier = ">=0.0.38" },
+]
+
+[[package]]
+name = "nist-gas-srm-frontend"
+version = "0.0.0"
+source = { editable = "apps/nist-gas-srm-frontend" }
+dependencies = [
+    { name = "httpx" },
+    { name = "nist-gas-srm" },
+    { name = "pandas" },
+    { name = "plotly-express" },
+    { name = "streamlit" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "nist-gas-srm", editable = "." },
+    { name = "pandas", specifier = ">=2.3.3" },
+    { name = "plotly-express", specifier = ">=0.4.1" },
+    { name = "streamlit", specifier = ">=1.60" },
+]
 
 [[package]]
 name = "nodejs-wheel-binaries"
@@ -2661,16 +2722,16 @@ version = "2.5.4"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform == 'win32'",
-    "python_full_version == '3.14.*' and sys_platform == 'win32'",
     "python_full_version >= '3.15' and sys_platform == 'emscripten'",
-    "python_full_version == '3.14.*' and sys_platform == 'emscripten'",
     "python_full_version >= '3.15' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.14.*' and sys_platform == 'win32'",
+    "python_full_version == '3.14.*' and sys_platform == 'emscripten'",
     "python_full_version == '3.14.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version == '3.13.*' and sys_platform == 'win32'",
-    "python_full_version == '3.12.*' and sys_platform == 'win32'",
     "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten'",
     "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.12.*' and sys_platform == 'win32'",
+    "python_full_version == '3.12.*' and sys_platform == 'emscripten'",
     "python_full_version == '3.12.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/95/b0/c7453d0b6e2073c3264468b106ee1563750cecc910965e67357e3698c83e/numpy-2.5.4.tar.gz", hash = "sha256:9a94cf751c9ad8ebaa835bcd3d40dacf8534ad086b88c38029b65123c7999d2a", size = 20866315, upload-time = "2026-10-10T20:05:31.422Z" }
@@ -4353,16 +4414,16 @@ version = "1.18.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform == 'win32'",
-    "python_full_version == '3.14.*' and sys_platform == 'win32'",
     "python_full_version >= '3.15' and sys_platform == 'emscripten'",
-    "python_full_version == '3.14.*' and sys_platform == 'emscripten'",
     "python_full_version >= '3.15' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.14.*' and sys_platform == 'win32'",
+    "python_full_version == '3.14.*' and sys_platform == 'emscripten'",
     "python_full_version == '3.14.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version == '3.13.*' and sys_platform == 'win32'",
-    "python_full_version == '3.12.*' and sys_platform == 'win32'",
     "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten'",
     "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.12.*' and sys_platform == 'win32'",
+    "python_full_version == '3.12.*' and sys_platform == 'emscripten'",
     "python_full_version == '3.12.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 dependencies = [
