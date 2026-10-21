@@ -29,7 +29,6 @@ classifiers = [
 ]
 dependencies = [
     "fastapi[standard]>=0.136.3",
-    "httpx",
     "nist-gas-srm",
     "pandas>=2.3.3",
     "pydantic>=2.13.5",

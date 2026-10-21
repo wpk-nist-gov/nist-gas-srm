@@ -59,8 +59,7 @@ nist-gas-srm = "nist_gas_srm.client.cli:app"
 [dependency-groups]
 dev = [
     "matplotlib",
-    "nist-gas-srm-backend",
-    "nist-gas-srm-frontend",
+    { include-group = "apps" },
     { include-group = "mypy" },
     { include-group = "notebook" },
     { include-group = "nox" },
@@ -79,6 +78,7 @@ type = [
     "pandas-stubs",
     "plotly-stubs",
     "types-openpyxl",
+    { include-group = "apps" },
     { include-group = "nox" },
     { include-group = "pylint" },
     { include-group = "pytest" },
@@ -93,6 +93,10 @@ docs = [
     "sphinx-copybutton",
 ]
 # other groups
+apps = [
+    "nist-gas-srm-backend",
+    "nist-gas-srm-frontend",
+]
 basedpyright = [ "basedpyright>=1.40.2" ]
 docs-live = [
     "sphinx-autobuild",

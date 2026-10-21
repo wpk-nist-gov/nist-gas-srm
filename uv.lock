@@ -2322,6 +2322,10 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
+apps = [
+    { name = "nist-gas-srm-backend" },
+    { name = "nist-gas-srm-frontend" },
+]
 basedpyright = [
     { name = "basedpyright" },
 ]
@@ -2411,6 +2415,8 @@ test-notebook = [
     { name = "pytest-xdist" },
 ]
 type = [
+    { name = "nist-gas-srm-backend" },
+    { name = "nist-gas-srm-frontend" },
     { name = "nox", marker = "python_full_version >= '3.14'" },
     { name = "pandas-stubs" },
     { name = "plotly-stubs" },
@@ -2453,6 +2459,10 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
+apps = [
+    { name = "nist-gas-srm-backend", editable = "apps/nist-gas-srm-backend" },
+    { name = "nist-gas-srm-frontend", editable = "apps/nist-gas-srm-frontend" },
+]
 basedpyright = [{ name = "basedpyright", specifier = ">=1.40.2" }]
 dev = [
     { name = "ipykernel", marker = "python_full_version >= '3.14'" },
@@ -2528,6 +2538,8 @@ test-notebook = [
     { name = "pytest-xdist" },
 ]
 type = [
+    { name = "nist-gas-srm-backend", editable = "apps/nist-gas-srm-backend" },
+    { name = "nist-gas-srm-frontend", editable = "apps/nist-gas-srm-frontend" },
     { name = "nox", marker = "python_full_version >= '3.14'", specifier = ">=2026.8.17" },
     { name = "pandas-stubs" },
     { name = "plotly-stubs" },
@@ -2544,7 +2556,6 @@ version = "0.1.0"
 source = { editable = "apps/nist-gas-srm-backend" }
 dependencies = [
     { name = "fastapi", extra = ["standard"] },
-    { name = "httpx" },
     { name = "nist-gas-srm" },
     { name = "pandas" },
     { name = "pydantic" },
@@ -2556,7 +2567,6 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "fastapi", extras = ["standard"], specifier = ">=0.136.3" },
-    { name = "httpx" },
     { name = "nist-gas-srm", editable = "." },
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "pydantic", specifier = ">=2.13.5" },
