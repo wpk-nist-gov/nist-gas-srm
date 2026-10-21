@@ -2301,7 +2301,7 @@ wheels = [
 
 [[package]]
 name = "nist-gas-srm"
-version = "0.1.0"
+version = "0.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
@@ -2552,7 +2552,7 @@ typecheck-runner = [{ name = "typecheck-runner", marker = "python_full_version >
 
 [[package]]
 name = "nist-gas-srm-backend"
-version = "0.1.0"
+version = "0.0.0"
 source = { editable = "apps/nist-gas-srm-backend" }
 dependencies = [
     { name = "fastapi", extra = ["standard"] },
@@ -2577,7 +2577,7 @@ requires-dist = [
 
 [[package]]
 name = "nist-gas-srm-frontend"
-version = "0.1.0"
+version = "0.0.0"
 source = { editable = "apps/nist-gas-srm-frontend" }
 dependencies = [
     { name = "httpx" },

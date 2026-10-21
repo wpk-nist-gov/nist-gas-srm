@@ -6,7 +6,7 @@ requires = [
 
 [project]
 name = "nist-gas-srm-frontend"
-version = "0.1.0"
+version = "0.0.0"
 description = "Gas SRM database backend"
 readme = "README.md"
 license = "NIST-PD"
