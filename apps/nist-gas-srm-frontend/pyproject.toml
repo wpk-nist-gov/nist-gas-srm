@@ -1,0 +1,46 @@
+[build-system]
+build-backend = "uv_build"
+requires = [
+    "uv-build>=0.13,<0.14",
+]
+
+[project]
+name = "nist-gas-srm-frontend"
+version = "0.1.0"
+description = "Gas SRM database backend"
+readme = "README.md"
+license = "NIST-PD"
+license-files = [ "LICENSE" ]
+authors = [
+    { name = "William P. Krekelberg", email = "wpk@nist.gov" },
+]
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "httpx>=0.28.1",
+    "nist-gas-srm",
+    "pandas>=2.3.3",
+    "plotly-express>=0.4.1",
+    "streamlit>=1.60",
+]
+
+[project.scripts]
+nist-gas-srm-frontend = "nist_gas_srm_frontend.__main__:main"
+
+[tool.uv.sources]
+nist-gas-srm = { workspace = true }
+
+[tool.deptry]
+known_first_party = [ "nist_gas_srm_frontend" ]
+package_module_name_map.plotly-express = "plotly"

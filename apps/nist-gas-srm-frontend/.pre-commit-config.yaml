@@ -1,0 +1,7 @@
+repos:
+  # ** deptry (dependency analysis)
+  - repo: https://github.com/francescorubbo/deptry-pre-commit
+    rev: "v0.25.1"
+    hooks:
+      - id: deptry
+        stages: [manual]

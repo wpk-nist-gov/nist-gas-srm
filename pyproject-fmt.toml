@@ -1,6 +1,3 @@
-indent = 4
-keep_full_version = true
-max_supported_python = "3.14"
 expand_tables = [
     "project.entry-points",
     "project.optional-dependencies",
@@ -21,3 +18,6 @@ expand_tables = [
     "tool.uv.exclude-newer-package",
     "tool.uv.sources",
 ]
+indent = 4
+keep_full_version = true
+max_supported_python = "3.14"
