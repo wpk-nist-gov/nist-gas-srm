@@ -148,16 +148,6 @@ class SRMPublic(SRMBase, IDPrimaryKeyPublic):
     pass
 
 
-# class SRMCreate(SRMBase, FromSRMQuery, excel.interface.SQLDataFrameInterface):
-#     dataframe_name = "metadata"  # ruff: ignore[commented-out-code]
-#     sheet_name = excel.interface.SheetNames.ratio  # ruff: ignore[commented-out-code]
-
-#     @override
-#     @classmethod
-#     def dataframe_to_excel(cls, obj: pd.DataFrame, workbook: Workbook) -> None:
-#         raise NotImplementedError
-
-
 class SRMCreate(SRMBase, FromSRMQuery):
     pass
 

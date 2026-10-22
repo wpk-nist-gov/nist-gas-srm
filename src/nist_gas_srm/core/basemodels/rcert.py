@@ -15,6 +15,7 @@ from sqlmodel._compat import SQLModelConfig  # ruff:ignore[import-private-name]
 
 from nist_gas_srm.core.excel.interface import SheetNames, SQLDataFrameInterface
 from nist_gas_srm.core.excel.utils import (
+    get_value_from_worksheet,
     maybe_dropna,
     simple_write_to_excel,
     skipper,
@@ -377,6 +378,59 @@ class RCertCylinderResultsUpdate(_RCertForeignKeyUpdate):
     uncert_ci95: float | None = None
 
 
+# ** Historical cylinder results
+class RCertHistoricalCylinderResultsBase(RCertCylinderResultsBase):
+    pass
+
+
+class RCertHistoricalCylinderResultsPublic(
+    RCertHistoricalCylinderResultsBase, IDPrimaryKeyPublic
+):
+    model_config = SQLModelConfig(populate_by_name=True)
+
+
+class RCertHistoricalCylinderResultsCreate(
+    RCertHistoricalCylinderResultsBase, SQLDataFrameInterface
+):
+    dataframe_name = "rcert.historical_cylinder_results"
+    sheet_name = SheetNames.rcert
+
+    @override
+    @classmethod
+    def excel_to_dataframe(cls, excelfile: pd.ExcelFile) -> pd.DataFrame | None:
+
+        # check for historical values table
+        if (
+            get_value_from_worksheet(excelfile, cls.sheet_name, rowx=46, colx="W")
+            != "Sample"
+        ):
+            return None
+
+        return cls._get_optional_frame(
+            excelfile,
+            usecols="W:Z",
+            skiprows=46,
+            strip_trailing_numbers=True,
+        )
+
+    @override
+    @classmethod
+    def dataframe_to_excel(cls, obj: pd.DataFrame, workbook: Workbook) -> None:
+        """Simplest case"""
+        simple_write_to_excel(
+            obj,
+            worksheet=workbook[cls.sheet_name],
+            start=(48, "W"),
+            fill_from=(47, "W"),
+            header=False,
+            extra_fill_columns=["AA", "AB", "AC", "AD", "AE"],
+        )
+
+
+class RCertHistoricalCylinderResultsUpdate(RCertCylinderResultsUpdate):
+    pass
+
+
 # ** Analysis function coefficients
 class RCertAnalysisFunctionCoefficientsBase(RCertForeignKey):
     order: int
@@ -555,6 +609,8 @@ RCertSubTableCreateType: TypeAlias = (
     | RCertAnalysisFunctionCoefficientsCreate
     | RCertCorrelationCoefficientsCreate
     | RCertOutliersCreate
+    | RCertHistoricalValuesCreate
+    | RCertHistoricalCylinderResultsCreate
 )
 
 
@@ -563,19 +619,21 @@ class RCertCompletePublic(RCertPublic):
     srm_values: list[RCertSRMValuesPublic] = []
     standards_values: list[RCertStandardsValuesPublic] = []
     additional_lot_standards: list[RCertAdditionalLotStandardsPublic] = []
-    historical_values: list[RCertHistoricalValuesPublic] = []
     cylinder_results: list[RCertCylinderResultsPublic] = []
     analysis_function_coefficients: list[RCertAnalysisFunctionCoefficientsPublic] = []
     correlation_coefficients: list[RCertCorrelationCoefficientsPublic] = []
     outliers: list[RCertOutliersPublic] = []
+    historical_values: list[RCertHistoricalValuesPublic] = []
+    historical_cylinder_results: list[RCertHistoricalCylinderResultsPublic] = []
 
 
 class RCertCompleteCreate(RCertCreate):
     srm_values: list[RCertSRMValuesCreate] = []
     standards_values: list[RCertStandardsValuesCreate] = []
     additional_lot_standards: list[RCertAdditionalLotStandardsCreate] = []
-    historical_values: list[RCertHistoricalValuesCreate] = []
     cylinder_results: list[RCertCylinderResultsCreate] = []
     analysis_function_coefficients: list[RCertAnalysisFunctionCoefficientsCreate] = []
     correlation_coefficients: list[RCertCorrelationCoefficientsCreate] = []
     outliers: list[RCertOutliersCreate] = []
+    historical_values: list[RCertHistoricalValuesCreate] = []
+    historical_cylinder_results: list[RCertHistoricalCylinderResultsCreate] = []

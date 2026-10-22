@@ -40,9 +40,6 @@ class RCertTable(rcertmodels.RCertBase, IDPrimaryKey, FixMixin, table=True):
     standards_values: list["RCertStandardsValues"] = Relationship(
         back_populates="rcert_table", cascade_delete=True
     )
-    historical_values: list["RCertHistoricalValues"] = Relationship(
-        back_populates="rcert_table", cascade_delete=True
-    )
     additional_lot_standards: list["RCertAdditionalLotStandards"] = Relationship(
         back_populates="rcert_table", cascade_delete=True
     )
@@ -58,6 +55,12 @@ class RCertTable(rcertmodels.RCertBase, IDPrimaryKey, FixMixin, table=True):
     outliers: list["RCertOutliers"] = Relationship(
         back_populates="rcert_table", cascade_delete=True
     )
+    historical_values: list["RCertHistoricalValues"] = Relationship(
+        back_populates="rcert_table", cascade_delete=True
+    )
+    historical_cylinder_results: list["RCertHistoricalCylinderResults"] = Relationship(
+        back_populates="rcert_table", cascade_delete=True
+    )
 
 
 class RCertSRMValues(rcertmodels.RCertSRMValuesBase, IDPrimaryKey, table=True):
@@ -71,13 +74,6 @@ class RCertStandardsValues(
 ):
     __tablename__ = cast("declared_attr[str]", "rcert_standards_values")
     rcert_table: RCertTable | None = Relationship(back_populates="standards_values")
-
-
-class RCertHistoricalValues(
-    rcertmodels.RCertHistoricalValuesBase, IDPrimaryKey, table=True
-):
-    __tablename__ = cast("declared_attr[str]", "rcert_historical_values")
-    rcert_table: RCertTable | None = Relationship(back_populates="historical_values")
 
 
 class RCertAdditionalLotStandards(
@@ -120,6 +116,22 @@ class RCertOutliers(rcertmodels.RCertOutliersBase, IDPrimaryKey, table=True):
     rcert_table: RCertTable | None = Relationship(back_populates="outliers")
 
 
+class RCertHistoricalValues(
+    rcertmodels.RCertHistoricalValuesBase, IDPrimaryKey, table=True
+):
+    __tablename__ = cast("declared_attr[str]", "rcert_historical_values")
+    rcert_table: RCertTable | None = Relationship(back_populates="historical_values")
+
+
+class RCertHistoricalCylinderResults(
+    rcertmodels.RCertHistoricalCylinderResultsBase, IDPrimaryKey, table=True
+):
+    __tablename__ = cast("declared_attr[str]", "rcert_historical_cylinder_results")
+    rcert_table: RCertTable | None = Relationship(
+        back_populates="historical_cylinder_results"
+    )
+
+
 RCertSubTableType: TypeAlias = (
     RCertSRMValues
     | RCertStandardsValues
@@ -128,4 +140,6 @@ RCertSubTableType: TypeAlias = (
     | RCertAnalysisFunctionCoefficients
     | RCertCorrelationCoefficients
     | RCertOutliers
+    | RCertHistoricalValues
+    | RCertHistoricalCylinderResults
 )

@@ -158,7 +158,7 @@ class MeasurementsVendorsCreate(
     @override
     @classmethod
     def excel_to_dataframe(cls, excelfile: pd.ExcelFile) -> pd.DataFrame | None:
-        return cls._get_frame(excelfile, usecols="A:D")
+        return cls._get_optional_frame(excelfile, usecols="A:D")
 
 
 class MeasurementsVendorsUpdate(SampleIDAndNumberUpdate, _MeasurementsForeignKeyUpdate):
@@ -192,12 +192,15 @@ class MeasurementsStandardsCreate(
     @override
     @classmethod
     def excel_to_dataframe(cls, excelfile: pd.ExcelFile) -> pd.DataFrame | None:
-        return cls._get_frame_with_len_check(
+        out = cls._get_frame_with_len_check(
             excelfile,
             usecols="A:E",
             rowx=1,
             colx="H",
         )
+
+        # Some old files use Suncert as the uncertainty column.
+        return out.rename(columns={"Suncert": "Sunc"})
 
     @override
     @classmethod
