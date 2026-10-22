@@ -291,7 +291,7 @@ def get_excel(
     srm_query: SRM_QUERY_OPTION = None,
     srm_table_id: SRM_TABLE_ID_MULT_OPTION = None,
     subtable: SUBTABLE_OPTION = None,
-    pretty: PRETTY_OPTION = False,
+    pretty: PRETTY_OPTION = False,  # ruff: ignore[unused-function-argument]
     verbose: VERBOSE_OPTIONS = None,  # ruff: ignore[unused-function-argument]
 ) -> None:
 
@@ -310,7 +310,7 @@ def get_excel(
 
     _ = response.raise_for_status()
 
-    typer.echo(_get_json_string_from_response(response, pretty=pretty))
+    typer.echo(response)
 
 
 @app_post.command("excel", no_args_is_help=True, help="Post excel file")

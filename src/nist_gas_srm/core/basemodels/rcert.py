@@ -15,6 +15,7 @@ from sqlmodel._compat import SQLModelConfig  # ruff:ignore[import-private-name]
 
 from nist_gas_srm.core.excel.interface import SheetNames, SQLDataFrameInterface
 from nist_gas_srm.core.excel.utils import (
+    get_value_from_worksheet,
     maybe_dropna,
     simple_write_to_excel,
     skipper,
@@ -147,6 +148,73 @@ class RCertSRMValuesUpdate(_RCertForeignKeyUpdate):
     ls_value: float | None = None
     ls_uncert: float | None = None
     ls_uncert_ci95: float | None = None
+
+
+# ** Historical values
+class RCertHistoricalValuesBase(RCertForeignKey):
+    model_config = SQLModelConfig(populate_by_name=True)
+
+    value: float = Field(validation_alias="Value")
+    uncert: float = Field(validation_alias="u(Value)")
+    uncert_ci95: float = Field(validation_alias="U95(Value)")
+
+
+class RCertHistoricalValuesPublic(RCertHistoricalValuesBase, IDPrimaryKeyPublic):
+    pass
+
+
+class RCertHistoricalValuesCreate(RCertHistoricalValuesBase, SQLDataFrameInterface):
+    dataframe_name = "rcert.historical_values"
+    sheet_name = SheetNames.rcert
+
+    @classmethod
+    def excel_to_dataframe_transposed(
+        cls, excelfile: pd.ExcelFile
+    ) -> pd.DataFrame | None:
+        return cls._get_optional_frame(
+            excelfile,
+            usecols="G:H",
+            header=None,
+            skiprows=skipper(include={79, 80, 81}),
+            names=["name", "value"],
+        )
+
+    @override
+    @classmethod
+    def excel_to_dataframe(cls, excelfile: pd.ExcelFile) -> pd.DataFrame | None:
+        if (df := cls.excel_to_dataframe_transposed(excelfile)) is None:
+            return df
+        new = cast(
+            "pd.DataFrame",
+            pd.pivot(df.assign(dummy=0).set_index("dummy"), columns="name")["value"],
+        )
+        new = new.rename_axis(columns=None, index=None).dropna(how="all")
+        if len(new) > 0:
+            return new
+        return None
+
+    @override
+    @classmethod
+    def dataframe_to_excel(cls, obj: pd.DataFrame, workbook: Workbook) -> None:
+        """Simplest case"""
+        if obj.empty:
+            return
+        keys = [k for k in cls.colnames_to_dbnames() if k != "rcert_id"]
+        df = obj[keys].T.reset_index()
+        simple_write_to_excel(
+            df,
+            worksheet=workbook[cls.sheet_name],
+            start=(80, "G"),
+            fill_from=(79, "G"),
+            header=False,
+            rows=[80, 81, 82],
+        )
+
+
+class RCertHistoricalValuesUpdate(_RCertForeignKeyUpdate):
+    value: float | None = None
+    uncert: float | None = None
+    uncert_ci95: float | None = None
 
 
 # ** Standard Values
@@ -308,6 +376,59 @@ class RCertCylinderResultsUpdate(_RCertForeignKeyUpdate):
     value: float | None = None
     uncert: float | None = None
     uncert_ci95: float | None = None
+
+
+# ** Historical cylinder results
+class RCertHistoricalCylinderResultsBase(RCertCylinderResultsBase):
+    pass
+
+
+class RCertHistoricalCylinderResultsPublic(
+    RCertHistoricalCylinderResultsBase, IDPrimaryKeyPublic
+):
+    model_config = SQLModelConfig(populate_by_name=True)
+
+
+class RCertHistoricalCylinderResultsCreate(
+    RCertHistoricalCylinderResultsBase, SQLDataFrameInterface
+):
+    dataframe_name = "rcert.historical_cylinder_results"
+    sheet_name = SheetNames.rcert
+
+    @override
+    @classmethod
+    def excel_to_dataframe(cls, excelfile: pd.ExcelFile) -> pd.DataFrame | None:
+
+        # check for historical values table
+        if (
+            get_value_from_worksheet(excelfile, cls.sheet_name, rowx=46, colx="W")
+            != "Sample"
+        ):
+            return None
+
+        return cls._get_optional_frame(
+            excelfile,
+            usecols="W:Z",
+            skiprows=46,
+            strip_trailing_numbers=True,
+        )
+
+    @override
+    @classmethod
+    def dataframe_to_excel(cls, obj: pd.DataFrame, workbook: Workbook) -> None:
+        """Simplest case"""
+        simple_write_to_excel(
+            obj,
+            worksheet=workbook[cls.sheet_name],
+            start=(48, "W"),
+            fill_from=(47, "W"),
+            header=False,
+            extra_fill_columns=["AA", "AB", "AC", "AD", "AE"],
+        )
+
+
+class RCertHistoricalCylinderResultsUpdate(RCertCylinderResultsUpdate):
+    pass
 
 
 # ** Analysis function coefficients
@@ -488,6 +609,8 @@ RCertSubTableCreateType: TypeAlias = (
     | RCertAnalysisFunctionCoefficientsCreate
     | RCertCorrelationCoefficientsCreate
     | RCertOutliersCreate
+    | RCertHistoricalValuesCreate
+    | RCertHistoricalCylinderResultsCreate
 )
 
 
@@ -500,6 +623,8 @@ class RCertCompletePublic(RCertPublic):
     analysis_function_coefficients: list[RCertAnalysisFunctionCoefficientsPublic] = []
     correlation_coefficients: list[RCertCorrelationCoefficientsPublic] = []
     outliers: list[RCertOutliersPublic] = []
+    historical_values: list[RCertHistoricalValuesPublic] = []
+    historical_cylinder_results: list[RCertHistoricalCylinderResultsPublic] = []
 
 
 class RCertCompleteCreate(RCertCreate):
@@ -510,3 +635,5 @@ class RCertCompleteCreate(RCertCreate):
     analysis_function_coefficients: list[RCertAnalysisFunctionCoefficientsCreate] = []
     correlation_coefficients: list[RCertCorrelationCoefficientsCreate] = []
     outliers: list[RCertOutliersCreate] = []
+    historical_values: list[RCertHistoricalValuesCreate] = []
+    historical_cylinder_results: list[RCertHistoricalCylinderResultsCreate] = []
