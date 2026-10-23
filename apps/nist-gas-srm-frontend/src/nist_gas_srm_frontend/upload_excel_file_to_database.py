@@ -44,14 +44,14 @@ st.subheader("Enter SRM metadata")
 
 
 editable_srm_widgets = {
-    "srm_id": EditableWidget(
+    "srm_number": EditableWidget(
         "ID",
         st.number_input,
         min_value=1,
         max_value=10000000,
     ),
-    "batch_id": EditableWidget("Batch", st.text_input, placeholder="a"),
-    "lot_id": EditableWidget("Lot", st.text_input, placeholder="XXX"),
+    "batch": EditableWidget("Batch", st.text_input, placeholder="a"),
+    "lot": EditableWidget("Lot", st.text_input, placeholder="XXX"),
 }
 
 params = {k: v.widget() for k, v in editable_srm_widgets.items()}
@@ -69,7 +69,7 @@ upload_file = st.file_uploader("Excel file to upload", type=".xls")
 def _get_metadata_from_filename() -> None:
     if upload_file is not None:
         values = parse_excel_filename_to_metadata(upload_file.name)
-        values["srm_id"] = int(values["srm_id"])
+        values["srm_number"] = int(values["srm_number"])
         for k, v in values.items():
             editable_srm_widgets[k].update_key(v)
 

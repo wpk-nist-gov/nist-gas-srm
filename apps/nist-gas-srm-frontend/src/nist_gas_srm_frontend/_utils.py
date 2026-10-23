@@ -48,22 +48,21 @@ def get_all_srms(include_subtypes: bool = True) -> list[str]:
 
     out = {model.srm_string_id for model in models}
     if include_subtypes:
-        # which srm_id is repeated?
-        for value, count in Counter(str(model.srm_id) for model in models).items():
+        # which srm_number is repeated?
+        for value, count in Counter(str(model.srm_number) for model in models).items():
             if count > 1:
                 out.add(value)
 
         # which srm + batch is repeated
         for value, count in Counter(
-            srm_params_to_srm_query(model.srm_id, model.batch_id) for model in models
+            srm_params_to_srm_query(model.srm_number, model.batch) for model in models
         ).items():
             if count > 1:
                 out.add(value)
 
         # which srm + lot is repeated
         for value, count in Counter(
-            srm_params_to_srm_query(model.srm_id, lot_id=model.lot_id)
-            for model in models
+            srm_params_to_srm_query(model.srm_number, lot=model.lot) for model in models
         ).items():
             if count > 1:
                 out.add(value)

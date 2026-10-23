@@ -27,15 +27,15 @@ with st.form("entry_form", clear_on_submit=False):
 
     PARAMS = {
         "name": st.text_input("Name", placeholder="A descriptive name"),
-        "srm_id": st.number_input(
+        "srm_number": st.number_input(
             "ID",
             placeholder="2627",
             min_value=1,
             max_value=10000000,
             value=None,
         ),
-        "batch_id": st.text_input("Batch", placeholder="a", value=None),
-        "lot_id": st.text_input("Lot", placeholder="XXX"),
+        "batch": st.text_input("Batch", placeholder="a", value=None),
+        "lot": st.text_input("Lot", placeholder="XXX"),
         "timestamp": st.datetime_input("timestamp"),
     }
 

@@ -228,7 +228,7 @@ def json_to_dict_of_dataframes(  # ruff: ignore[complex-structure]
     normalize: bool = True,
     prefix: Sequence[str] | None = None,
     rename_columns: bool = True,
-    meta: str | Sequence[Any] | None = ("srm_id", "batch_id", "lot_id"),
+    meta: str | Sequence[Any] | None = ("srm_number", "batch", "lot"),
     **kwargs: Any,
 ) -> dict[str, Any]:
     """
@@ -334,9 +334,9 @@ def clean_normalized_dataframe(
     data: dict[str, Any],
     drop: Sequence[str] = (
         "id",
-        "srm_id",
-        "batch_id",
-        "lot_id",
+        "srm_number",
+        "batch",
+        "lot",
         "rcert_id",
         "standard_analysis_id",
         "measurements_id",
@@ -354,10 +354,10 @@ def clean_normalized_dataframe(
 
             df = value.drop(drop, axis=1, errors="ignore") if drop else value.copy()
             srm_name_value = (
-                value.srm_id.astype(str)
-                + value.batch_id.where(lambda x: ~x.isnull(), "")
+                value.srm_number.astype(str)
+                + value.batch.where(lambda x: ~x.isnull(), "")
                 + "-"
-                + value.lot_id.astype(str)
+                + value.lot.astype(str)
             )
             df.insert(0, srm_name, srm_name_value)
 
