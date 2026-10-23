@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 
 EXCEL_FILENAME_PATTERN = re.compile(
-    r"srm(?P<srm_id>\d+)(?P<batch_id>\w*)_Series(?P<lot_id>\w*)_(.*).xls",
+    r"srm(?P<srm_number>\d+)(?P<batch>\w*)_Series(?P<lot>\w*)_(.*).xls",
     flags=re.IGNORECASE,
 )
 
@@ -140,8 +140,8 @@ def parse_excel_filename_to_metadata(name: str) -> dict[str, Any]:
         raise ValueError(msg)
 
     out = m.groupdict().copy()
-    if not out["batch_id"]:
-        out["batch_id"] = None
+    if not out["batch"]:
+        out["batch"] = None
 
     return out
 

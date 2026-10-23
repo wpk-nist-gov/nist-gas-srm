@@ -128,7 +128,7 @@ SUBTABLE_OPTION = Annotated[
         """,
     ),
 ]
-SRM_ID_OPTION = Annotated[
+SRM_NUMBER_OPTION = Annotated[
     int | None,
     typer.Option(
         "--srm-id",
@@ -137,7 +137,7 @@ SRM_ID_OPTION = Annotated[
         """,
     ),
 ]
-BATCH_ID_OPTION = Annotated[
+BATCH_OPTION = Annotated[
     str | None,
     typer.Option(
         "--batch",
@@ -146,7 +146,7 @@ BATCH_ID_OPTION = Annotated[
         """,
     ),
 ]
-LOT_ID_OPTION = Annotated[
+LOT_OPTION = Annotated[
     str | None,
     typer.Option(
         "--lot",
@@ -198,7 +198,7 @@ SRM_QUERY_OPTION = Annotated[
         "-q",
         "--query",
         help="""
-        srms to download.  Format is ``{srm_id}{batch_id}-{lot_id}``.
+        srms to download.  Format is ``{srm_number}{batch}-{lot}``.
         """,
     ),
 ]
@@ -208,7 +208,7 @@ SRM_QUERY_MULT_OPTION = Annotated[
         "-q",
         "--query",
         help="""
-        srms to download.  Format is ``{srm_id}{batch_id}-{lot_id}``.
+        srms to download.  Format is ``{srm_number}{batch}-{lot}``.
         """,
     ),
 ]
@@ -249,9 +249,9 @@ def _get_dict_drop_drop_none(**kwargs: Any) -> dict[str, Any]:
 @app_get.command("json", no_args_is_help=True, help="Get srm data")
 def get_srm(
     *,
-    srm_id: SRM_ID_OPTION = None,
-    batch_id: BATCH_ID_OPTION = None,
-    lot_id: LOT_ID_OPTION = None,
+    srm_number: SRM_NUMBER_OPTION = None,
+    batch: BATCH_OPTION = None,
+    lot: LOT_OPTION = None,
     srm_query: SRM_QUERY_MULT_OPTION = None,
     srm_table_id: SRM_TABLE_ID_MULT_OPTION = None,
     complete: COMPLETE_OPTION = False,
@@ -263,9 +263,9 @@ def get_srm(
 ) -> None:
 
     params: dict[str, Any] = _get_dict_drop_drop_none(
-        srm_id=srm_id,
-        batch_id=batch_id,
-        lot_id=lot_id,
+        srm_number=srm_number,
+        batch=batch,
+        lot=lot,
         srm_query=srm_query,
         srm_table_id=srm_table_id,
         complete=complete,
@@ -285,9 +285,9 @@ def get_srm(
 @app_get.command("excel", no_args_is_help=True, help="Get excel file")
 def get_excel(
     path: OUTPUT_FILE_OPTION,
-    srm_id: SRM_ID_OPTION = None,
-    batch_id: BATCH_ID_OPTION = None,
-    lot_id: LOT_ID_OPTION = None,
+    srm_number: SRM_NUMBER_OPTION = None,
+    batch: BATCH_OPTION = None,
+    lot: LOT_OPTION = None,
     srm_query: SRM_QUERY_OPTION = None,
     srm_table_id: SRM_TABLE_ID_MULT_OPTION = None,
     subtable: SUBTABLE_OPTION = None,
@@ -297,9 +297,9 @@ def get_excel(
 
     params: dict[str, Any] = _get_dict_drop_drop_none(
         path=path,
-        srm_id=srm_id,
-        batch_id=batch_id,
-        lot_id=lot_id,
+        srm_number=srm_number,
+        batch=batch,
+        lot=lot,
         srm_query=srm_query,
         srm_table_id=srm_table_id,
         subtable=subtable,
@@ -316,9 +316,9 @@ def get_excel(
 @app_post.command("excel", no_args_is_help=True, help="Post excel file")
 def post_excel(
     path: INPUT_FILE_OPTION,
-    srm_id: SRM_ID_OPTION = None,
-    batch_id: BATCH_ID_OPTION = None,
-    lot_id: LOT_ID_OPTION = None,
+    srm_number: SRM_NUMBER_OPTION = None,
+    batch: BATCH_OPTION = None,
+    lot: LOT_OPTION = None,
     srm_query: SRM_QUERY_OPTION = None,
     pretty: PRETTY_OPTION = False,
     verbose: VERBOSE_OPTIONS = None,  # ruff: ignore[unused-function-argument]
@@ -326,9 +326,9 @@ def post_excel(
 
     params: dict[str, Any] = _get_dict_drop_drop_none(
         path_or_buffer=path,
-        srm_id=srm_id,
-        batch_id=batch_id,
-        lot_id=lot_id,
+        srm_number=srm_number,
+        batch=batch,
+        lot=lot,
         srm_query=srm_query,
     )
 

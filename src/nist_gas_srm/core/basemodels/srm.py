@@ -54,11 +54,11 @@ class FromSRMQuery(SQLModel):
         """
         Match patterns like:
 
-        "{srm_id}{batch_id}-{lot_id}" with batch/lot optional
+        "{srm_number}{batch}-{lot}" with batch/lot optional
 
         or
 
-        '{"srm_id": ...., "batch_id": ..., "lot_id": ...}'
+        '{"srm_number": ...., "batch": ..., "lot": ...}'
 
         """
 
@@ -108,18 +108,20 @@ class SRMBase(SQLModel):
     """Metadata base class"""
 
     __table_args__ = (
-        UniqueConstraint("srm_id", "batch_id", "lot_id", name="unique_user_product"),
+        UniqueConstraint("srm_number", "batch", "lot", name="unique_user_product"),
     )
 
     model_config = SQLModelConfig(ignored_types=(hybrid_property,))
 
-    name: str | None = Field(sa_column=Column("name", VARCHAR), default=None)
-    note: str | None = Field(sa_column=Column("note", VARCHAR), default=None)
+    description: str | None = Field(
+        sa_column=Column("description", VARCHAR), default=None
+    )
     units: str = "ppm"
 
-    srm_id: int = Field(index=True)
-    batch_id: OptionalLowerString = None
-    lot_id: LowerString
+    srm_number: int = Field(index=True)
+    batch: OptionalLowerString = None
+    lot: LowerString
+    revision: str | None = None
 
     timestamp: Annotated[datetime, BeforeValidator(validate_timestamp)] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False),
@@ -129,7 +131,7 @@ class SRMBase(SQLModel):
     @hybrid_property
     def srm_string_id(self) -> str:
         return srm_params_to_srm_query(
-            srm_id=self.srm_id, batch_id=self.batch_id, lot_id=self.lot_id
+            srm_number=self.srm_number, batch=self.batch, lot=self.lot
         )
 
     @srm_string_id.inplace.expression
@@ -138,9 +140,9 @@ class SRMBase(SQLModel):
         from sqlalchemy import String, func
 
         return func.concat(
-            func.cast(col(cls.srm_id), String),
-            func.coalesce(cls.batch_id, ""),
-            func.concat("-", cls.lot_id),
+            func.cast(col(cls.srm_number), String),
+            func.coalesce(cls.batch, ""),
+            func.concat("-", cls.lot),
         )
 
 
@@ -158,15 +160,15 @@ class SRMUpdate(SQLModel):
 
 
 class SRMQuery(FromSRMQuery):
-    srm_id: int | None = None
-    batch_id: OptionalLowerString = None
-    lot_id: OptionalLowerString = None
+    srm_number: int | None = None
+    batch: OptionalLowerString = None
+    lot: OptionalLowerString = None
 
 
 class SRMQueryFuzzy(SQLModel):
-    srm_id: int | str | None = None
-    batch_id: OptionalLowerString = None
-    lot_id: OptionalLowerString = None
+    srm_number: int | str | None = None
+    batch: OptionalLowerString = None
+    lot: OptionalLowerString = None
 
 
 # * Public combinations
