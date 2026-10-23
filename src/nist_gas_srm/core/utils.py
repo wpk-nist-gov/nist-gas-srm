@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 # * Dataframe/excel utils
 SRM_PATTERN = re.compile(
-    r"(?P<srm_id>\d+)(?P<batch_id>\w+)?(:?-(?P<lot_id>\w*))?",
+    r"(?P<srm_number>\d+)(?P<batch>\w+)?(:?-(?P<lot>\w*))?",
     flags=re.IGNORECASE,
 )
 

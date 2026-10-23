@@ -13,9 +13,9 @@ if "bulk_data" not in st.session_state:
         [
             {
                 "name": "a name",
-                "srm_id": 1,
-                "batch_id": "X",
-                "lot_id": "X",
+                "srm_number": 1,
+                "batch": "X",
+                "lot": "X",
                 "timestamp": datetime.now(UTC),
             }
         ],

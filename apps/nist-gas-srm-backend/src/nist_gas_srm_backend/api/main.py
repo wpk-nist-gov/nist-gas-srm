@@ -72,18 +72,18 @@ SRMQueryMultType = Annotated[list[str] | None, Query(title="General query")]
 
 def _raise_if_srms_exist(
     session: Session,
-    srm_id: int,
-    batch_id: str | None,
-    lot_id: str | None,
+    srm_number: int,
+    batch: str | None,
+    lot: str | None,
 ) -> None:
     if crud.get_srms(
         session=session,
-        srm_id=srm_id,
-        batch_id=batch_id,
-        lot_id=lot_id,
+        srm_number=srm_number,
+        batch=batch,
+        lot=lot,
     ):
         srm_query = srm_params_to_srm_query(
-            srm_id=srm_id, batch_id=batch_id, lot_id=lot_id
+            srm_number=srm_number, batch=batch, lot=lot
         ).upper()
         logger.info("SRM %s exists", srm_query)
         raise HTTPException(
@@ -116,9 +116,9 @@ def welcome() -> dict[str, str]:
 # def read_srm(
 #     *,
 #     session: SessionDepends,
-#     srm_id: int | None = None,
-#     batch_id: str | None = None,
-#     lot_id: str | None = None,
+#     srm_number: int | None = None,
+#     batch: str | None = None,
+#     lot: str | None = None,
 #     srm_query: SRMQueryType = None,
 #     srm_table_id: SRMTableIDType = None,
 # ) -> models.SRMTable:
@@ -126,9 +126,9 @@ def welcome() -> dict[str, str]:
 
 #     return crud.get_srm(
 #         session=session,
-#         srm_id=srm_id,
-#         batch_id=batch_id,
-#         lot_id=lot_id,
+#         srm_number=srm_number,
+#         batch=batch,
+#         lot=lot,
 #         srm_query=srm_query,
 #         srm_table_id=srm_table_id,
 #     )
@@ -169,9 +169,9 @@ def welcome() -> dict[str, str]:
 # def read_srms(
 #     *,
 #     session: SessionDepends,
-#     srm_id: int | None = None,
-#     batch_id: str | None = None,
-#     lot_id: str | None = None,
+#     srm_number: int | None = None,
+#     batch: str | None = None,
+#     lot: str | None = None,
 #     srm_query: SRMQueryMultType = None,
 #     srm_table_id: SRMTableIDMultType = None,
 #     one: bool = False,
@@ -181,9 +181,9 @@ def welcome() -> dict[str, str]:
 #     try:
 #         return crud.get_srms(
 #             session=session,
-#             srm_id=srm_id,
-#             batch_id=batch_id,
-#             lot_id=lot_id,
+#             srm_number=srm_number,
+#             batch=batch,
+#             lot=lot,
 #             srm_query=srm_query,
 #             srm_table_id=srm_table_id,
 #             one=one,
@@ -205,9 +205,9 @@ def welcome() -> dict[str, str]:
 #         self,
 #         *,
 #         session: SessionDepends,
-#         srm_id: int | None = None,
-#         batch_id: str | None = None,
-#         lot_id: str | None = None,
+#         srm_number: int | None = None,
+#         batch: str | None = None,
+#         lot: str | None = None,
 #         srm_query: SRMQueryMultType = None,
 #         srm_table_id: SRMTableIDMultType = None,
 #         complete: bool = False,
@@ -220,9 +220,9 @@ def welcome() -> dict[str, str]:
 #         with catch_single_record_errors():
 #             data_db = crud.get_srms(
 #                 session=session,
-#                 srm_id=srm_id,
-#                 batch_id=batch_id,
-#                 lot_id=lot_id,
+#                 srm_number=srm_number,
+#                 batch=batch,
+#                 lot=lot,
 #                 srm_query=srm_query,
 #                 srm_table_id=srm_table_id,
 #                 one=one,
@@ -318,9 +318,9 @@ def catch_single_record_errors() -> Generator[None]:
 def get_srms(
     *,
     session: SessionDepends,
-    srm_id: int | None = None,
-    batch_id: str | None = None,
-    lot_id: str | None = None,
+    srm_number: int | None = None,
+    batch: str | None = None,
+    lot: str | None = None,
     srm_query: SRMQueryMultType = None,
     srm_table_id: SRMTableIDMultType = None,
     complete: bool = False,
@@ -331,9 +331,9 @@ def get_srms(
     with catch_single_record_errors():
         data_db = crud.get_srms(
             session=session,
-            srm_id=srm_id,
-            batch_id=batch_id,
-            lot_id=lot_id,
+            srm_number=srm_number,
+            batch=batch,
+            lot=lot,
             srm_query=srm_query,
             srm_table_id=srm_table_id,
             one=one,
@@ -353,18 +353,18 @@ def get_srms(
 def delete_srm(
     *,
     session: SessionDepends,
-    srm_id: int | None = None,
-    batch_id: str | None = None,
-    lot_id: str | None = None,
+    srm_number: int | None = None,
+    batch: str | None = None,
+    lot: str | None = None,
     srm_query: SRMQueryType = None,
     srm_table_id: SRMTableIDType = None,
 ) -> basemodels.Message:
 
     srm = crud.get_srm(
         session=session,
-        srm_id=srm_id,
-        batch_id=batch_id,
-        lot_id=lot_id,
+        srm_number=srm_number,
+        batch=batch,
+        lot=lot,
         srm_query=srm_query,
         srm_table_id=srm_table_id,
     )
@@ -377,9 +377,9 @@ def delete_srm(
 # def read_rcert(
 #     *,
 #     session: SessionDepends,
-#     srm_id: int | None = None,
-#     batch_id: str | None = None,
-#     lot_id: str | None = None,
+#     srm_number: int | None = None,
+#     batch: str | None = None,
+#     lot: str | None = None,
 #     srm_query: SRMQueryType = None,
 #     srm_table_id: SRMTableIDType = None,
 # ) -> models.RCertTable:
@@ -387,9 +387,9 @@ def delete_srm(
 
 #     return crud.get_rcert(
 #         session=session,
-#         srm_id=srm_id,
-#         batch_id=batch_id,
-#         lot_id=lot_id,
+#         srm_number=srm_number,
+#         batch=batch,
+#         lot=lot,
 #         srm_query=srm_query,
 #         srm_table_id=srm_table_id,
 #     )
@@ -399,9 +399,9 @@ def delete_srm(
 # def read_rcerts(
 #     *,
 #     session: SessionDepends,
-#     srm_id: int | None = None,
-#     batch_id: str | None = None,
-#     lot_id: str | None = None,
+#     srm_number: int | None = None,
+#     batch: str | None = None,
+#     lot: str | None = None,
 #     srm_query: SRMQueryMultType = None,
 #     srm_table_id: SRMTableIDMultType = None,
 #     one: bool = False,
@@ -410,9 +410,9 @@ def delete_srm(
 
 #     return crud.get_rcerts(
 #         session=session,
-#         srm_id=srm_id,
-#         batch_id=batch_id,
-#         lot_id=lot_id,
+#         srm_number=srm_number,
+#         batch=batch,
+#         lot=lot,
 #         srm_query=srm_query,
 #         srm_table_id=srm_table_id,
 #         one=one,
@@ -426,9 +426,9 @@ def delete_srm(
 # def read_meauserement(
 #     *,
 #     session: SessionDepends,
-#     srm_id: int | None = None,
-#     batch_id: str | None = None,
-#     lot_id: str | None = None,
+#     srm_number: int | None = None,
+#     batch: str | None = None,
+#     lot: str | None = None,
 #     srm_query: SRMQueryType = None,
 #     srm_table_id: SRMTableIDType = None,
 # ) -> models.Measurements:
@@ -436,9 +436,9 @@ def delete_srm(
 
 #     return crud.get_measurement(
 #         session=session,
-#         srm_id=srm_id,
-#         batch_id=batch_id,
-#         lot_id=lot_id,
+#         srm_number=srm_number,
+#         batch=batch,
+#         lot=lot,
 #         srm_query=srm_query,
 #         srm_table_id=srm_table_id,
 #     )
@@ -451,9 +451,9 @@ def delete_srm(
 # def read_measurements(
 #     *,
 #     session: SessionDepends,
-#     srm_id: int | None = None,
-#     batch_id: str | None = None,
-#     lot_id: str | None = None,
+#     srm_number: int | None = None,
+#     batch: str | None = None,
+#     lot: str | None = None,
 #     srm_query: SRMQueryMultType = None,
 #     srm_table_id: SRMTableIDMultType = None,
 #     one: bool = False,
@@ -462,9 +462,9 @@ def delete_srm(
 
 #     return crud.get_measurements(
 #         session=session,
-#         srm_id=srm_id,
-#         batch_id=batch_id,
-#         lot_id=lot_id,
+#         srm_number=srm_number,
+#         batch=batch,
+#         lot=lot,
 #         srm_query=srm_query,
 #         srm_table_id=srm_table_id,
 #         one=one,
@@ -482,9 +482,9 @@ def delete_srm(
 # def read_standard_analysis(
 #     *,
 #     session: SessionDepends,
-#     srm_id: int | None = None,
-#     batch_id: str | None = None,
-#     lot_id: str | None = None,
+#     srm_number: int | None = None,
+#     batch: str | None = None,
+#     lot: str | None = None,
 #     srm_query: SRMQueryType = None,
 #     srm_table_id: SRMTableIDType = None,
 
@@ -493,9 +493,9 @@ def delete_srm(
 
 #     return crud.get_standard_analysis(
 #         session=session,
-#         srm_id=srm_id,
-#         batch_id=batch_id,
-#         lot_id=lot_id,
+#         srm_number=srm_number,
+#         batch=batch,
+#         lot=lot,
 #         srm_query=srm_query,
 #         srm_table_id=srm_table_id,
 #     )
@@ -508,9 +508,9 @@ def delete_srm(
 # def read_standard_analyses(
 #     *,
 #     session: SessionDepends,
-#     srm_id: int | None = None,
-#     batch_id: str | None = None,
-#     lot_id: str | None = None,
+#     srm_number: int | None = None,
+#     batch: str | None = None,
+#     lot: str | None = None,
 #     srm_query: SRMQueryMultType = None,
 #     srm_table_id: SRMTableIDMultType = None,
 #     one: bool = False,
@@ -519,9 +519,9 @@ def delete_srm(
 
 #     return crud.get_standard_analyses(
 #         session=session,
-#         srm_id=srm_id,
-#         batch_id=batch_id,
-#         lot_id=lot_id,
+#         srm_number=srm_number,
+#         batch=batch,
+#         lot=lot,
 #         srm_query=srm_query,
 #         srm_table_id=srm_table_id,
 #         one=one,
@@ -535,17 +535,17 @@ def delete_srm(
 # def read_rcerts_cylinder_results(
 #     *,
 #     session: SessionDepends,
-#     srm_id: int | None = None,
-#     batch_id: str | None = None,
-#     lot_id: str | None = None,
+#     srm_number: int | None = None,
+#     batch: str | None = None,
+#     lot: str | None = None,
 # ) -> Sequence[models.rcert.RCertCylinderResults]:
 #     """Get list of srms"""
 
 #     return crud.get_rcert(
 #         session=session,
-#         srm_id=srm_id,
-#         batch_id=batch_id,
-#         lot_id=lot_id,
+#         srm_number=srm_number,
+#         batch=batch,
+#         lot=lot,
 #     ).cylinder_results
 
 
@@ -627,7 +627,7 @@ async def create_upload_file(
     session: SessionDepends,
     srm_query: Annotated[
         str, Form()
-    ] = '{"name": "string", "srm_id": 0, "batch_id": null, "lot_id": "string", "timestamp": null}',
+    ] = '{"name": "string", "srm_number": 0, "batch": null, "lot": "string", "timestamp": null}',
     file: Annotated[UploadFile, File()],
 ) -> Any:  # models.SRMTable:
 
@@ -642,9 +642,9 @@ async def create_upload_file(
 
     _raise_if_srms_exist(
         session=session,
-        srm_id=srmdata_create.srm_id,
-        batch_id=srmdata_create.batch_id,
-        lot_id=srmdata_create.lot_id,
+        srm_number=srmdata_create.srm_number,
+        batch=srmdata_create.batch,
+        lot=srmdata_create.lot,
     )
 
     if file.filename is None or not file.filename.endswith(".xls"):
@@ -684,9 +684,9 @@ async def download_excel(
     background_tasks: BackgroundTasks,
     *,
     session: SessionDepends,
-    srm_id: int | None = None,
-    batch_id: str | None = None,
-    lot_id: str | None = None,
+    srm_number: int | None = None,
+    batch: str | None = None,
+    lot: str | None = None,
     srm_query: SRMQueryType = None,
     srm_table_id: SRMTableIDType = None,
 ) -> FileResponse:
@@ -695,9 +695,9 @@ async def download_excel(
         srmdata = basemodels.srm.SRMCompleteCreate.model_validate(
             crud.get_srm(
                 session=session,
-                srm_id=srm_id,
-                batch_id=batch_id,
-                lot_id=lot_id,
+                srm_number=srm_number,
+                batch=batch,
+                lot=lot,
                 srm_query=srm_query,
                 srm_table_id=srm_table_id,
             )
@@ -716,8 +716,7 @@ async def download_excel(
 
     # filename
     filename = (
-        f"SRM{srmdata.srm_id}{srmdata.batch_id or ''}-{srmdata.lot_id}".upper()
-        + ".xlsx"
+        f"SRM{srmdata.srm_number}{srmdata.batch or ''}-{srmdata.lot}".upper() + ".xlsx"
     )
 
     # convert to excel file

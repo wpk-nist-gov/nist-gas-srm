@@ -19,17 +19,17 @@ if TYPE_CHECKING:
         (
             "SRM2627a_SeriesI_CAG+CEC_CEC-RV6.4.xls",
             {
-                "srm_id": "2627",
-                "batch_id": "a",
-                "lot_id": "I",
+                "srm_number": "2627",
+                "batch": "a",
+                "lot": "I",
             },
         ),
         (
             "SRM2627_SeriesI_CAG+CEC_CEC-RV6.4.xls",
             {
-                "srm_id": "2627",
-                "batch_id": None,
-                "lot_id": "I",
+                "srm_number": "2627",
+                "batch": None,
+                "lot": "I",
             },
         ),
     ],
