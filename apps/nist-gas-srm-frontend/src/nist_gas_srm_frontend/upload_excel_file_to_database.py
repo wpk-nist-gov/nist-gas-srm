@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import streamlit as st
 
-from nist_gas_srm.core import basemodels
+from nist_gas_srm import basemodels
 from nist_gas_srm.core.excel.utils import parse_excel_filename_to_metadata
 
 if TYPE_CHECKING:

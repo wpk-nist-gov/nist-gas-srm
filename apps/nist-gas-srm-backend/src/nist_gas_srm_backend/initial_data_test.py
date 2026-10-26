@@ -11,7 +11,7 @@ from sqlmodel import (
     Session,
 )
 
-from nist_gas_srm.core import basemodels
+from nist_gas_srm import basemodels
 
 from . import crud
 from .core.db import engine, init_db

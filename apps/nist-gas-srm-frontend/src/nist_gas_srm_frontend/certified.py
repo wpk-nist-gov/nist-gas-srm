@@ -5,7 +5,8 @@ from __future__ import annotations
 import plotly.express as px
 import streamlit as st
 
-from nist_gas_srm.core import basemodels, excel
+from nist_gas_srm import basemodels
+from nist_gas_srm.core import excel
 
 st.title("Certified values")
 

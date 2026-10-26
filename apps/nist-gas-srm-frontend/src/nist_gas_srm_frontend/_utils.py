@@ -4,9 +4,9 @@ from collections import Counter
 
 import httpx
 
+from nist_gas_srm import basemodels
+from nist_gas_srm.basemodels.utils import srm_params_to_srm_query
 from nist_gas_srm.client import crud
-from nist_gas_srm.core import basemodels
-from nist_gas_srm.core.basemodels.utils import srm_params_to_srm_query
 
 FASTAPI_URL = "http://127.0.0.1:8000"
 

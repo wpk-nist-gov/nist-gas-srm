@@ -2,7 +2,7 @@ from typing import Any
 
 import pytest
 
-from nist_gas_srm.core import basemodels
+from nist_gas_srm import basemodels
 
 
 @pytest.mark.parametrize(

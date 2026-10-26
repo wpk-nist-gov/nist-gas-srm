@@ -9,8 +9,8 @@ from sqlmodel._compat import (  # ruff: ignore[import-private-name]
     SQLModelConfig,
 )
 
-from nist_gas_srm.core.basemodels import rcert as rcertmodels
-from nist_gas_srm.core.basemodels.keys import IDPrimaryKey
+from nist_gas_srm.basemodels import rcert as rcertmodels
+from nist_gas_srm.basemodels.keys import IDPrimaryKey
 
 from ._fixmixin import FixMixin
 
