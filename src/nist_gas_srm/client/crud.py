@@ -28,9 +28,9 @@ _get_client = partial(httpx.Client, base_url=FASTAPI_URL)
 def _get_srm_params(
     srm_query: str | basemodels.srm.SRMQuery | MissingType,
     *,
-    srm_id: int | MissingType = MISSING,
-    batch_id: str | MissingType | None = MISSING,
-    lot_id: str | MissingType | None = MISSING,
+    srm_number: int | MissingType = MISSING,
+    batch: str | MissingType | None = MISSING,
+    lot: str | MissingType | None = MISSING,
     srm_table_id: str | UUID | MissingType = MISSING,
     raise_if_empty: bool = False,
 ) -> dict[str, Any]:
@@ -49,7 +49,7 @@ def _get_srm_params(
 
     params.update(
         basemodels.srm.SRMQuery.from_params_exclude_missing(
-            srm_id=srm_id, batch_id=batch_id, lot_id=lot_id
+            srm_number=srm_number, batch=batch, lot=lot
         ).model_dump(exclude_unset=True)
     )
 
@@ -64,9 +64,9 @@ def get_multiple_tables(
     client: Client | None = None,
     *,
     url: str,
-    srm_id: int | MissingType = MISSING,
-    batch_id: str | MissingType | None = MISSING,
-    lot_id: str | MissingType | None = MISSING,
+    srm_number: int | MissingType = MISSING,
+    batch: str | MissingType | None = MISSING,
+    lot: str | MissingType | None = MISSING,
     srm_query: str
     | basemodels.srm.SRMQuery
     | Sequence[str | basemodels.srm.SRMQuery]
@@ -82,9 +82,9 @@ def get_multiple_tables(
             return get_multiple_tables(
                 client=client_,
                 url=url,
-                srm_id=srm_id,
-                batch_id=batch_id,
-                lot_id=lot_id,
+                srm_number=srm_number,
+                batch=batch,
+                lot=lot,
                 srm_query=srm_query,
                 srm_table_id=srm_table_id,
                 subtable=subtable,
@@ -111,7 +111,7 @@ def get_multiple_tables(
 
     params.update(
         basemodels.srm.SRMQuery.from_params_exclude_missing(
-            srm_id=srm_id, batch_id=batch_id, lot_id=lot_id
+            srm_number=srm_number, batch=batch, lot=lot
         ).model_dump(exclude_unset=True)
     )
 
@@ -125,9 +125,9 @@ def download_excel_file(
     path: Path | MissingType = MISSING,
     client: Client | None = None,
     *,
-    srm_id: int | MissingType = MISSING,
-    batch_id: str | MissingType | None = MISSING,
-    lot_id: str | MissingType | None = MISSING,
+    srm_number: int | MissingType = MISSING,
+    batch: str | MissingType | None = MISSING,
+    lot: str | MissingType | None = MISSING,
     srm_query: str | basemodels.srm.SRMQuery | MissingType = MISSING,
     srm_table_id: str | UUID | MissingType = MISSING,
 ) -> Response:
@@ -136,18 +136,18 @@ def download_excel_file(
             return download_excel_file(
                 path=path,
                 client=client_,
-                srm_id=srm_id,
-                batch_id=batch_id,
-                lot_id=lot_id,
+                srm_number=srm_number,
+                batch=batch,
+                lot=lot,
                 srm_query=srm_query,
                 srm_table_id=srm_table_id,
             )
 
     params = _get_srm_params(
         srm_query,
-        srm_id=srm_id,
-        batch_id=batch_id,
-        lot_id=lot_id,
+        srm_number=srm_number,
+        batch=batch,
+        lot=lot,
         srm_table_id=srm_table_id,
     )
 
@@ -164,9 +164,9 @@ def upload_excel_file(
     path_or_buffer: Path | BinaryIO,
     client: Client | None = None,
     *,
-    srm_id: int | MissingType = MISSING,
-    batch_id: str | MissingType | None = MISSING,
-    lot_id: str | MissingType | None = MISSING,
+    srm_number: int | MissingType = MISSING,
+    batch: str | MissingType | None = MISSING,
+    lot: str | MissingType | None = MISSING,
     srm_query: str
     | basemodels.srm.SRMCreate
     | basemodels.srm.SRMQuery
@@ -178,9 +178,9 @@ def upload_excel_file(
             return upload_excel_file(
                 client=client_,
                 path_or_buffer=path_or_buffer,
-                srm_id=srm_id,
-                batch_id=batch_id,
-                lot_id=lot_id,
+                srm_number=srm_number,
+                batch=batch,
+                lot=lot,
                 srm_query=srm_query,
                 upload_name=upload_name,
             )
@@ -193,7 +193,7 @@ def upload_excel_file(
         ).model_dump_json(exclude_unset=True)
     else:
         srm_query_str = basemodels.srm.SRMQuery.from_params_exclude_missing(
-            srm_id=srm_id, batch_id=batch_id, lot_id=lot_id
+            srm_number=srm_number, batch=batch, lot=lot
         ).model_dump_json(exclude_unset=True)
 
     func = partial(client.post, "/srms/files", data={"srm_query": srm_query_str})
@@ -216,9 +216,9 @@ def upload_excel_file(
 def delete_srm(
     client: Client | None = None,
     *,
-    srm_id: int | MissingType = MISSING,
-    batch_id: str | MissingType | None = MISSING,
-    lot_id: str | MissingType | None = MISSING,
+    srm_number: int | MissingType = MISSING,
+    batch: str | MissingType | None = MISSING,
+    lot: str | MissingType | None = MISSING,
     srm_query: str | basemodels.srm.SRMQuery | MissingType = MISSING,
     srm_table_id: str | UUID | MissingType = MISSING,
 ) -> Response:
@@ -226,18 +226,18 @@ def delete_srm(
         with _get_client() as client_:
             return delete_srm(
                 client=client_,
-                srm_id=srm_id,
-                batch_id=batch_id,
-                lot_id=lot_id,
+                srm_number=srm_number,
+                batch=batch,
+                lot=lot,
                 srm_query=srm_query,
                 srm_table_id=srm_table_id,
             )
 
     params = _get_srm_params(
         srm_query,
-        srm_id=srm_id,
-        batch_id=batch_id,
-        lot_id=lot_id,
+        srm_number=srm_number,
+        batch=batch,
+        lot=lot,
         srm_table_id=srm_table_id,
     )
 

@@ -145,9 +145,9 @@ def _get_where_from_srm_table_id(
 def _get_srm_result(
     *,
     session: Session,
-    srm_id: int | None = None,
-    batch_id: str | None = None,
-    lot_id: str | None = None,
+    srm_number: int | None = None,
+    batch: str | None = None,
+    lot: str | None = None,
     srm_query: str
     | basemodels.srm.SRMQuery
     | Sequence[str | basemodels.srm.SRMQuery]
@@ -167,7 +167,7 @@ def _get_srm_result(
         return session.exec(query)
 
     srm_query = basemodels.srm.SRMQuery.from_params_exclude_none(
-        srm_id=srm_id, batch_id=batch_id, lot_id=lot_id
+        srm_number=srm_number, batch=batch, lot=lot
     )
     if srm_query.model_dump(exclude_unset=True):
         where_ = _get_where_from_srm_query_maybe_fuzzy(srm_query)
@@ -179,18 +179,18 @@ def _get_srm_result(
 def get_srm(
     *,
     session: Session,
-    srm_id: int | None = None,
-    batch_id: str | None = None,
-    lot_id: str | None = None,
+    srm_number: int | None = None,
+    batch: str | None = None,
+    lot: str | None = None,
     srm_query: str | basemodels.srm.SRMQuery | None = None,
     srm_table_id: uuid.UUID | None = None,
 ) -> models.SRMTable:
     """Get single srm"""
     return _get_srm_result(
         session=session,
-        srm_id=srm_id,
-        batch_id=batch_id,
-        lot_id=lot_id,
+        srm_number=srm_number,
+        batch=batch,
+        lot=lot,
         srm_query=srm_query,
         srm_table_id=srm_table_id,
     ).one()
@@ -199,9 +199,9 @@ def get_srm(
 def get_srms(
     *,
     session: Session,
-    srm_id: int | None = None,
-    batch_id: str | None = None,
-    lot_id: str | None = None,
+    srm_number: int | None = None,
+    batch: str | None = None,
+    lot: str | None = None,
     srm_query: Sequence[str | basemodels.srm.SRMQuery] | None = None,
     srm_table_id: Sequence[uuid.UUID] | None = None,
     one: bool = False,
@@ -209,9 +209,9 @@ def get_srms(
     """Get multiple srm"""
     result = _get_srm_result(
         session=session,
-        srm_id=srm_id,
-        batch_id=batch_id,
-        lot_id=lot_id,
+        srm_number=srm_number,
+        batch=batch,
+        lot=lot,
         srm_query=srm_query,
         srm_table_id=srm_table_id,
     )
@@ -224,18 +224,18 @@ def get_srms(
 def get_rcert(
     *,
     session: Session,
-    srm_id: int | None = None,
-    batch_id: str | None = None,
-    lot_id: str | None = None,
+    srm_number: int | None = None,
+    batch: str | None = None,
+    lot: str | None = None,
     srm_query: str | basemodels.srm.SRMQuery | None = None,
     srm_table_id: uuid.UUID | None = None,
 ) -> models.RCertTable:
 
     return get_srm(
         session=session,
-        srm_id=srm_id,
-        batch_id=batch_id,
-        lot_id=lot_id,
+        srm_number=srm_number,
+        batch=batch,
+        lot=lot,
         srm_query=srm_query,
         srm_table_id=srm_table_id,
     ).rcert
@@ -244,9 +244,9 @@ def get_rcert(
 def get_rcerts(
     *,
     session: Session,
-    srm_id: int | None = None,
-    batch_id: str | None = None,
-    lot_id: str | None = None,
+    srm_number: int | None = None,
+    batch: str | None = None,
+    lot: str | None = None,
     srm_query: Sequence[str | basemodels.srm.SRMQuery] | None = None,
     srm_table_id: Sequence[uuid.UUID] | None = None,
     one: bool = False,
@@ -256,9 +256,9 @@ def get_rcerts(
         _.rcert
         for _ in get_srms(
             session=session,
-            srm_id=srm_id,
-            batch_id=batch_id,
-            lot_id=lot_id,
+            srm_number=srm_number,
+            batch=batch,
+            lot=lot,
             srm_query=srm_query,
             srm_table_id=srm_table_id,
             one=one,
@@ -269,18 +269,18 @@ def get_rcerts(
 def get_measurement(
     *,
     session: Session,
-    srm_id: int | None = None,
-    batch_id: str | None = None,
-    lot_id: str | None = None,
+    srm_number: int | None = None,
+    batch: str | None = None,
+    lot: str | None = None,
     srm_query: str | basemodels.srm.SRMQuery | None = None,
     srm_table_id: uuid.UUID | None = None,
 ) -> models.Measurements:
 
     return get_srm(
         session=session,
-        srm_id=srm_id,
-        batch_id=batch_id,
-        lot_id=lot_id,
+        srm_number=srm_number,
+        batch=batch,
+        lot=lot,
         srm_query=srm_query,
         srm_table_id=srm_table_id,
     ).measurements
@@ -289,9 +289,9 @@ def get_measurement(
 def get_measurements(
     *,
     session: Session,
-    srm_id: int | None = None,
-    batch_id: str | None = None,
-    lot_id: str | None = None,
+    srm_number: int | None = None,
+    batch: str | None = None,
+    lot: str | None = None,
     srm_query: Sequence[str | basemodels.srm.SRMQuery] | None = None,
     srm_table_id: Sequence[uuid.UUID] | None = None,
     one: bool = False,
@@ -301,9 +301,9 @@ def get_measurements(
         _.measurements
         for _ in get_srms(
             session=session,
-            srm_id=srm_id,
-            batch_id=batch_id,
-            lot_id=lot_id,
+            srm_number=srm_number,
+            batch=batch,
+            lot=lot,
             srm_query=srm_query,
             srm_table_id=srm_table_id,
             one=one,
@@ -314,18 +314,18 @@ def get_measurements(
 def get_standard_analysis(
     *,
     session: Session,
-    srm_id: int | None = None,
-    batch_id: str | None = None,
-    lot_id: str | None = None,
+    srm_number: int | None = None,
+    batch: str | None = None,
+    lot: str | None = None,
     srm_query: str | basemodels.srm.SRMQuery | None = None,
     srm_table_id: uuid.UUID | None = None,
 ) -> models.StandardAnalysisTable:
 
     return get_srm(
         session=session,
-        srm_id=srm_id,
-        batch_id=batch_id,
-        lot_id=lot_id,
+        srm_number=srm_number,
+        batch=batch,
+        lot=lot,
         srm_query=srm_query,
         srm_table_id=srm_table_id,
     ).standard_analysis
@@ -334,9 +334,9 @@ def get_standard_analysis(
 def get_standard_analyses(
     *,
     session: Session,
-    srm_id: int | None = None,
-    batch_id: str | None = None,
-    lot_id: str | None = None,
+    srm_number: int | None = None,
+    batch: str | None = None,
+    lot: str | None = None,
     srm_query: Sequence[str | basemodels.srm.SRMQuery] | None = None,
     srm_table_id: Sequence[uuid.UUID] | None = None,
     one: bool = False,
@@ -346,9 +346,9 @@ def get_standard_analyses(
         _.standard_analysis
         for _ in get_srms(
             session=session,
-            srm_id=srm_id,
-            batch_id=batch_id,
-            lot_id=lot_id,
+            srm_number=srm_number,
+            batch=batch,
+            lot=lot,
             srm_query=srm_query,
             srm_table_id=srm_table_id,
             one=one,

@@ -73,8 +73,8 @@ def main(argv: Sequence[str] | None = None) -> bool:
                 "22B-a",
                 "22-a",
                 json.dumps({
-                    "srm_id": 123,
-                    "lot_id": "hello",
+                    "srm_number": 123,
+                    "lot": "hello",
                     "units": "ppb",
                     "note": "other",
                 }),

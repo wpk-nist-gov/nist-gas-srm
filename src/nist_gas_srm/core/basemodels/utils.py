@@ -55,9 +55,9 @@ OptionalLowerString = Annotated[
 
 
 def srm_params_to_srm_query(
-    srm_id: int,
-    batch_id: str | None = None,
-    lot_id: str | None = None,
+    srm_number: int,
+    batch: str | None = None,
+    lot: str | None = None,
 ) -> str:
 
-    return f"{srm_id}{batch_id or ''}{'-' + lot_id if lot_id else ''}"
+    return f"{srm_number}{batch or ''}{'-' + lot if lot else ''}"

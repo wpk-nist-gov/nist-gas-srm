@@ -104,9 +104,9 @@ if "srm_metadata" not in st.session_state:
         [
             {
                 "name": "a name",
-                "srm_id": 1,
-                "batch_id": "X",
-                "lot_id": "X",
+                "srm_number": 1,
+                "batch": "X",
+                "lot": "X",
                 "timestamp": datetime.now(UTC),
             }
         ],
@@ -133,7 +133,7 @@ def _get_metadata_from_filename() -> None:
     if upload_file is not None:
         new = pd.DataFrame([
             excel.utils.parse_excel_filename_to_metadata(upload_file.name)
-        ]).astype({"srm_id": int})
+        ]).astype({"srm_number": int})
         st.session_state.srm_metadata.update(new)
         metadata_table.update_key()
 
