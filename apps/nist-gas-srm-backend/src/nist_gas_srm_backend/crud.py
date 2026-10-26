@@ -11,7 +11,7 @@ from sqlalchemy.sql.elements import BinaryExpression, ColumnElement
 from sqlmodel import Session, and_ as sql_and_, or_ as sql_or_, select
 
 from nist_gas_srm import basemodels
-from nist_gas_srm.core.excel.interface import excel_to_json
+from nist_gas_srm.excel.interface import excel_to_json
 
 from . import models
 

@@ -25,9 +25,8 @@ from pydantic import ValidationError
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 from sqlmodel import Session, SQLModel
 
-from nist_gas_srm import basemodels
+from nist_gas_srm import basemodels, excel
 from nist_gas_srm.basemodels.utils import srm_params_to_srm_query
-from nist_gas_srm.core import excel
 from nist_gas_srm.core.typing import SubTableType
 
 from .. import crud, models

@@ -16,13 +16,13 @@ from sqlmodel import (
 )
 from sqlmodel._compat import SQLModelConfig  # ruff:ignore[import-private-name]
 
-from nist_gas_srm.core import excel
-from nist_gas_srm.core.excel.utils import (
-    simple_write_to_excel,
-)
+from nist_gas_srm import excel
 from nist_gas_srm.core.typing_compat import override
 from nist_gas_srm.core.validate import (
     validate_nan_to_none,
+)
+from nist_gas_srm.excel.utils import (
+    simple_write_to_excel,
 )
 
 from .keys import (
