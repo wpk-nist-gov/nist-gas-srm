@@ -8,7 +8,7 @@ from uuid import UUID
 
 import httpx
 
-from nist_gas_srm.core import basemodels
+from nist_gas_srm import basemodels
 from nist_gas_srm.core.missing import MISSING
 
 if TYPE_CHECKING:

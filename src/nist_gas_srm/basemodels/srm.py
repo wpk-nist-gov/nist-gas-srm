@@ -23,9 +23,9 @@ from sqlmodel import (
 from sqlmodel._compat import SQLModelConfig  # ruff:ignore[import-private-name]
 
 # pylint: disable=consider-using-from-import
-import nist_gas_srm.core.basemodels.measurements as measurements
-import nist_gas_srm.core.basemodels.rcert as rcert
-import nist_gas_srm.core.basemodels.standard_analysis as stdanal
+import nist_gas_srm.basemodels.measurements as measurements
+import nist_gas_srm.basemodels.rcert as rcert
+import nist_gas_srm.basemodels.standard_analysis as stdanal
 from nist_gas_srm.core.missing import MISSING
 from nist_gas_srm.core.typing import SubTableType
 from nist_gas_srm.core.utils import JSON_PATTERN, SRM_PATTERN

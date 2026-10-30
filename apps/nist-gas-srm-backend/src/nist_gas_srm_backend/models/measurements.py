@@ -6,8 +6,8 @@ from sqlmodel import (
     Relationship,
 )
 
-from nist_gas_srm.core import basemodels
-from nist_gas_srm.core.basemodels.keys import IDPrimaryKey
+from nist_gas_srm import basemodels
+from nist_gas_srm.basemodels.keys import IDPrimaryKey
 
 from ._fixmixin import FixMixin
 

@@ -378,7 +378,7 @@ root = "apps/nist-gas-srm-backend/src/nist_gas_srm_backend/models"
 reportImportCycles = false
 
 [[tool.pyright.executionEnvironments]]
-root = "src/nist_gas_srm/backend/models"
+root = "src/nist_gas_srm/__init__.py"
 reportImportCycles = false
 
 [[tool.pyright.executionEnvironments]]

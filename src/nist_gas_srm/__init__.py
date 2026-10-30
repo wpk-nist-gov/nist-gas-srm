@@ -5,7 +5,7 @@ Top level API (:mod:`nist_gas_srm`)
 
 from importlib.metadata import PackageNotFoundError, version as _version
 
-from .core import basemodels, excel
+from . import basemodels, excel
 
 try:  # ruff:ignore[non-empty-init-module]
     __version__ = _version("nist-gas-srm")

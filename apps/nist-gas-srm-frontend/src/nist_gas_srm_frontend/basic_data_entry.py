@@ -3,7 +3,7 @@
 import pandas as pd
 import streamlit as st
 
-from nist_gas_srm.core.basemodels.srm import SRMCreate
+from nist_gas_srm.basemodels.srm import SRMCreate
 
 # ruff: disable[commented-out-code]
 # using streamlit-pydantic

@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, cast
 import pandas as pd
 import streamlit as st
 
-from nist_gas_srm.core import basemodels, excel
+from nist_gas_srm import basemodels, excel
 from nist_gas_srm.core.typing_compat import override
 from nist_gas_srm_frontend._utils import TABLEGROUP_DBNAMES_TABLENAMES_MAPPING
 
