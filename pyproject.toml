@@ -3,7 +3,7 @@
 [build-system]
 build-backend = "uv_build"
 requires = [
-    "uv-build>=0.13.4,<0.14.0",
+    "uv-build>=0.13.5,<0.14.0",
 ]
 
 [project]
@@ -425,6 +425,14 @@ filterwarnings = [
     "error",
     "ignore: Cannot parse header or footer so it will be ignored:UserWarning",
     "ignore: Print area cannot be set to Defined name:UserWarning",
+    """\
+    ignore: The default engine for reading 'xlsx' files will change from 'openpyxl' to 'calamine' in a future \
+    version:pandas.errors.Pandas4Warning\
+    """,
+    """\
+    ignore: The xlrd engine is deprecated and will be removed in a future version. Use the calamine engine \
+    instead:pandas.errors.Pandas4Warning\
+    """,
 ]
 log_level = "INFO"
 log_cli_level = "INFO"
@@ -485,7 +493,7 @@ pip-deps = [
     "rooster>=0.1.1",
     "rust-just>=1.59.0",
     "twine>=7.0.0",
-    "ty>=0.0.90",
+    "ty>=0.0.91",
 ]
 groups = [
     "basedpyright",
