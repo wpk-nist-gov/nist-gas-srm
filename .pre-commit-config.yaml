@@ -246,7 +246,11 @@ repos:
           - "metadata.kernelspec metadata.kernel_spec"
 
   - repo: https://github.com/nbQA-dev/nbQA
+<<<<<<< before updating
     rev: 1.10.0
+=======
+    rev: "1.10.0"
+>>>>>>> after updating
     hooks:
       # ** typos
       - id: nbqa
